@@ -17,3 +17,4 @@ bld/
 .vscode
 /dockerbuild
 .idea/*
+/CS2Fixes.VC.db
