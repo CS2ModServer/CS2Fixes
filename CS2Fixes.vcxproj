@@ -74,7 +74,8 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <TargetName>cs2fixes</TargetName>
     <LibraryPath>sdk\lib\public\win64;vendor/funchook/lib;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
-    <OutDir>$(SolutionDir)/package/addons/cs2fixes/bin/win64/</OutDir>
+    <OutDir>$(SolutionDir)/build/package/addons/cs2fixes/bin/win64/</OutDir>
+    <IntDir>$(SolutionDir)/build/$(ShortProjectName)\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <TargetName>cs2fixes</TargetName>
@@ -117,14 +118,14 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level1</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>__STDC_LIMIT_MACROS;X64BITS;WIN32;COMPILER_MSVC;COMPILER_MSVC64;_CRT_NO_VA_START_VALIDATION;_ITERATOR_DEBUG_LEVEL=0;_DEBUG;CS2Fixes_EXPORTS;_WINDOWS;_USRDLL;META_IS_SOURCE2;SUBHOOK_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>protobuf/generated;src/utils;src/cs2_sdk;sdk/public;sdk/public/tier0;sdk/game/shared;sdk/game/server;sdk/public/tier1;sdk/public/mathlib;minhook/include;$(MMSOURCE112)/core;$(MMSOURCE112)/core/sourcehook;vendor/subhook;vendor/funchook/include;sdk/public/entity2;sdk/public/game/server;sdk/thirdparty/protobuf-3.21.8/src;$(SolutionDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>protobuf/generated;src/utils;src/cs2_sdk;sdk/public;sdk/public/tier0;sdk/game/shared;sdk/game/server;sdk/public/tier1;sdk/public/mathlib;minhook/include;../metamod-source/core;../metamod-source/core/sourcehook;vendor/subhook;vendor/funchook/include;sdk/public/entity2;sdk/public/game/server;sdk/thirdparty/protobuf-3.21.8/src;$(SolutionDir);vendor/funchook/lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <UndefinePreprocessorDefinitions>%(UndefinePreprocessorDefinitions)</UndefinePreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -150,7 +151,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>protobuf/generated;src/utils;src/cs2_sdk;sdk/public;sdk/public/tier0;sdk/game/shared;sdk/game/server;sdk/public/tier1;sdk/public/mathlib;minhook/include;$(MMSOURCE112)/core;$(MMSOURCE112)/core/sourcehook;vendor/subhook;vendor/funchook/include;sdk/public/entity2;sdk/public/game/server;sdk/thirdparty/protobuf-3.21.8/src;$(SolutionDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>protobuf/generated;src/utils;src/cs2_sdk;sdk/public;sdk/public/tier0;sdk/game/shared;sdk/game/server;sdk/public/tier1;sdk/public/mathlib;minhook/include;../metamod-source/core;../metamod-source/core/sourcehook;vendor/subhook;vendor/funchook/include;sdk/public/entity2;sdk/public/game/server;sdk/thirdparty/protobuf-3.21.8/src;$(SolutionDir);vendor/funchook/lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <UndefinePreprocessorDefinitions>%(UndefinePreprocessorDefinitions)</UndefinePreprocessorDefinitions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -162,10 +163,13 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
       <AdditionalDependencies>interfaces.lib;mathlib.lib;tier0.lib;tier1.lib;psapi.lib;funchook.lib;distorm.lib;steam_api64.lib;vendor/protobuf-lib/Release/libprotobuf.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>sdk/lib/public/win64;vendor/funchook/lib/Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>sdk/lib/public/win64;vendor/funchook/lib/Release;/NODEFAULTLIB;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ShowProgress>
       </ShowProgress>
     </Link>
+    <PostBuildEvent>
+      <Command>$(SolutionDir)/build/Compile.Success.CS2Fixes.bat</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="protobuf\generated\cs_usercmd.pb.cc" />
