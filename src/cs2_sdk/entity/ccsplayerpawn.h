@@ -1,7 +1,7 @@
 /**
  * =============================================================================
  * CS2Fixes
- * Copyright (C) 2023-2024 Source2ZE
+ * Copyright (C) 2023-2025 Source2ZE
  * =============================================================================
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -35,7 +35,6 @@ enum CSPlayerState
 	NUM_PLAYER_STATES = 0x9,
 };
 
-
 class CCSPlayerPawnBase : public CBasePlayerPawn
 {
 public:
@@ -44,7 +43,7 @@ public:
 	SCHEMA_FIELD(CSPlayerState, m_iPlayerState)
 	SCHEMA_FIELD(CHandle<CCSPlayerController>, m_hOriginalController)
 
-	CCSPlayerController *GetOriginalController()
+	CCSPlayerController* GetOriginalController()
 	{
 		return m_hOriginalController().Get();
 	}
