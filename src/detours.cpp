@@ -40,6 +40,7 @@
 #include "entity/ctakedamageinfo.h"
 #include "entity/ctriggerpush.h"
 #include "entity/services.h"
+#include "entwatch.h"
 #include "gameconfig.h"
 #include "igameevents.h"
 #include "irecipientfilter.h"
@@ -53,7 +54,7 @@
 
 #include "tier0/memdbgon.h"
 
-extern CGlobalVars* gpGlobals;
+extern CGlobalVars* GetGlobals();
 extern CGameEntitySystem* g_pEntitySystem;
 extern IGameEventManager2* g_gameEventManager;
 extern CCSGameRules* g_pGameRules;
@@ -68,6 +69,7 @@ DECLARE_DETOUR(IsHearingClient, Detour_IsHearingClient);
 DECLARE_DETOUR(TriggerPush_Touch, Detour_TriggerPush_Touch);
 DECLARE_DETOUR(CBaseEntity_TakeDamageOld, Detour_CBaseEntity_TakeDamageOld);
 DECLARE_DETOUR(CCSPlayer_WeaponServices_CanUse, Detour_CCSPlayer_WeaponServices_CanUse);
+DECLARE_DETOUR(CCSPlayer_WeaponServices_EquipWeapon, Detour_CCSPlayer_WeaponServices_EquipWeapon);
 DECLARE_DETOUR(CEntityIdentity_AcceptInput, Detour_CEntityIdentity_AcceptInput);
 DECLARE_DETOUR(CNavMesh_GetNearestNavArea, Detour_CNavMesh_GetNearestNavArea);
 DECLARE_DETOUR(ProcessMovement, Detour_ProcessMovement);
@@ -201,15 +203,15 @@ void FASTCALL Detour_TriggerPush_Touch(CTriggerPush* pPush, CBaseEntity* pOther)
 		pOther->Teleport(&origin, nullptr, nullptr);
 	}
 
-	if (g_bLogPushes)
+	if (g_bLogPushes && GetGlobals())
 	{
 		Vector vecEntBaseVelocity = pOther->m_vecBaseVelocity;
 		Vector vecOrigPush = vecAbsDir * pPush->m_flSpeed();
 
 		Message("Pushing entity %i | frame = %i | tick = %i | entity basevelocity %s = %.2f %.2f %.2f | original push velocity = %.2f %.2f %.2f | final push velocity = %.2f %.2f %.2f\n",
 				pOther->GetEntityIndex(),
-				gpGlobals->framecount,
-				gpGlobals->tickcount,
+				GetGlobals()->framecount,
+				GetGlobals()->tickcount,
 				(flags & FL_BASEVELOCITY) ? "WITH FLAG" : "",
 				vecEntBaseVelocity.x, vecEntBaseVelocity.y, vecEntBaseVelocity.z,
 				vecOrigPush.x, vecOrigPush.y, vecOrigPush.z,
@@ -234,6 +236,9 @@ bool FASTCALL Detour_IsHearingClient(void* serverClient, int index)
 void SayChatMessageWithTimer(IRecipientFilter& filter, const char* pText, CCSPlayerController* pPlayer, uint64 eMessageType)
 {
 	VPROF("SayChatMessageWithTimer");
+
+	if (!GetGlobals() || !g_pGameRules)
+		return;
 
 	char buf[256];
 
@@ -303,7 +308,7 @@ void SayChatMessageWithTimer(IRecipientFilter& filter, const char* pText, CCSPla
 		}
 	}
 
-	float fCurrentRoundClock = g_pGameRules->m_iRoundTime - (gpGlobals->curtime - g_pGameRules->m_fRoundStartTime.Get().GetTime());
+	float fCurrentRoundClock = g_pGameRules->m_iRoundTime - (GetGlobals()->curtime - g_pGameRules->m_fRoundStartTime.Get().GetTime());
 
 	// Only display trigger time if the timer is greater than 4 seconds, and time expires within the round
 	if ((uiTriggerTimerLength > 4) && (fCurrentRoundClock > uiTriggerTimerLength))
@@ -369,7 +374,18 @@ bool FASTCALL Detour_CCSPlayer_WeaponServices_CanUse(CCSPlayer_WeaponServices* p
 	if (g_bEnableZR && !ZR_Detour_CCSPlayer_WeaponServices_CanUse(pWeaponServices, pPlayerWeapon))
 		return false;
 
+	if (g_bEnableEntWatch && !EW_Detour_CCSPlayer_WeaponServices_CanUse(pWeaponServices, pPlayerWeapon))
+		return false;
+
 	return CCSPlayer_WeaponServices_CanUse(pWeaponServices, pPlayerWeapon);
+}
+
+void FASTCALL Detour_CCSPlayer_WeaponServices_EquipWeapon(CCSPlayer_WeaponServices* pWeaponServices, CBasePlayerWeapon* pPlayerWeapon)
+{
+	if (g_bEnableEntWatch)
+		EW_Detour_CCSPlayer_WeaponServices_EquipWeapon(pWeaponServices, pPlayerWeapon);
+
+	return CCSPlayer_WeaponServices_EquipWeapon(pWeaponServices, pPlayerWeapon);
 }
 
 bool FASTCALL Detour_CEntityIdentity_AcceptInput(CEntityIdentity* pThis, CUtlSymbolLarge* pInputName, CEntityInstance* pActivator, CEntityInstance* pCaller, variant_t* value, int nOutputID)
@@ -480,7 +496,7 @@ void FASTCALL Detour_ProcessMovement(CCSPlayer_MovementServices* pThis, void* pM
 {
 	CCSPlayerPawn* pPawn = pThis->GetPawn();
 
-	if (!pPawn->IsAlive())
+	if (!pPawn->IsAlive() || !GetGlobals())
 		return ProcessMovement(pThis, pMove);
 
 	CCSPlayerController* pController = pPawn->GetOriginalController();
@@ -495,13 +511,13 @@ void FASTCALL Detour_ProcessMovement(CCSPlayer_MovementServices* pThis, void* pM
 
 	// Yes, this is what source1 does to scale player speed
 	// Scale frametime during the entire movement processing step and revert right after
-	float flStoreFrametime = gpGlobals->frametime;
+	float flStoreFrametime = GetGlobals()->frametime;
 
-	gpGlobals->frametime *= flSpeedMod;
+	GetGlobals()->frametime *= flSpeedMod;
 
 	ProcessMovement(pThis, pMove);
 
-	gpGlobals->frametime = flStoreFrametime;
+	GetGlobals()->frametime = flStoreFrametime;
 }
 
 static bool g_bDisableSubtick = false;
@@ -560,8 +576,12 @@ void FASTCALL Detour_CGamePlayerEquip_InputTriggerForActivatedPlayer(CGamePlayer
 
 CServerSideClient* FASTCALL Detour_GetFreeClient(int64_t unk1, const __m128i* unk2, unsigned int unk3, int64_t unk4, char unk5, void* unk6)
 {
+	// Not sure if this function can even be called in this state, but if it is, we can't do shit anyways
+	if (!GetClientList() || !GetGlobals())
+		return nullptr;
+
 	// Check if there is still unused slots, this should never break so just fall back to original behaviour for ease (we don't have a CServerSideClient constructor)
-	if (gpGlobals->maxClients != GetClientList()->Count())
+	if (GetGlobals()->maxClients != GetClientList()->Count())
 		return GetFreeClient(unk1, unk2, unk3, unk4, unk5, unk6);
 
 	// Phantom client fix
