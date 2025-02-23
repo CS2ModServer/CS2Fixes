@@ -31,6 +31,9 @@
 #include "recipientfilters.h"
 #include "votemanager.h"
 #include "zombiereborn.h"
+#include "adventuremod.h"
+
+#include "cs2fixes.h"
 
 #include "tier0/memdbgon.h"
 
@@ -197,16 +200,48 @@ static bool g_bEnableTopDefender = false;
 
 FAKE_BOOL_CVAR(cs2f_topdefender_enable, "Whether to use TopDefender", g_bEnableTopDefender, false, false)
 
+/*
+//core.gameevents
+"player_hurt":	dict({
+					"userid":			"playercontroller",
+					"userid_pawn":		"strict_ehandle",
+					"attacker":			"playercontroller",
+					"attacker_pawn":	"strict_ehandle",
+					"health":			"byte",
+				}),
+//mod.gameevents
+"player_hurt":	dict({
+					"userid":			"playercontroller",	IGameEvent::GetPlayerController
+					"userid_pawn":		"strict_ehandle",	IGameEvent::GetPawnEHandle
+					"attacker":			"playercontroller",	IGameEvent::GetPlayerController
+					"attacker_pawn":	"strict_ehandle",	IGameEvent::GetPawnEHandle
+					"health":			"byte",				IGameEvent::GetInt
+					"armor":			"byte",
+					"weapon":			"string",
+					"dmg_health":		"short",			IGameEvent::GetInt
+					"dmg_armor":		"byte",				IGameEvent::GetInt
+					"hitgroup":			"byte",
+				}),
+
+*/
 GAME_EVENT_F(player_hurt)
 {
 	if (g_bEnableZR)
 		ZR_OnPlayerHurt(pEvent);
 
-	if (!g_bEnableTopDefender)
-		return;
+	//	if (!g_bEnableTopDefender)
+	//		return;
 
 	CCSPlayerController* pAttacker = (CCSPlayerController*)pEvent->GetPlayerController("attacker");
 	CCSPlayerController* pVictim = (CCSPlayerController*)pEvent->GetPlayerController("userid");
+
+	//pEvent->SetInt("attacker_slot", pAttacker->GetPlayerSlot());
+	//pEvent->SetInt("victim_slot", pVictim->GetPlayerSlot());
+
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+	{
+		plugin.PyPlayerHurt(pEvent);
+	}
 
 	// Ignore Ts/zombies and CTs hurting themselves
 	if (!pAttacker || pAttacker->m_iTeamNum() != CS_TEAM_CT || pAttacker->m_iTeamNum() == pVictim->m_iTeamNum())
@@ -362,6 +397,23 @@ GAME_EVENT_F(bullet_impact)
 		Leader_BulletImpact(pEvent);
 }
 
+/* The macro below is defined in eventlistener.h
+ * #define GAME_EVENT_F(_event)                                        \
+ *	void _event##_callback(IGameEvent*);                               \
+ *	CGameEventListener _event##_listener(_event##_callback, #_event);  \
+ *	void _event##_callback(IGameEvent* pEvent)
+ *
+ * I sure hope writing this out helps someone else who's in here to figure stuff out.
+ *
+ * void vote_cast_callback(IGameEvent*);                                   \ definition for the game event
+ * CGameEventListener vote_cast_listener(vote_cast_callback, "vote_cast"); \ register that we will have a callback when desired event fires
+ * void vote_cast_callback(IGameEvent* pEvent)                             \ the actual callback
+ * {
+ *     g_pPanoramaVoteHandler->VoteCast(pEvent);
+ * }
+ * 
+ * And that's it, now to forget about this and rediscover in a few years when trying to figure out this magic.
+ */
 GAME_EVENT_F(vote_cast)
 {
 	g_pPanoramaVoteHandler->VoteCast(pEvent);

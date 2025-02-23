@@ -26,6 +26,11 @@
 #include <iserver.h>
 #include <sh_vector.h>
 
+#include <vector>
+#include <filesystem>
+namespace fs = std::filesystem;
+#include "PyPlugin.h"
+
 struct CTakeDamageInfoContainer;
 class CCSPlayer_MovementServices;
 class CServerSideClient;
@@ -60,6 +65,7 @@ public: // hooks
 	void Hook_OnClientConnected(CPlayerSlot slot, const char* pszName, uint64 xuid, const char* pszNetworkID, const char* pszAddress, bool bFakePlayer);
 	bool Hook_ClientConnect(CPlayerSlot slot, const char* pszName, uint64 xuid, const char* pszNetworkID, bool unk1, CBufferString* pRejectReason);
 	void Hook_ClientCommand(CPlayerSlot nSlot, const CCommand& _cmd);
+	
 	void Hook_CheckTransmit(CCheckTransmitInfo** ppInfoList, int infoCount, CBitVec<16384>& unionTransmitEdicts,
 							const Entity2Networkable_t** pNetworkables, const uint16* pEntityIndicies, int nEntities, bool bEnablePVSBits);
 	void Hook_DispatchConCommand(ConCommandHandle cmd, const CCommandContext& ctx, const CCommand& args);
@@ -89,6 +95,20 @@ public:
 	const char* GetVersion();
 	const char* GetDate();
 	const char* GetLogTag();
+
+
+public:
+	// Get this plugin's directory path
+	fs::path GetPluginBaseDirectory() { return s_Source2PyDirectory; }
+	bool LoadPythonPlugins();
+
+private:
+	const fs::path s_Source2PyDirectory = "../../csgo/addons/CS2Fixes/PyPlugins/";
+
+public:
+	std::vector<Source2Py::PyPlugin> m_Plugins;
+	
+	
 };
 
 extern CS2Fixes g_CS2Fixes;

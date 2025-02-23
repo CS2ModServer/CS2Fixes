@@ -125,7 +125,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>protobuf/generated;src/utils;src/cs2_sdk;sdk/public;sdk/public/tier0;sdk/game/shared;sdk/game/server;sdk/public/tier1;sdk/public/mathlib;minhook/include;../metamod-source/core;../metamod-source/core/sourcehook;vendor/subhook;vendor/funchook/include;sdk/public/entity2;sdk/public/game/server;sdk/thirdparty/protobuf-3.21.8/src;$(SolutionDir);vendor/funchook/lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>protobuf/generated;src/utils;src/cs2_sdk;sdk/public;sdk/public/tier0;sdk/game/shared;sdk/game/server;sdk/public/tier1;sdk/public/mathlib;minhook/include;../metamod-source/core;../metamod-source/core/sourcehook;vendor/subhook;vendor/funchook/include;sdk/public/entity2;sdk/public/game/server;sdk/thirdparty/protobuf-3.21.8/src;$(SolutionDir);vendor/funchook/lib;C:/Python312/include;vendor/pybind11/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <UndefinePreprocessorDefinitions>%(UndefinePreprocessorDefinitions)</UndefinePreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -135,7 +135,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
       <AdditionalDependencies>interfaces.lib;mathlib.lib;tier0.lib;tier1.lib;psapi.lib;funchook.lib;distorm.lib;steam_api64.lib;vendor/protobuf-lib/Debug/libprotobufd.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>sdk/lib/public/win64;vendor/funchook/lib/Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>sdk/lib/public/win64;vendor/funchook/lib/Debug;%(AdditionalLibraryDirectories);C:/Python312/libs</AdditionalLibraryDirectories>
       <ShowProgress>
       </ShowProgress>
     </Link>
@@ -151,7 +151,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>protobuf/generated;src/utils;src/cs2_sdk;sdk/public;sdk/public/tier0;sdk/game/shared;sdk/game/server;sdk/public/tier1;sdk/public/mathlib;minhook/include;../metamod-source/core;../metamod-source/core/sourcehook;vendor/subhook;vendor/funchook/include;sdk/public/entity2;sdk/public/game/server;sdk/thirdparty/protobuf-3.21.8/src;$(SolutionDir);vendor/funchook/lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>protobuf/generated;src/utils;src/cs2_sdk;sdk/public;sdk/public/tier0;sdk/game/shared;sdk/game/server;sdk/public/tier1;sdk/public/mathlib;minhook/include;../metamod-source/core;../metamod-source/core/sourcehook;vendor/subhook;vendor/funchook/include;sdk/public/entity2;sdk/public/game/server;sdk/thirdparty/protobuf-3.21.8/src;$(SolutionDir);vendor/funchook/lib;C:/Python312/include;vendor/pybind11/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <UndefinePreprocessorDefinitions>%(UndefinePreprocessorDefinitions)</UndefinePreprocessorDefinitions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -163,7 +163,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
       <AdditionalDependencies>interfaces.lib;mathlib.lib;tier0.lib;tier1.lib;psapi.lib;funchook.lib;distorm.lib;steam_api64.lib;vendor/protobuf-lib/Release/libprotobuf.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>sdk/lib/public/win64;vendor/funchook/lib/Release;/NODEFAULTLIB;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>sdk/lib/public/win64;vendor/funchook/lib/Release;/NODEFAULTLIB;%(AdditionalLibraryDirectories);C:/Python312/libs</AdditionalLibraryDirectories>
       <ShowProgress>
       </ShowProgress>
     </Link>
@@ -172,6 +172,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\adventuremod.cpp" />
     <ClCompile Include="src\buttonwatch.cpp" />
     <ClCompile Include="protobuf\generated\cs_usercmd.pb.cc" />
     <ClCompile Include="protobuf\generated\networkbasetypes.pb.cc" />
@@ -210,6 +211,9 @@
     <ClCompile Include="src\panoramavote.cpp" />
     <ClCompile Include="src\patches.cpp" />
     <ClCompile Include="src\playermanager.cpp" />
+    <ClCompile Include="src\PyAPI.cpp" />
+    <ClCompile Include="src\PyPlugin.cpp" />
+    <ClCompile Include="src\PyRuntime.cpp" />
     <ClCompile Include="src\user_preferences.cpp" />
     <ClCompile Include="src\votemanager.cpp" />
     <ClCompile Include="src\zombiereborn.cpp" />
@@ -221,6 +225,7 @@
     <ClCompile Include="src\utils\plat_win.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\adventuremod.h" />
     <ClInclude Include="src\buttonwatch.h" />
     <ClInclude Include="src\adminsystem.h" />
     <ClInclude Include="src\commands.h" />
@@ -270,6 +275,11 @@
     <ClInclude Include="src\panoramavote.h" />
     <ClInclude Include="src\patches.h" />
     <ClInclude Include="src\playermanager.h" />
+    <ClInclude Include="src\PyAPI.h" />
+    <ClInclude Include="src\PyInclude.h" />
+    <ClInclude Include="src\PyModule.h" />
+    <ClInclude Include="src\PyPlugin.h" />
+    <ClInclude Include="src\PyRuntime.h" />
     <ClInclude Include="src\recipientfilters.h" />
     <ClInclude Include="src\serversideclient.h" />
     <ClInclude Include="src\utils\plat_win.h" />
@@ -283,6 +293,9 @@
     <ClInclude Include="src\utils\module.h" />
     <ClInclude Include="src\utils\plat.h" />
     <ClInclude Include="src\utils\virtual.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ClassDiagram1.cd" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

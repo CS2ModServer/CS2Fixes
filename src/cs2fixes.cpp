@@ -60,6 +60,12 @@
 #include "zombiereborn.h"
 #include <entity.h>
 
+//#include "Source2Py.h"
+#include "PyRuntime.h"
+//#include "PyInclude.h" //included in PyRuntime.h
+
+#include <fstream>
+
 #include "tier0/memdbgon.h"
 
 double g_flUniversalTime;
@@ -148,6 +154,52 @@ CGameEntitySystem* GameEntitySystem()
 	return *reinterpret_cast<CGameEntitySystem**>((uintptr_t)(g_pGameResourceServiceServer) + offset);
 }
 
+bool CS2Fixes::LoadPythonPlugins()
+{
+	fs::path pypluginsFilepath = "pyplugins.ini";
+
+	if (!fs::exists(pypluginsFilepath))
+	{
+		Message("Failed to load pyplugins.ini!\n");
+		// Log::Error("Failed to load pyplugins.ini!");
+		return false;
+	}
+
+	// Read from pyplugins.ini
+	std::ifstream pypluginsFile(pypluginsFilepath);
+
+	if (pypluginsFile.fail())
+	{
+		Message("Failed to open pyplugins.ini!\n\0");
+		// Log::Error("Failed to open pyplugins.ini!");
+		return false;
+	}
+
+	std::string line;
+	while (std::getline(pypluginsFile, line))
+	{
+		// ignore comments
+		if (line[0] == '#' || line[0] == ';' || line.empty())
+			continue;
+
+		Source2Py::PyPlugin plugin(line);
+		if (plugin)
+		{
+			Message("Loaded %s %s\n", line.c_str(), "from pyplugins.ini");
+			// Log::Write("Loaded " + line + " from pyplugins.ini");
+				
+			m_Plugins.push_back(plugin);
+			m_Plugins.back().Load();
+		}
+	}
+
+	Message("Loaded %s %s\n", std::to_string(m_Plugins.size()), "Python plugin(s)");
+	// Log::Write("Loaded " + std::to_string(m_Plugins.size()) + " Python plugin(s)");
+
+	return true;
+}
+
+
 PLUGIN_EXPOSE(CS2Fixes, g_CS2Fixes);
 bool CS2Fixes::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, bool late)
 {
@@ -226,7 +278,21 @@ bool CS2Fixes::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, bool
 	if (!InitGameSystems())
 		bRequiredInitLoaded = false;
 
-	const auto pCGamePlayerEquipVTable = modules::server->FindVirtualTable("CGamePlayerEquip");
+	fs::path exePath = fs::current_path();
+	fs::current_path(GetPluginBaseDirectory());
+	if (!Source2Py::PyRuntime::Init())
+		bRequiredInitLoaded = false;
+
+	if (!LoadPythonPlugins())
+	{
+		Source2Py::PyRuntime::Close();
+		bRequiredInitLoaded = false;
+	}
+
+	// ...and set the cwd back where the game expects it
+	fs::current_path(exePath);
+
+const auto pCGamePlayerEquipVTable = modules::server->FindVirtualTable("CGamePlayerEquip");
 	if (!pCGamePlayerEquipVTable)
 	{
 		snprintf(error, maxlen, "Failed to find CGamePlayerEquip vtable\n");
