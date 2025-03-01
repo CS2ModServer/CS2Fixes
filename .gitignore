@@ -18,3 +18,5 @@ bld/
 /dockerbuild
 .idea/*
 /CS2Fixes.VC.db
+*.log
+*.pyc
