@@ -149,14 +149,5 @@ public:
 		m_iScore() = m_iScore() + iScore;
 	}
 
-	int GetHealth()
-	{
-		return m_iHealth();
-	}
 
-	bool SetHealth(int newHealth)
-	{
-		m_iHealth = newHealth;
-		return true;
-	}
 };

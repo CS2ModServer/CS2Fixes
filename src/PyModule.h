@@ -22,119 +22,198 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 
 	m.def("SetTimescale", &PyAPI::SetTimescale);
 
-	//m.def("SetHealthSlot", &ADVAPI::SetHealthSlot);
-	//m.def("SetHealthPawn", &ADVAPI::SetHealthPawn); //no way to get pawn yet.
-	//m.def("SetHealthPlayerController", &ADVAPI::SetHealthPlayerController);
 
-	//m.def("GetHealthSlot", &ADVAPI::GetHealthSlot);
-	//m.def("GetHealthPawn", &ADVAPI::GetHealthPawn); //no way to get pawn yet.
-	//m.def("GetHealthPlayerController", &ADVAPI::GetHealthPlayerController);
-
-	py::class_<GameEventKeySymbol_t>(m, "GameEventKeySymbol_t")
-		.def(py::init<const char*>())
+	//KeyValues3
+	{
+		py::class_<KeyValues3>(m, "KV3")
+			.def(py::init<int, KV3TypeEx_t, KV3SubType_t>())
 		;
+	}
 
-	py::class_<CCSPlayerController, CBasePlayerController>(m, "CCSPlayerController")
-		.def("GetHealth", &CCSPlayerController::GetHealth)
+	//GameEventKeySymbol_t
+	{
+		py::class_<GameEventKeySymbol_t>(m, "GameEventKeySymbol_t")
+			.def(py::init<const char*>())
 		;
-	//py::class_<CCSPlayerController*>(m, "CCSPlayerController")
-	//	.def(py::init<CCSPlayerController*>())
-	//	.def("GetHealth", &CCSPlayerController::GetHealth)
-	//	.def("SetHealth", &CCSPlayerController::SetHealth)
-	//	;
+	}
 
-	py::class_<CEntityInstance>(m, "CEntityInstance")
-		//.def(py::init<>()) // Doesn't have a constructor?
-		.def("GetRefEHandle", &CEntityInstance::GetRefEHandle)
-		.def("GetClassname", &CEntityInstance::GetClassname)
-		.def("GetEntityIndex", &CEntityInstance::GetEntityIndex)
-		//.def("GetCCSPlayerController", &CEntityInstance::GetCCSPlayerController)
+	//IGameEvent player_hurt
+	//userid_pawn, attacker_pawn
+	//GetPawnEHandle on above returns CEntityHandle
+	//CEntityHandle
+	{
+		py::class_<CEntityHandle>(m, "CEntityHandle")
+			.def(py::init<>())
+			.def("Init", &CEntityHandle::Init, "Init(int iEntry, int iSerialNumber) -> void")
+			.def("Term", &CEntityHandle::Term, "Term() -> void")
+			.def("IsValid", &CEntityHandle::IsValid, "IsValid() -> bool")
+			.def("GetEntryIndex", &CEntityHandle::GetEntryIndex, "GetEntryIndex() -> int")
+			.def("GetSerialNumber", &CEntityHandle::GetSerialNumber, "GetSerialNumber() -> int")
+			//.def("ToInt", &CEntityHandle::ToInt, "ToInt() -> int")
+			.def(py::self != py::self, "-> bool")
+			.def(py::self == py::self, "-> bool")
+			.def(py::self < py::self, "-> bool")
+
+			// just use Set
+			//.def("=", &CEntityHandle::operator=, "-> const CEntityhandle&")
+			.def("Set", &CEntityHandle::Set, "Set(const CEntityInstance* pEntity) -> const CEntityHandle&")
+		
+			// Use this to dereference the handle.
+			// Note: this is implemented in game code (ehandle.h)
+			.def("Get", &CEntityHandle::Get, "Get() -> CEntityInstance*")
+			.def("TestSetHealth",
+				[](CEntityHandle& self) 
+				{
+					 CEntityInstance* test = (CEntityInstance*)self.Get();
+					 CBaseEntity* temp = (CBaseEntity*)test;
+					 Message("temp->m_iHealth: %d", temp->m_iHealth);
+					 temp->m_iHealth = 123; //sure wish I were smarter. :/
+				})
 		;
+	}
 
-	py::class_<CEntityIndex>(m, "CEntityIndex")
-		.def(py::init<int>()) 
-		.def("Get",				&CEntityIndex::Get)
-		.def(py::self == py::self)
-		.def(py::self != py::self)
-		;
+	//CEntityInstance
+	{
+		py::class_<CEntityInstance, std::shared_ptr<CEntityInstance>>(m, "CEntityInstance")
+			//.def(py::init<>()) // Doesn't have a constructor?
+			.def("GetRefEHandle", &CEntityInstance::GetRefEHandle, "GetRefEHandle() -> CEntityHandle")
+			.def("GetClassname", &CEntityInstance::GetClassname, "GetClassname() -> const char*")
+			.def("GetEntityIndex", &CEntityInstance::GetEntityIndex, "GetEntityIndex() -> CEntityIndex")
+			.def("GetHealth", 
+				[](CEntityInstance* self) -> int 
+				{
+					CBaseEntity* pawn = (CBaseEntity*)self;
+					if (!pawn)
+						return -999;
+					return (int)pawn->m_iHealth();
+				})
+			;
+	}
 
-	py::class_<CEntityHandle>(m, "CEntityHandle")
-		.def(py::init<>())
-		.def("Init",			&CEntityHandle::Init)
-		.def("Term",			&CEntityHandle::Term)
-		.def("IsValid",			&CEntityHandle::IsValid)
-		.def("GetEntryIndex",	&CEntityHandle::GetEntryIndex)
-		.def("GetSerialNumber", &CEntityHandle::GetSerialNumber)
-		.def(py::self != py::self)
-		.def(py::self == py::self)
-		.def(py::self <  py::self)
-
-		.def("Set", &CEntityHandle::Set)
-		//.def("=", &CEntityHandle::operator=) //just use Set
-
-		// Use this to dereference the handle.
-		// Note: this is implemented in game code (ehandle.h)
-		//.def("Get", &CEntityHandle::Get)
-		;
+	//CEntityIndex
+	{
+		py::class_<CEntityIndex>(m, "CEntityIndex")
+			.def(py::init<int>())
+			.def("Get", &CEntityIndex::Get, "Get() -> int")
+			.def(py::self == py::self, "-> bool")
+			.def(py::self != py::self, "-> bool")
+			;
+	}
 
 	/*
 	* Needed for IGameEvent if you want 
 	* virtual CPlayerSlot GetPlayerSlot( const GameEventKeySymbol_t &keySymbol ) = 0;
 	* virtual void SetPlayer( const GameEventKeySymbol_t &keySymbol, CPlayerSlot value ) = 0;
 	*/
-	//py::class_<CPlayerSlot>(m, "CPlayerSlot")
-	//	.def(py::init<int>()) //constructor
-	//	.def("Get", &CPlayerSlot::Get)        // int () const
-	//	.def(py::self == py::self)
-	//	.def(py::self != py::self)
-	//	; 
-	
+	//CPlayerSlot
+	{
+		py::class_<CPlayerSlot>(m, "CPlayerSlot")
+			.def(py::init<int>())
+			.def("Get", &CPlayerSlot::Get, "Get() -> int")
+			.def(py::self == py::self, "-> bool")
+			.def(py::self != py::self, "-> bool")
 
+			.def("TestGetHealth",
+				[](CPlayerSlot& self) -> int //this is overkill but at least it'll be understood when i come back some day.
+				{ 
+					CBaseEntity* pawn = (CBaseEntity*)CCSPlayerController::FromSlot(self)->GetPawn();
+					if (!pawn)
+						return -999;
 
-	py::class_<IGameEvent>(m, "GameEvent")
-		//*
-		.def("GetName", &IGameEvent::GetName)
-		.def("GetID", &IGameEvent::GetID)
-		.def("GetBool", &IGameEvent::GetBool)
-		.def("GetInt", &IGameEvent::GetInt)
-		.def("GetFloat", &IGameEvent::GetFloat)
-		.def("GetString", &IGameEvent::GetString)
-		.def("GetDataKeys", &IGameEvent::GetDataKeys)
-		
-		//**
-		.def("IsReliable", &IGameEvent::IsReliable)
-		.def("IsLocal", &IGameEvent::IsLocal)
-		.def("IsEmpty", &IGameEvent::IsEmpty)
-		.def("GetUint64", &IGameEvent::GetUint64)
-		.def("GetPtr", &IGameEvent::GetPtr)
-		
-		//***
-		.def("GetEHandle", &IGameEvent::GetEHandle)
-		.def("GetEntity", &IGameEvent::GetEntity)
-		.def("GetEntityIndex", &IGameEvent::GetEntityIndex)
-		.def("GetPlayerSlot", &IGameEvent::GetPlayerSlot) //implement py::class_<CPlayerSlot> first
-		
-		//.def("GetPlayerController", &IGameEvent::GetPlayerController) // returns CEntityInstance, not PC.
-		//.def("GetPlayerPawn", &IGameEvent::GetPlayerPawn) // returns CEntityInstance, not Pawn
-		
+					return (int)pawn->m_iHealth();
+				})
+			.def("TestSetHealth",
+				 [](CPlayerSlot& self, int newHealth) -> bool // this is overkill but at least it'll be understood when i come back some day.
+				 {
+					 CBaseEntity* pawn = (CBaseEntity*)CCSPlayerController::FromSlot(self)->GetPawn();
+					 if (!pawn)
+						 return false;
 
-		//****
-		.def("GetPawnEHandle", &IGameEvent::GetPawnEHandle) //returns CEntityHandle woo.
-		.def("GetPawnEntityIndex", &IGameEvent::GetPawnEntityIndex)
-		.def("SetBool", &IGameEvent::SetBool)
-		.def("SetInt", &IGameEvent::SetInt)
-		
-		//*****
-		.def("SetUint64", &IGameEvent::SetUint64)
-		.def("SetFloat", &IGameEvent::SetFloat)
-		.def("SetString", &IGameEvent::SetString)
-		.def("SetPtr", &IGameEvent::SetPtr)
-		//.def("SetEntity", &IGameEvent::SetEntity) //figure out overloading
-		
-		//******
-		//.def("SetPlayer", &IGameEvent::SetPlayer) //figure out overloading
-		.def("SetPlayerRaw", &IGameEvent::SetPlayerRaw)
-		.def("HasKey", &IGameEvent::HasKey)
-		//.def("unk001", &IGameEvent::unk001) //virtual void* unk001() = 0; //Something script vm related
+					 pawn->m_iHealth = newHealth;
+					 return true;
+				 })
+			.def("TestAddHealth",
+				[](CPlayerSlot& self, int addHealth) -> bool // this is overkill but at least it'll be understood when i come back some day.
+				{
+					CBaseEntity* pawn = (CBaseEntity*)CCSPlayerController::FromSlot(self)->GetPawn();
+					if (!pawn)
+						return false;
+
+					pawn->m_iHealth = pawn->m_iHealth + addHealth;
+					return true;
+				})
+			;
+	}
+
+	//CBasePlayerController
+	{
+		py::class_<CBasePlayerController*>(m, "CBasePlayerController")
+			.def("GetHealth", [](CBasePlayerController* self) { return self->m_iHealth(); }, "player health?")
+			//.def("GetHealth", &CCSPlayerController::GetHealth, "GetHealth() -> int")
 		;
+	}
+
+	//IGameEvent
+	{
+		py::class_<IGameEvent>(m, "GameEvent")
+			// return const char*
+			.def("GetName", &IGameEvent::GetName, "GetName() -> const char*")
+			.def("GetString", &IGameEvent::GetString, "GetString(const GameEventKeySymbol_t, const char* defaultValue = \"\") -> const char*")
+
+			// return int
+			.def("GetID", &IGameEvent::GetID, "GetID() -> int")
+			.def("GetInt", &IGameEvent::GetInt, "GetInt(const GameEventKeySymbol_t, int defaultValue = 0) -> int")
+
+			// return bool
+			.def("GetBool",    &IGameEvent::GetBool,    "GetBool(const GameEventKeySymbol_t, bool defaultValue = false) -> bool")
+			.def("HasKey", &IGameEvent::HasKey, "HasKey(const GameEventKeySymbol_t) -> bool")
+			.def("IsEmpty", &IGameEvent::IsEmpty, "GetEmpty(const GameEventKeySymbol_t) -> bool")
+			.def("IsLocal",    &IGameEvent::IsLocal,    "GetLocal() -> bool")
+			.def("IsReliable", &IGameEvent::IsReliable, "GetReliable() -> bool")
+
+			// return float
+			.def("GetFloat", &IGameEvent::GetFloat, "GetFloat(const GameEventKeySymbol_t, defaultValue = 0.0f) -> float")
+
+			// return KeyValues3*
+			.def("GetDataKeys", &IGameEvent::GetDataKeys, "GetDataKeys() -> KeyValues3*")
+		
+			// void no return
+			.def("SetBool", &IGameEvent::SetBool)
+			.def("SetInt", &IGameEvent::SetInt)
+			.def("SetUint64", &IGameEvent::SetUint64)
+			.def("SetFloat", &IGameEvent::SetFloat)
+			.def("SetString", &IGameEvent::SetString)
+			.def("SetPtr", &IGameEvent::SetPtr)
+			.def("SetPlayerRaw", &IGameEvent::SetPlayerRaw)
+			//.def("SetPlayer", &IGameEvent::SetPlayer) //figure out overloading
+			//.def("SetEntity", &IGameEvent::SetEntity) //figure out overloading
+			//.def("unk001", &IGameEvent::unk001) //virtual void* unk001() = 0; //Something script vm related
+
+			// return CEntityHandle
+			.def("GetEHandle", &IGameEvent::GetEHandle)
+			.def("GetPawnEHandle", &IGameEvent::GetPawnEHandle)
+
+			// return CEntityIndex
+			.def("GetEntityIndex", &IGameEvent::GetEntityIndex)
+			.def("GetPawnEntityIndex", &IGameEvent::GetPawnEntityIndex)
+
+			// return CPlayerSlot
+			.def("GetPlayerSlot", &IGameEvent::GetPlayerSlot)
+
+			// return CEntityInstance*
+			.def("GetEntity", &IGameEvent::GetEntity)
+			.def("GetPlayerController", &IGameEvent::GetPlayerController)
+			.def("GetPlayerPawn", &IGameEvent::GetPlayerPawn)
+			//.def("GetEntity", &IGameEvent::GetEntity, py::return_value_policy::reference_internal)
+			//.def("GetPlayerController", &IGameEvent::GetPlayerController, py::return_value_policy::reference_internal) // returns CEntityInstance*
+			//.def("GetPlayerPawn", &IGameEvent::GetPlayerPawn, py::return_value_policy::reference_internal)			   // returns CEntityInstance*
+		
+
+			// return uint64
+			.def("GetUint64", &IGameEvent::GetUint64)
+
+			// return void*
+			.def("GetPtr", &IGameEvent::GetPtr)
+		;
+	}
 }

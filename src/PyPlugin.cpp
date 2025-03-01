@@ -18,7 +18,7 @@ namespace Source2Py {
 		// Attempt to load Python plugin
 		try {
 			m_PluginObject = py::module_::import(filepath.c_str()).attr(modulename.c_str());
-			Message("the loaded plugin: %s\n", m_PluginObject.str());
+			Message("Trying to load plugin: %s\n", modulename.c_str());
 		}
 		catch (py::error_already_set& e) {
 			Message("modulename: %s\n", modulename.c_str());

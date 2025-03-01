@@ -217,20 +217,22 @@ FAKE_BOOL_CVAR(cs2f_topdefender_enable, "Whether to use TopDefender", g_bEnableT
 				}),
 //mod.gameevents
 "player_hurt":	dict({
-					"userid":			"playercontroller",	IGameEvent::GetPlayerController
-					"userid_pawn":		"strict_ehandle",	IGameEvent::GetPawnEHandle
-					"attacker":			"playercontroller",	IGameEvent::GetPlayerController
-					"attacker_pawn":	"strict_ehandle",	IGameEvent::GetPawnEHandle
-					"health":			"byte",				IGameEvent::GetInt
+					"userid":			"playercontroller",
+					"userid_pawn":		"strict_ehandle",
+					"attacker":			"playercontroller",
+					"attacker_pawn":	"strict_ehandle",
+					"health":			"byte",
 					"armor":			"byte",
 					"weapon":			"string",
-					"dmg_health":		"short",			IGameEvent::GetInt
-					"dmg_armor":		"byte",				IGameEvent::GetInt
+					"dmg_health":		"short",
+					"dmg_armor":		"byte",
 					"hitgroup":			"byte",
 				}),
 
 */
-GAME_EVENT_F(player_hurt)
+
+//remember this is firing at the moment the player is hurt, before the damage is applied.
+GAME_EVENT_F(player_hurt) //new
 {
 	if (g_bEnableZR)
 		ZR_OnPlayerHurt(pEvent);
@@ -248,6 +250,30 @@ GAME_EVENT_F(player_hurt)
 	{
 		plugin.PyPlayerHurt(pEvent);
 	}
+
+	// Ignore Ts/zombies and CTs hurting themselves
+	if (!pAttacker || pAttacker->m_iTeamNum() != CS_TEAM_CT || pAttacker->m_iTeamNum() == pVictim->m_iTeamNum())
+		return;
+
+	ZEPlayer* pPlayer = pAttacker->GetZEPlayer();
+
+	if (!pPlayer)
+		return;
+
+	pPlayer->SetTotalDamage(pPlayer->GetTotalDamage() + pEvent->GetInt("dmg_health"));
+	pPlayer->SetTotalHits(pPlayer->GetTotalHits() + 1);
+}
+
+GAME_EVENT_F(old_player_hurt)
+{
+	if (g_bEnableZR)
+		ZR_OnPlayerHurt(pEvent);
+
+	if (!g_bEnableTopDefender)
+		return;
+
+	CCSPlayerController* pAttacker = (CCSPlayerController*)pEvent->GetPlayerController("attacker");
+	CCSPlayerController* pVictim = (CCSPlayerController*)pEvent->GetPlayerController("userid");
 
 	// Ignore Ts/zombies and CTs hurting themselves
 	if (!pAttacker || pAttacker->m_iTeamNum() != CS_TEAM_CT || pAttacker->m_iTeamNum() == pVictim->m_iTeamNum())
