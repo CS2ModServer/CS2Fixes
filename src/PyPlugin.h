@@ -24,10 +24,10 @@ namespace Source2Py {
 		void PyClientPutInServer(int playerSlot, char const* name, int type, uint64_t xuid);
 		void PyClientSettingsChanged(int playerSlot);
 		void PyOnClientConnected(int playerSlot, const char* name, uint64_t xuid, const char* networkID, const char* address, bool fakePlayer);
-		void PyClientConnect(int playerSlot, const char* name, uint64_t xuid, const char* networkID);
 		//void ClientCommand(int playerSlot, const CCommand& _cmd); (todo: port CCommand)
 		void PyFireGameEvent(IGameEvent* event);
 		void PyPlayerHurt(IGameEvent* event);
+		void PyPlayerDeath(IGameEvent* event);
 
 		bool IsValid() const { return m_Valid; }
 

@@ -21,14 +21,14 @@ namespace Source2Py {
 			Message("Trying to load plugin: %s\n", modulename.c_str());
 		}
 		catch (py::error_already_set& e) {
-			Message("modulename: %s\n", modulename.c_str());
-			Message("Failed to load Python plugin: %s\n%s\n", filepath, std::string(e.what()));
-			//Log::Error("Failed to load Python plugin: " + filepath + "\n" + std::string(e.what()));
+			Message("Failed to load Python modulename: %s\n", modulename.c_str());
+			Message("%s\n", e.what());
 			m_Valid = false;
 		}
 
 		return m_Valid;
 	}
+
 	void PyPlugin::Load() {
 		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnPluginLoad");
 	}
@@ -47,12 +47,21 @@ namespace Source2Py {
 		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnClientActive", playerSlot, loadGame, name, xuid);
 	}
 
-	void PyPlugin::PyClientDisconnect(int playerSlot, int reason, const char* name, uint64_t xuid, const char* networkID)
+	void PyPlugin::PyClientDisconnect(
+		int playerSlot, 
+		int reason, 
+		const char* name, 
+		uint64_t xuid, 
+		const char* networkID)
 	{ 
 		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnClientDisconnect", playerSlot, reason, name, xuid, networkID);
 	}
 
-	void PyPlugin::PyClientPutInServer(int playerSlot, char const* name, int type, uint64_t xuid)
+	void PyPlugin::PyClientPutInServer(
+		int playerSlot, 
+		char const* name, 
+		int type, 
+		uint64_t xuid)
 	{ 
 		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnClientPutInServer", playerSlot, name, type, xuid);
 	}
@@ -62,14 +71,15 @@ namespace Source2Py {
 		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnClientSettingsChanged", playerSlot);
 	}
 
-	void PyPlugin::PyOnClientConnected(int playerSlot, const char* name, uint64_t xuid, const char* networkID, const char* address, bool fakePlayer)
+	void PyPlugin::PyOnClientConnected(
+		int playerSlot, 
+		const char* name, 
+		uint64_t xuid, 
+		const char* networkID, 
+		const char* address, 
+		bool fakePlayer)
 	{ 
 		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnClientConnected", playerSlot, name, xuid, networkID, address, fakePlayer);
-	}
-
-	void PyPlugin::PyClientConnect(int playerSlot, const char* name, uint64_t xuid, const char* networkID)
-	{ 
-		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnClientConnect", playerSlot, name, xuid, networkID);
 	}
 
 	void PyPlugin::PyFireGameEvent(IGameEvent* event)
@@ -82,33 +92,9 @@ namespace Source2Py {
 		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnPlayerHurt", event);
 	}
 
-	/*
-	//core.gameevents
-	"player_hurt":	dict({
-						"userid":			"playercontroller",
-						"userid_pawn":		"strict_ehandle",
-						"attacker":			"playercontroller",
-						"attacker_pawn":	"strict_ehandle",
-						"health":			"byte",
-					}),
-	
-	//game.gameevents
-	//N/A
-
-	//mod.gameevents
-	"player_hurt":	dict({
-						"userid":			"playercontroller",	IGameEvent::GetPlayerController
-						"userid_pawn":		"strict_ehandle",	IGameEvent::GetPawnEHandle
-						"attacker":			"playercontroller",	IGameEvent::GetPlayerController
-						"attacker_pawn":	"strict_ehandle",	IGameEvent::GetPawnEHandle	
-						"health":			"byte",				IGameEvent::GetInt( "
-						"armor":			"byte",
-						"weapon":			"string",
-						"dmg_health":		"short",			IGameEvent::GetInt("dmg_health", default=0)
-						"dmg_armor":		"byte",				IGameEvent::GetInt("
-						"hitgroup":			"byte",
-					}),
-
-	*/
+	void PyPlugin::PyPlayerDeath(IGameEvent* event)
+	{
+		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnPlayerDeath", event);
+	}
 
 }

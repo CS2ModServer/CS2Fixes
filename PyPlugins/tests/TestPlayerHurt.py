@@ -3,7 +3,7 @@ import logging, inspect
 import traceback
 
 #logging.basicConfig(filename='SampleEvents.log', encoding='utf-8', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s', datefmt='%H:%M:%S')
-logging.basicConfig(filename='TestPlayerHurt.log', encoding='utf-8', level=logging.DEBUG, format='[%(asctime)s]%(message)s', datefmt='%H:%M:%S')
+logging.basicConfig(filename='tests/TestPlayerHurt.log', encoding='utf-8', level=logging.DEBUG, format='[%(asctime)s]%(message)s', datefmt='%H:%M:%S')
 log = logging
 
 
@@ -31,15 +31,15 @@ class TestPlayerHurt:
             }),'''
     def OnPluginLoad(self):
         alog("successfully loaded")
-        #Source2Py.ServerPrint("OnLoad - TestPlayerHurt successfully loaded")
         pass 
 
     def _testGetPawnEHandle(self, event):
-        geks = Source2Py.GameEventKeySymbol_t("attacker_pawn")
-        peHandle = event.GetPawnEHandle(geks) #strict_ehandle??
-        alog("peHandle type: " + str(type(peHandle)))
+        #currently no viable route to pawn m_iHealth() that doesn't result in read access violation
+        #geks = Source2Py.GameEventKeySymbol_t("attacker_pawn")
+        #peHandle = event.GetPawnEHandle(geks) #strict_ehandle??
+        #alog("peHandle type: " + str(type(peHandle)))
+        #peHandle.TestSetHealth() #crashes for now.
 
-        ent = peHandle.TestHealthCEH()
         pass
     def _testGetPlayerSlot(self, event):
         #using GetInt("userid") or //"attacker"
@@ -67,21 +67,55 @@ class TestPlayerHurt:
             else:
                 Source2Py.ServerPrint("aslot.TestAddHealth(" + str(heal) + ") -failed-")
         pass
+
+    def _test_ADVAPI_init(self, event, player):
+        geks = Source2Py.GameEventKeySymbol_t(player)
+
+        p_int         = Source2Py.ADVPlayer( event.GetPlayerSlot(geks).Get() )
+        alog(str(player) + "int ADVPlayer.IsValid(): " + str(p_int.IsValid()))
+        alog(str(player) + "int ADVPlayer.test(): " +    str(p_int.test()))
+
+        #p_slot         = Source2Py.ADVPlayer( event.GetPlayerSlot(geks) )
+        #alog(str(player) + "slot ADVPlayer.IsValid(): " + str(p_slot.IsValid()))
+        #alog(str(player) + "slot ADVPlayer.test(): " +    str(p_slot.test()))
+    def _testADVAPI(self, event):
+        alog("_testADVAPI START")
+
+        self._test_ADVAPI_init(self, event, "userid")
+        self._test_ADVAPI_init(self, event, "attacker")
+
+        if (False):
+            #this stuff also works so I'll leave it here
+            geks = Source2Py.GameEventKeySymbol_t("userid")
+            victim = Source2Py.ADVPlayer(event.GetPlayerSlot(geks).Get())
+            if(victim.IsValid()):
+                alog("victim is valid")
+            else:
+                alog("victim is invalid")
+
+            geks = Source2Py.GameEventKeySymbol_t("attacker")
+            attacker = Source2Py.ADVPlayer(event.GetPlayerSlot(geks))
+            if(attacker.IsValid()):
+                alog("attacker is valid")
+            else:
+                alog("attacker is invalid")
+
+            alog("test self.GetHealth() on attacker: " + str(attacker.test()))
+        alog("_testADVAPI END")
+        pass
     def OnPlayerHurt(self, event):
         alog("START")
 
         try:
+            #unsuccessful so far
             #self._testGetPawnEHandle(self, event)
-            self._testGetPlayerSlot(self, event)
+
+            #succeeded, woo! 
+            #self._testGetPlayerSlot(self, event) #"life steal" / "vampirism"
+            self._testADVAPI(self, event)
         except Exception as e:
             alog(e)
             alog(traceback.format_exc())
-
-        #aentity.TestHealth()
-
-        #geks = Source2Py.GameEventKeySymbol_t("userid_pawn")
-        #vpawn = event.GetPlayerPawn(geks)
-        #vpawn.TestHealth()
 
         Source2Py.ServerPrint("OnPlayerHurt - TestPlayerHurt END")
         pass

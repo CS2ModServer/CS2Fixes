@@ -852,6 +852,18 @@ bool CS2Fixes::Hook_ClientConnect(CPlayerSlot slot, const char* pszName, uint64 
 
 void CS2Fixes::Hook_ClientPutInServer(CPlayerSlot slot, char const* pszName, int type, uint64 xuid)
 {
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyClientPutInServer(
+			slot.Get(),
+			pszName,
+			type,
+			// type values could be:
+			// 0 - player
+			// 1 - fake player (bot)
+			// 2 - unknown
+			xuid
+			);
+
 	Message("Hook_ClientPutInServer(%d, \"%s\", %d, %d, %lli)\n", slot, pszName, type, xuid);
 
 	if (!g_playerManager->GetPlayer(slot))
@@ -865,6 +877,16 @@ void CS2Fixes::Hook_ClientPutInServer(CPlayerSlot slot, char const* pszName, int
 
 void CS2Fixes::Hook_ClientDisconnect(CPlayerSlot slot, ENetworkDisconnectionReason reason, const char* pszName, uint64 xuid, const char* pszNetworkID)
 {
+
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyClientDisconnect(
+			slot.Get(),
+			reason,
+			pszName,
+			xuid,
+			pszNetworkID
+			);
+
 	Message("Hook_ClientDisconnect(%d, %d, \"%s\", %lli)\n", slot, reason, pszName, xuid);
 	ZEPlayer* pPlayer = g_playerManager->GetPlayer(slot);
 

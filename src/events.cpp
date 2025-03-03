@@ -234,22 +234,20 @@ FAKE_BOOL_CVAR(cs2f_topdefender_enable, "Whether to use TopDefender", g_bEnableT
 //remember this is firing at the moment the player is hurt, before the damage is applied.
 GAME_EVENT_F(player_hurt) //new
 {
-	if (g_bEnableZR)
-		ZR_OnPlayerHurt(pEvent);
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyPlayerHurt(pEvent);
 
-	//	if (!g_bEnableTopDefender)
-	//		return;
+	//if (g_bEnableZR)
+	//	ZR_OnPlayerHurt(pEvent);
+
+	//if (!g_bEnableTopDefender)
+	//	return;
 
 	CCSPlayerController* pAttacker = (CCSPlayerController*)pEvent->GetPlayerController("attacker");
 	CCSPlayerController* pVictim = (CCSPlayerController*)pEvent->GetPlayerController("userid");
 
 	//pEvent->SetInt("attacker_slot", pAttacker->GetPlayerSlot());
 	//pEvent->SetInt("victim_slot", pVictim->GetPlayerSlot());
-
-	for (auto& plugin : g_CS2Fixes.m_Plugins)
-	{
-		plugin.PyPlayerHurt(pEvent);
-	}
 
 	// Ignore Ts/zombies and CTs hurting themselves
 	if (!pAttacker || pAttacker->m_iTeamNum() != CS_TEAM_CT || pAttacker->m_iTeamNum() == pVictim->m_iTeamNum())
@@ -290,14 +288,17 @@ GAME_EVENT_F(old_player_hurt)
 
 GAME_EVENT_F(player_death)
 {
-	if (g_bEnableZR)
-		ZR_OnPlayerDeath(pEvent);
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyPlayerDeath(pEvent);
 
-	if (g_bEnableEntWatch)
-		EW_PlayerDeath(pEvent);
+	//if (g_bEnableZR)
+	//	ZR_OnPlayerDeath(pEvent);
 
-	if (!g_bEnableTopDefender)
-		return;
+	//if (g_bEnableEntWatch)
+	//	EW_PlayerDeath(pEvent);
+
+	//if (!g_bEnableTopDefender)
+	//	return;
 
 	CCSPlayerController* pAttacker = (CCSPlayerController*)pEvent->GetPlayerController("attacker");
 	CCSPlayerController* pVictim = (CCSPlayerController*)pEvent->GetPlayerController("userid");
@@ -445,4 +446,30 @@ GAME_EVENT_F(cs_win_panel_match)
 
 	if (!g_pMapVoteSystem->IsVoteOngoing())
 		g_pMapVoteSystem->StartVote();
+}
+
+GAME_EVENT_F(player_connect)
+{
+	Message("player_connect\n");
+}
+GAME_EVENT_F(gc_connected)
+{
+	Message("gc_connected\n");
+}
+GAME_EVENT_F(player_connect_full)
+{
+	Message("player_connect_full\n");
+}
+
+GAME_EVENT_F(player_disconnect)
+{
+	Message("player_disconnect\n");
+}
+GAME_EVENT_F(client_disconnect)
+{
+	Message("client_disconnect\n");
+}
+GAME_EVENT_F(cs_game_disconnected)
+{
+	Message("cs_game_disconnected\n");
 }

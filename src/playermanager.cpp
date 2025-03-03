@@ -747,9 +747,10 @@ void CPlayerManager::OnBotConnected(CPlayerSlot slot)
 
 bool CPlayerManager::OnClientConnected(CPlayerSlot slot, uint64 xuid, const char* pszNetworkID)
 {
+
 	Assert(m_vecPlayers[slot.Get()] == nullptr);
 
-	Message("%d connected\n", slot.Get());
+	//Message("%d connected\n", slot.Get());
 
 	ZEPlayer* pPlayer = new ZEPlayer(slot);
 	pPlayer->SetUnauthenticatedSteamId(new CSteamID(xuid));
@@ -767,6 +768,21 @@ bool CPlayerManager::OnClientConnected(CPlayerSlot slot, uint64 xuid, const char
 	}
 
 	pPlayer->SetIpAddress(ip);
+
+	CCSPlayerController* pc = CCSPlayerController::FromSlot(slot);
+	const char* name = "unknown";
+	if (pc)
+		name = pc->GetPlayerName();
+
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyOnClientConnected(
+			slot.Get(), 
+			name, 
+			xuid, 
+			pszNetworkID, 
+			pPlayer->GetIpAddress(), 
+			pPlayer->IsFakeClient()
+			);
 
 	if (!g_pAdminSystem->ApplyInfractions(pPlayer))
 	{
@@ -792,7 +808,7 @@ bool CPlayerManager::OnClientConnected(CPlayerSlot slot, uint64 xuid, const char
 
 void CPlayerManager::OnClientDisconnect(CPlayerSlot slot)
 {
-	Message("%d disconnected\n", slot.Get());
+	//Message("%d disconnected\n", slot.Get());
 
 	g_pUserPreferencesSystem->PushPreferences(slot.Get());
 	g_pUserPreferencesSystem->ClearPreferences(slot.Get());

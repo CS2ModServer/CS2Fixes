@@ -62,12 +62,28 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 			// Note: this is implemented in game code (ehandle.h)
 			.def("Get", &CEntityHandle::Get, "Get() -> CEntityInstance*")
 			.def("TestSetHealth",
-				[](CEntityHandle& self) 
+				[](CEntityHandle* self) 
 				{
-					 CEntityInstance* test = (CEntityInstance*)self.Get();
-					 CBaseEntity* temp = (CBaseEntity*)test;
-					 Message("temp->m_iHealth: %d", temp->m_iHealth);
-					 temp->m_iHealth = 123; //sure wish I were smarter. :/
+					Message("TestSetHealth - 1\n");
+					if (!self->IsValid())
+					{
+						Message("TestSetHealth - IsValid=false\n");
+					}
+					else
+					{
+						CEntityInstance* instance = (CEntityInstance*)self->Get();
+
+						Message("TestSetHealth - 2\n");
+						CCSPlayerPawn* pawn = (CCSPlayerPawn*)instance;
+
+						Message("TestSetHealth - 4\n");
+						int hp = pawn->m_iHealth();
+						 
+						Message("TestSetHealth - 6\n");
+						Message("hp: %d", hp);
+
+						Message("TestSetHealth - 7\n");
+					}
 				})
 		;
 	}
@@ -100,6 +116,23 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 			;
 	}
 
+
+	py::class_<ADVAPI>(m, "ADVPlayer")
+		//-1  = invalid
+		// 0  = server
+		// 0< = player of some kind
+		// todo is zero an acceptable player index?
+		.def(py::init<int>())
+
+		.def("GetHealth", &ADVAPI::GetHealth)
+		.def("AddHealth", &ADVAPI::AddHealth)
+		.def("IsValid", &ADVAPI::IsValid)
+		.def("GetName", &ADVAPI::GetName)
+		.def("test", [](ADVAPI& self) -> int 
+		{
+			return self.GetHealth();
+		})
+		;
 	/*
 	* Needed for IGameEvent if you want 
 	* virtual CPlayerSlot GetPlayerSlot( const GameEventKeySymbol_t &keySymbol ) = 0;
@@ -115,7 +148,7 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 
 			.def("TestGetHealth",
 				[](CPlayerSlot& self) -> int //this is overkill but at least it'll be understood when i come back some day.
-				{ 
+				{	
 					CBaseEntity* pawn = (CBaseEntity*)CCSPlayerController::FromSlot(self)->GetPawn();
 					if (!pawn)
 						return -999;
@@ -148,7 +181,7 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 	//CBasePlayerController
 	{
 		py::class_<CBasePlayerController*>(m, "CBasePlayerController")
-			.def("GetHealth", [](CBasePlayerController* self) { return self->m_iHealth(); }, "player health?")
+			//.def("GetHealth", [](CBasePlayerController* self) { return self->m_iHealth(); }, "player health?")
 			//.def("GetHealth", &CCSPlayerController::GetHealth, "GetHealth() -> int")
 		;
 	}
