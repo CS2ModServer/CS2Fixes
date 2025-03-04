@@ -137,8 +137,30 @@ static bool g_bNoblock = false;
 
 FAKE_BOOL_CVAR(cs2f_noblock_enable, "Whether to use player noblock, which sets debris collision on every player", g_bNoblock, false, false)
 
+GAME_EVENT_F(player_spawned)
+{
+	int index = pEvent->GetPlayerSlot("userid").Get();
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyPlayerSpawned(index);
+	
+	return;
+}
+
+GAME_EVENT_F(player_activate)
+{
+	int index = pEvent->GetPlayerSlot("userid").Get();
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyPlayerActivate(index);
+	
+	return;
+}
+
 GAME_EVENT_F(player_spawn)
 {
+	int index = pEvent->GetPlayerSlot("userid").Get();
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyPlayerSpawn(index);
+
 	CCSPlayerController* pController = (CCSPlayerController*)pEvent->GetPlayerController("userid");
 
 	if (!pController)
@@ -161,6 +183,10 @@ GAME_EVENT_F(player_spawn)
 	// Gotta do this on the next frame...
 	new CTimer(0.0f, false, false, [hController]() {
 		CCSPlayerController* pController = hController.Get();
+
+		int index = pController->GetPlayerSlot();
+		for (auto& plugin : g_CS2Fixes.m_Plugins)
+			plugin.PyPlayerSpawn_post(index);
 
 		if (!pController)
 			return -1.0f;
@@ -200,6 +226,7 @@ GAME_EVENT_F(player_spawn)
 
 		return -1.0f;
 	});
+
 }
 
 static bool g_bEnableTopDefender = false;

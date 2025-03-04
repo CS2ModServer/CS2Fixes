@@ -1,4 +1,6 @@
 import Source2Py
+GameEvent = Source2Py.GameEvent
+
 import logging, inspect
 import traceback
 
@@ -28,12 +30,17 @@ class TestPlayerHurt:
             "dmg_health":       GetInt // health damage dealt with the player_hurt "short",
             "dmg_armor":        GetInt // armor damage dealt with the player_hurt "byte",
             "hitgroup":         GetInt // 1=head, 2=body_upper, 3=body_lower, 4=arm_left, 5=arm_right, 6=leg_left, 7=leg_right
-            }),'''
+            }),
+    '''
+    ''' note that python does not need typing in it's method declarations but here it is being used 
+        as a reminder of the incoming type from CPP.
+    '''
     def OnPluginLoad(self):
         alog("successfully loaded")
         pass 
-
-    def _testGetPawnEHandle(self, event):
+    def _testGetPawnEHandle(self, 
+        event: GameEvent
+        ):
         #currently no viable route to pawn m_iHealth() that doesn't result in read access violation
         #geks = Source2Py.GameEventKeySymbol_t("attacker_pawn")
         #peHandle = event.GetPawnEHandle(geks) #strict_ehandle??
@@ -41,7 +48,9 @@ class TestPlayerHurt:
         #peHandle.TestSetHealth() #crashes for now.
 
         pass
-    def _testGetPlayerSlot(self, event):
+    def _testGetPlayerSlot(self, 
+        event: GameEvent
+        ):
         #using GetInt("userid") or //"attacker"
         geks = Source2Py.GameEventKeySymbol_t("userid")
         vslot = event.GetPlayerSlot(geks) #GetPlayerSlot works because the constructor expects a single integer input and the event data contained in "userid" and "attacker" is the playerindex on the server.
@@ -68,7 +77,10 @@ class TestPlayerHurt:
                 Source2Py.ServerPrint("aslot.TestAddHealth(" + str(heal) + ") -failed-")
         pass
 
-    def _test_ADVAPI_init(self, event, player):
+    def _test_ADVAPI_init(self, 
+        event: GameEvent, 
+        player: str
+        ):
         geks = Source2Py.GameEventKeySymbol_t(player)
 
         p_int         = Source2Py.ADVPlayer( event.GetPlayerSlot(geks).Get() )
@@ -78,7 +90,9 @@ class TestPlayerHurt:
         #p_slot         = Source2Py.ADVPlayer( event.GetPlayerSlot(geks) )
         #alog(str(player) + "slot ADVPlayer.IsValid(): " + str(p_slot.IsValid()))
         #alog(str(player) + "slot ADVPlayer.test(): " +    str(p_slot.test()))
-    def _testADVAPI(self, event):
+    def _testADVAPI(self, 
+        event: GameEvent
+        ):
         alog("_testADVAPI START")
 
         self._test_ADVAPI_init(self, event, "userid")
@@ -103,7 +117,9 @@ class TestPlayerHurt:
             alog("test self.GetHealth() on attacker: " + str(attacker.test()))
         alog("_testADVAPI END")
         pass
-    def OnPlayerHurt(self, event):
+    def OnPlayerHurt(self, 
+        event: GameEvent
+        ):
         alog("START")
 
         try:
@@ -111,7 +127,7 @@ class TestPlayerHurt:
             #self._testGetPawnEHandle(self, event)
 
             #succeeded, woo! 
-            #self._testGetPlayerSlot(self, event) #"life steal" / "vampirism"
+            self._testGetPlayerSlot(self, event) #"life steal" / "vampirism"
             self._testADVAPI(self, event)
         except Exception as e:
             alog(e)

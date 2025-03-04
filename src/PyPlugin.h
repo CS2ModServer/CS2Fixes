@@ -28,6 +28,10 @@ namespace Source2Py {
 		void PyFireGameEvent(IGameEvent* event);
 		void PyPlayerHurt(IGameEvent* event);
 		void PyPlayerDeath(IGameEvent* event);
+		void PyPlayerSpawn(int playerSlot);
+		void PyPlayerSpawn_post(int playerSlot);
+		void PyPlayerSpawned(int playerSlot);
+		void PyPlayerActivate(int playerSlot);
 
 		bool IsValid() const { return m_Valid; }
 

@@ -2,7 +2,8 @@
 
 int ADVAPI::GetHealth()
 {
-	if (pawn)
+	CBaseEntity* pawn = GetPawn();
+	if (pawn && pawn->IsAlive())
 		return pawn->m_iHealth();
 
 	return -999;
@@ -10,28 +11,25 @@ int ADVAPI::GetHealth()
 
 void ADVAPI::AddHealth(int amount)
 {
-	if (pawn)
+	CBaseEntity* pawn = GetPawn();
+	if (pawn && pawn->IsAlive())
+	{
 		pawn->m_iHealth = pawn->m_iHealth() + amount;
+	}
 }
 
 const char* ADVAPI::GetName()
 {
-	if (!ccsPC)
+	CCSPlayerController* pc = GetPC();
+	if (!pc)
 		return nullptr;
 
-	return ccsPC->GetPlayerName();
+	return pc->GetPlayerName();
 }
 
 bool ADVAPI::IsValid()
 {
-	//todo is zero an acceptable player index?
 	if (this->GetIndex() < 0)
-		return false;
-
-	if (!this->GetPC())
-		return false;
-
-	if (!this->GetPawn())
 		return false;
 
 	return true;

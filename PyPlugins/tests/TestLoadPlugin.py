@@ -6,3 +6,7 @@ class TestLoadPlugin:
     def OnPluginLoad(self):
         Source2Py.ServerPrint("[PY] TestLoadPlugin successfully loaded.")
         pass
+    def OnPluginUnload(self):
+        Source2Py.ServerPrint("[PY] TestLoadPlugin successfully unloaded.")
+        pass
+        

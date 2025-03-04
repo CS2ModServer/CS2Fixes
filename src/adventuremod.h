@@ -8,19 +8,23 @@ public:
 	ADVAPI(int _index) :
 		index(_index) 
 	{
-		ccsPC = CCSPlayerController::FromSlot(index);
-		pawn  = (CBaseEntity*)ccsPC->GetPawn();
 	}
 
 private:
 	int index;
-	CCSPlayerController* ccsPC;
-	CBaseEntity* pawn;
 
 public: 
 	int						GetIndex() const	{ return index; }
-	CCSPlayerController*	GetPC()				{ return ccsPC; }
-	CBaseEntity*			GetPawn()			{ return pawn; }
+	int						GetSlot() const		{ return index; }
+	CCSPlayerController*	GetPC() 
+	{ 
+		return (CCSPlayerController*)CCSPlayerController::FromSlot(index); 
+	}
+	CBaseEntity*			GetPawn()			
+	{ 
+		CCSPlayerController* pc = GetPC();
+		return (CBaseEntity*)pc->GetPawn();
+	}
 	
 	int GetHealth();
 	void AddHealth(int amount);

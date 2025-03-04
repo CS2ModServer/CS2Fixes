@@ -118,16 +118,16 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 
 
 	py::class_<ADVAPI>(m, "ADVPlayer")
-		//-1  = invalid
-		// 0  = server
-		// 0< = player of some kind
-		// todo is zero an acceptable player index?
+		//-1    = invalid
+		// 0..n = player of some kind
 		.def(py::init<int>())
 
 		.def("GetHealth", &ADVAPI::GetHealth)
 		.def("AddHealth", &ADVAPI::AddHealth)
 		.def("IsValid", &ADVAPI::IsValid)
 		.def("GetName", &ADVAPI::GetName)
+		.def("GetSlot", &ADVAPI::GetSlot)
+		.def("GetIndex", &ADVAPI::GetIndex)
 		.def("test", [](ADVAPI& self) -> int 
 		{
 			return self.GetHealth();
