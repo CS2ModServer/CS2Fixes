@@ -25,7 +25,7 @@ class TestPlayerInputs:
         bFirstTick: bool,
         bLastTick: bool
         ):
-
+        #we will be only reporting button presses on frames where the state changed.
         pass
     def OnPlayer______(self, 
         _slot: int
@@ -34,7 +34,12 @@ class TestPlayerInputs:
         try:
             alog("_slot: " + str(_slot))
             player = ADVPlayer(_slot)
-            alog(player.GetName() + " is airborn!")
+            if (player.IsValid()):
+                name = player.GetName()
+                if (name):
+                    alog(name + " is airborn!")
+                else:
+                    alog("name was invalid")
         except Exception as e:
             alog(e)
             alog(traceback.format_exc())

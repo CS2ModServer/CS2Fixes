@@ -32,6 +32,14 @@ bool ADVAPI::IsValid()
 	if (this->GetIndex() < 0)
 		return false;
 
+	CCSPlayerController* pc = this->GetPC();
+	if (!pc)
+		return false;
+
+	CBaseEntity* pawn = pc->GetPawn();
+	if (!pawn)
+		return false;
+
 	return true;
 }
 
@@ -51,7 +59,7 @@ bool ADVAPI::IsOnLadder()
 	return false;
 }
 
-uint64* ADVAPI::GetButtons()
+uint64* ADVAPI::GetButtonStates()
 {
 	CBaseEntity* pawn = (CBaseEntity*)GetPawn();
 	CCSPlayerPawnBase* base = (CCSPlayerPawnBase*)pawn;

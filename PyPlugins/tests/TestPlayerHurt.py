@@ -111,10 +111,10 @@ class TestPlayerHurt:
             attacker = Source2Py.ADVPlayer(event.GetPlayerSlot(geks))
             if(attacker.IsValid()):
                 alog("attacker is valid")
+                alog("test self.GetHealth() on attacker: " + str(attacker.test()))
             else:
                 alog("attacker is invalid")
 
-            alog("test self.GetHealth() on attacker: " + str(attacker.test()))
         alog("_testADVAPI END")
         pass
     def OnPlayerHurt(self, 

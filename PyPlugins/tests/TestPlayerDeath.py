@@ -130,26 +130,29 @@ class TestPlayerDeath:
             alog(str(k) + "   |   " + str(v))
 
         victim = Source2Py.ADVPlayer(ev['userid'])
-        attacker = Source2Py.ADVPlayer(ev['attacker'])
-        assister = Source2Py.ADVPlayer(ev['assister'])
         
-        killstring = victim.GetName() + " was killed by "
+        if(victim.IsValid()):
+            killstring = victim.GetName() + " was killed by "
 
-        if (attacker.IsValid()):
-            killstring = killstring + attacker.GetName()
-            heal = 15
-            current_hp = attacker.GetHealth()
-            alog(str(attacker.GetName() + " healed by " + str(heal) + " from " + str(current_hp) + " to " + str(current_hp+heal)))
-            attacker.AddHealth(15)
+            attacker = Source2Py.ADVPlayer(ev['attacker'])
+            if (attacker.IsValid()):
+                killstring = killstring + attacker.GetName()
+                heal = 15
+                current_hp = attacker.GetHealth()
+                alog(str(attacker.GetName() + " healed by " + str(heal) + " from " + str(current_hp) + " to " + str(current_hp+heal)))
+                attacker.AddHealth(15)
 
-        if (assister.IsValid()):
-            killstring = killstring + ", and " + assister.GetName()
-            heal = 5
-            current_hp = assister.GetHealth()
-            alog(str(assister.GetName() + " healed by " + str(heal) + " from " + str(current_hp) + " to " + str(current_hp+heal)))
-            assister.AddHealth(5)
+            assister = Source2Py.ADVPlayer(ev['assister'])
+            if (assister.IsValid()):
+                name = assister.GetName()
+                if (name):
+                    killstring = killstring + ", and " + assister.GetName()
+                heal = 5
+                current_hp = assister.GetHealth()
+                alog(str(assister.GetName() + " healed by " + str(heal) + " from " + str(current_hp) + " to " + str(current_hp+heal)))
+                assister.AddHealth(5)
 
-        alog(killstring)
+            alog(killstring)
         pass
     def OnPlayerDeath(self, event):
         alog("START")

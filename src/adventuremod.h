@@ -35,7 +35,7 @@ public:
 	bool IsValid();
 	bool IsOnGround();
 	bool IsOnLadder();
-	uint64* GetButtons();
+	uint64* GetButtonStates();
 
 
 

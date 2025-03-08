@@ -36,8 +36,9 @@ class TestPlayerSpawn:
         _slot: int
         ):
         alog("START")
-        bonus_hp = randint(10, 50)
         player = ADVPlayer(_slot)
-        player.AddHealth(bonus_hp)
+        if (player.IsValid()):
+            bonus_hp = randint(10, 50)
+            player.AddHealth(bonus_hp)
         alog("END")
         pass

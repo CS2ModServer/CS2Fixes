@@ -33,32 +33,33 @@ class TestPlayerJump:
             #note that just being in this list does not mean your actually in the air
             #just that airborn/ladder/grounded state is being tracked.
             player = ADVPlayer(_slot)
-            grounded = player.IsOnGround()
-            if not grounded:
-                if player.IsOnLadder(): 
-                    grounded = 1 #ladders count as ground too.
-                '''
-                if player.inWater():
-                    figure out how to figure out.
-                    grounded = 1
-                '''
+            if (player.IsValid()):
+                grounded = player.IsOnGround()
+                if not grounded:
+                    if player.IsOnLadder(): 
+                        grounded = 1 #ladders count as ground too.
+                    '''
+                    if player.inWater():
+                        figure out how to figure out.
+                        grounded = 1
+                    '''
 
-            if self.last_grounded.get(_slot, 1) != grounded:
-                #if the last grounded state does not match what you are now, like
-                #if you fall off a box, ladder, or roof... or jump :)
-                self.last_grounded[_slot] = grounded
-                if grounded:
-                    ev = Source2Py.CreateFakeEvent("player_land", True)
-                    if (ev):
-                        geks = Source2Py.GameEventKeySymbol_t("userid")
-                        ev.SetInt(geks, _slot)
-                        Source2Py.FireFakeEvent(ev, True)
-                else:
-                    ev = Source2Py.CreateFakeEvent("player_airborn", True)
-                    if (ev):
-                        geks = Source2Py.GameEventKeySymbol_t("userid")
-                        ev.SetInt(geks, _slot)
-                        Source2Py.FireFakeEvent(ev, True)
+                if self.last_grounded.get(_slot, 1) != grounded:
+                    #if the last grounded state does not match what you are now, like
+                    #if you fall off a box, ladder, or roof... or jump :)
+                    self.last_grounded[_slot] = grounded
+                    if grounded:
+                        ev = Source2Py.CreateFakeEvent("player_land", True)
+                        if (ev):
+                            geks = Source2Py.GameEventKeySymbol_t("userid")
+                            ev.SetInt(geks, _slot)
+                            Source2Py.FireFakeEvent(ev, True)
+                    else:
+                        ev = Source2Py.CreateFakeEvent("player_airborn", True)
+                        if (ev):
+                            geks = Source2Py.GameEventKeySymbol_t("userid")
+                            ev.SetInt(geks, _slot)
+                            Source2Py.FireFakeEvent(ev, True)
 
         pass
     def OnPlayerJump(self, 
@@ -81,11 +82,12 @@ class TestPlayerJump:
         try:
             self.players_in_air[_slot] = True
             player = ADVPlayer(_slot)
-            name = player.GetName()
-            if (name):
-                alog(name + " jumped!")
-            else:
-                alog("player.GetName() returned nullptr (jumped!)")
+            if (player.IsValid()):
+                name = player.GetName()
+                if (name):
+                    alog(name + " jumped!")
+                else:
+                    alog("player.GetName() returned nullptr (jumped!)")
         except Exception as e:
             alog(e)
             alog(traceback.format_exc())
@@ -121,12 +123,12 @@ class TestPlayerJump:
         try:
             alog("_slot: " + str(_slot))
             player = ADVPlayer(_slot)
-            name = player.GetName()
-            if (name):
-                alog(name + " landed!")
-            else:
-                alog("player.GetName() returned nullptr (landed!)")
-
+            if (player.IsValid()):
+                name = player.GetName()
+                if (name):
+                    alog(name + " landed!")
+                else:
+                    alog("player.GetName() returned nullptr (landed!)")
         except Exception as e:
             alog(e)
             alog(traceback.format_exc())
@@ -142,11 +144,12 @@ class TestPlayerJump:
         try:
             alog("_slot: " + str(_slot))
             player = ADVPlayer(_slot)
-            name = player.GetName()
-            if (name):
-                alog(name + " is airborn!")
-            else:
-                alog("player.GetName() returned nullptr (is airborn!)")
+            if (player.IsValid()):
+                name = player.GetName()
+                if (name):
+                    alog(name + " is airborn!")
+                else:
+                    alog("player.GetName() returned nullptr (is airborn!)")
         except Exception as e:
             alog(e)
             alog(traceback.format_exc())
