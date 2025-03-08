@@ -79,9 +79,33 @@ class TestPlayerJump:
 
         alog("START")
         try:
-            player = ADVPlayer(_slot)
             self.players_in_air[_slot] = True
-            alog(player.GetName() + " jumped!")
+            player = ADVPlayer(_slot)
+            name = player.GetName()
+            if (name):
+                alog(name + " jumped!")
+            else:
+                alog("player.GetName() returned nullptr (jumped!)")
+        except Exception as e:
+            alog(e)
+            alog(traceback.format_exc())
+        alog("END")
+        pass
+    def OnClientDisconnect(self, 
+        _slot: int, 
+        _reason: int, 
+        _name: str, 
+        _xuid: int, 
+        _networkID: str):
+        alog("START")
+        try:
+            alog("slot: " + str(_slot))
+            alog("reason: " + str(_reason))
+            alog(_name + " disconnected")
+            alog("xuid: " + str(_xuid))
+            alog("networkID: " + str(_networkID))
+            self.last_grounded.pop(_slot, None)
+            self.players_in_air.pop(_slot, None)
         except Exception as e:
             alog(e)
             alog(traceback.format_exc())
@@ -97,7 +121,12 @@ class TestPlayerJump:
         try:
             alog("_slot: " + str(_slot))
             player = ADVPlayer(_slot)
-            alog(player.GetName() + " landed!")
+            name = player.GetName()
+            if (name):
+                alog(name + " landed!")
+            else:
+                alog("player.GetName() returned nullptr (landed!)")
+
         except Exception as e:
             alog(e)
             alog(traceback.format_exc())
@@ -113,7 +142,11 @@ class TestPlayerJump:
         try:
             alog("_slot: " + str(_slot))
             player = ADVPlayer(_slot)
-            alog(player.GetName() + " is airborn!")
+            name = player.GetName()
+            if (name):
+                alog(name + " is airborn!")
+            else:
+                alog("player.GetName() returned nullptr (is airborn!)")
         except Exception as e:
             alog(e)
             alog(traceback.format_exc())

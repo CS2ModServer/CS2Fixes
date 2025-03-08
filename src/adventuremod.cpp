@@ -38,11 +38,26 @@ bool ADVAPI::IsValid()
 bool ADVAPI::IsOnGround()
 {
 	CBaseEntity* ent = (CBaseEntity*)GetPawn();
-	return ent->m_fFlags() & FL_ONGROUND;
+	if (ent)
+		return ent->m_fFlags() & FL_ONGROUND;
+	return false;
 }
 
 bool ADVAPI::IsOnLadder()
 {
 	CBaseEntity* ent = (CBaseEntity*)GetPawn();
-	return ent->m_MoveType() & MOVETYPE_LADDER;
+	if (ent)
+		return ent->m_MoveType() & MOVETYPE_LADDER;
+	return false;
+}
+
+uint64* ADVAPI::GetButtons()
+{
+	CBaseEntity* pawn = (CBaseEntity*)GetPawn();
+	CCSPlayerPawnBase* base = (CCSPlayerPawnBase*)pawn;
+	CPlayer_MovementServices* ms = base->m_pMovementServices();
+	// m_pButtonStates[0] is the mask of currently pressed buttons
+	// m_pButtonStates[1] is the mask of buttons that changed in the current frame
+	uint64* temp = ms->m_nButtons().m_pButtonStates();
+	return temp;
 }

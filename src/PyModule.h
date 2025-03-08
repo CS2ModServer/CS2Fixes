@@ -134,6 +134,7 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 			.def("GetIndex", &ADVAPI::GetIndex)
 			.def("IsOnGround", &ADVAPI::IsOnGround)
 			.def("IsOnLadder", &ADVAPI::IsOnLadder)
+			.def("GetButtons", &ADVAPI::GetButtons)
 			.def("test", 
 				[](ADVAPI& self) -> int 
 				//Tristen, don't delete this, you'll eventually forget again.
@@ -142,6 +143,8 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 				})
 			;
 	}
+
+
 	m.def("CreateFakeEvent", 
 		[](const char* name, bool bForce) -> IGameEvent*
 		{

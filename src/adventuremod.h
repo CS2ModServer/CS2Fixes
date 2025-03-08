@@ -23,7 +23,10 @@ public:
 	CBaseEntity*			GetPawn()			
 	{ 
 		CCSPlayerController* pc = GetPC();
-		return (CBaseEntity*)pc->GetPawn();
+		if (pc)
+			return (CBaseEntity*)pc->GetPawn();
+		else
+			return nullptr;
 	}
 	
 	int GetHealth();
@@ -32,7 +35,7 @@ public:
 	bool IsValid();
 	bool IsOnGround();
 	bool IsOnLadder();
-
+	uint64* GetButtons();
 
 
 
