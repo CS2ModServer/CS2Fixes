@@ -57,6 +57,9 @@ void RegisterEventListeners()
 
 	if (bRegistered || !g_gameEventManager)
 		return;
+	
+	//E:/CS2Server/cs2/game/csgo/bin/win64/~ is where were at normally.
+	g_gameEventManager->LoadEventsFromFile("../../csgo/addons/CS2Fixes/resource/adventure.res", false);
 
 	FOR_EACH_VEC(g_vecEventListeners, i)
 	{
@@ -162,7 +165,7 @@ GAME_EVENT_F(player_spawn)
 		plugin.PyPlayerSpawn(index);
 
 	CCSPlayerController* pController = (CCSPlayerController*)pEvent->GetPlayerController("userid");
-
+	
 	if (!pController)
 		return;
 
@@ -272,7 +275,7 @@ GAME_EVENT_F(player_hurt) //new
 
 	CCSPlayerController* pAttacker = (CCSPlayerController*)pEvent->GetPlayerController("attacker");
 	CCSPlayerController* pVictim = (CCSPlayerController*)pEvent->GetPlayerController("userid");
-
+	
 	//pEvent->SetInt("attacker_slot", pAttacker->GetPlayerSlot());
 	//pEvent->SetInt("victim_slot", pVictim->GetPlayerSlot());
 
@@ -340,6 +343,49 @@ GAME_EVENT_F(player_death)
 		return;
 
 	pPlayer->SetTotalKills(pPlayer->GetTotalKills() + 1);
+	
+}
+
+GAME_EVENT_F(player_jump)
+{
+    /*	"player_jump":dict({
+			"userid":"playercontroller",
+        }),	*/
+	int index = pEvent->GetPlayerSlot("userid").Get();
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyPlayerJump(index);
+
+	CCSPlayerController* pController = CCSPlayerController::FromSlot(index);
+
+	/* //uncomment if you need to find any of these things again because you forgot!
+	//you broke it here likely tristen
+	CBaseEntity* pPawn = (CBaseEntity*)pController->GetPawn();
+	CCSPlayerPawnBase* ppb = (CCSPlayerPawnBase*)pPawn;
+	CCSPlayer_ItemServices* pItemServices = static_cast<CCSPlayer_ItemServices*>(ppb->m_pItemServices());
+	Message("has defuser: %d\n", pItemServices->m_bHasDefuser()); // works
+	Message("has helmet: %d\n", pItemServices->m_bHasHelmet()); //works
+	Message("has armor: %d\n", pItemServices->m_bHasHeavyArmor()); //works
+
+	CCSPlayerPawn* ccsPB = (CCSPlayerPawn*)pController->GetPawn();
+	Message("has m_bIsDefusing: %d\n", ccsPB->m_bIsDefusing()); //not tested
+	Message("has m_nWhichBombZone: %d\n", ccsPB->m_nWhichBombZone()); //works  A=1, B=2
+	Message("has m_bInBuyZone: %d\n", ccsPB->m_bInBuyZone()); //works, "in buy zone" + "buy time not expired" = true, else false
+	Message("has m_bInBombZone: %d\n", ccsPB->m_bInBombZone()); //works, "in bomb zone" + "with bomb" = true, else false.
+	*/
+}
+
+GAME_EVENT_F(player_land)
+{
+	int index = pEvent->GetPlayerSlot("userid").Get();
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyPlayerLand(index);
+}
+
+GAME_EVENT_F(player_airborn)
+{
+	int index = pEvent->GetPlayerSlot("userid").Get();
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyPlayerAirborn(index);
 }
 
 bool g_bFullAllTalk = false;

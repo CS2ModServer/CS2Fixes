@@ -34,3 +34,15 @@ bool ADVAPI::IsValid()
 
 	return true;
 }
+
+bool ADVAPI::IsOnGround()
+{
+	CBaseEntity* ent = (CBaseEntity*)GetPawn();
+	return ent->m_fFlags() & FL_ONGROUND;
+}
+
+bool ADVAPI::IsOnLadder()
+{
+	CBaseEntity* ent = (CBaseEntity*)GetPawn();
+	return ent->m_MoveType() & MOVETYPE_LADDER;
+}

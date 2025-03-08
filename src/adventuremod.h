@@ -30,5 +30,10 @@ public:
 	void AddHealth(int amount);
 	const char* GetName();
 	bool IsValid();
+	bool IsOnGround();
+	bool IsOnLadder();
+
+
+
 
 };

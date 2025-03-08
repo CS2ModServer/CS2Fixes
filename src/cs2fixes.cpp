@@ -291,21 +291,25 @@ bool CS2Fixes::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, bool
 	if (!InitGameSystems())
 		bRequiredInitLoaded = false;
 
-	fs::path exePath = fs::current_path();
-	fs::current_path(GetPluginBaseDirectory());
-	if (!Source2Py::PyRuntime::Init())
-		bRequiredInitLoaded = false;
-
-	if (!LoadPythonPlugins())
+	//this' all i've added here.
 	{
-		Source2Py::PyRuntime::Close();
-		bRequiredInitLoaded = false;
+		fs::path exePath = fs::current_path();
+		fs::current_path(GetPluginBaseDirectory());
+
+		if (!Source2Py::PyRuntime::Init())
+			bRequiredInitLoaded = false;
+
+		if (!LoadPythonPlugins())
+		{
+			Source2Py::PyRuntime::Close();
+			bRequiredInitLoaded = false;
+		}
+
+		// and set the cwd back where the game expects it
+		fs::current_path(exePath);
 	}
 
-	// ...and set the cwd back where the game expects it
-	fs::current_path(exePath);
-
-const auto pCGamePlayerEquipVTable = modules::server->FindVirtualTable("CGamePlayerEquip");
+	const auto pCGamePlayerEquipVTable = modules::server->FindVirtualTable("CGamePlayerEquip");
 	if (!pCGamePlayerEquipVTable)
 	{
 		snprintf(error, maxlen, "Failed to find CGamePlayerEquip vtable\n");
@@ -949,6 +953,12 @@ void CS2Fixes::Hook_GameFramePost(bool simulating, bool bFirstTick, bool bLastTi
 		CZRRegenTimer::Tick();
 
 	EntityHandler_OnGameFramePost(simulating, GetGlobals()->tickcount);
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyGameFrame(
+			simulating,
+			bFirstTick,
+			bLastTick
+			);
 }
 
 extern bool g_bFlashLightTransmitOthers;

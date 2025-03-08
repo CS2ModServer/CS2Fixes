@@ -117,4 +117,19 @@ namespace Source2Py {
 		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnPlayerActivate", playerSlot);
 	}
 
+	void PyPlugin::PyPlayerJump(int playerSlot)
+	{
+		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnPlayerJump", playerSlot);
+	}
+
+	void PyPlugin::PyPlayerLand(int playerSlot)
+	{
+		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnPlayerLand", playerSlot);
+	}
+	
+	void PyPlugin::PyPlayerAirborn(int playerSlot)
+	{
+		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnPlayerAirborn", playerSlot);
+	}
+
 } // namespace Source2Py

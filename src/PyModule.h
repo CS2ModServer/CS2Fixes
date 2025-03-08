@@ -10,6 +10,9 @@
 
 class CPlayerSlot;
 #include <igameevents.h>
+extern IGameEventManager2* g_gameEventManager;
+#include "eventlistener.h"
+extern CUtlVector<CGameEventListener*> g_vecEventListeners;
 
 PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 	using namespace Source2Py;
@@ -21,7 +24,6 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 	m.def("ClientCommand", &PyAPI::ClientCommand);
 
 	m.def("SetTimescale", &PyAPI::SetTimescale);
-
 
 	//KeyValues3
 	{
@@ -116,23 +118,47 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 			;
 	}
 
+	//ADVAPI
+	{
+		py::class_<ADVAPI>(m, "ADVPlayer")
+			//-1    = invalid
+			// 0..n = player of some kind
+			.def(py::init<int>())
 
-	py::class_<ADVAPI>(m, "ADVPlayer")
-		//-1    = invalid
-		// 0..n = player of some kind
-		.def(py::init<int>())
-
-		.def("GetHealth", &ADVAPI::GetHealth)
-		.def("AddHealth", &ADVAPI::AddHealth)
-		.def("IsValid", &ADVAPI::IsValid)
-		.def("GetName", &ADVAPI::GetName)
-		.def("GetSlot", &ADVAPI::GetSlot)
-		.def("GetIndex", &ADVAPI::GetIndex)
-		.def("test", [](ADVAPI& self) -> int 
+			.def("GetHealth", &ADVAPI::GetHealth)
+			.def("AddHealth", &ADVAPI::AddHealth)
+			.def("IsValid", &ADVAPI::IsValid)
+			.def("IsOnGround", &ADVAPI::IsOnGround)
+			.def("GetName", &ADVAPI::GetName)
+			.def("GetSlot", &ADVAPI::GetSlot)
+			.def("GetIndex", &ADVAPI::GetIndex)
+			.def("IsOnGround", &ADVAPI::IsOnGround)
+			.def("IsOnLadder", &ADVAPI::IsOnLadder)
+			.def("test", 
+				[](ADVAPI& self) -> int 
+				//Tristen, don't delete this, you'll eventually forget again.
+				{
+					return self.GetHealth();
+				})
+			;
+	}
+	m.def("CreateFakeEvent", 
+		[](const char* name, bool bForce) -> IGameEvent*
 		{
-			return self.GetHealth();
-		})
+			
+			IGameEvent* event = g_gameEventManager->CreateEvent(name,true);
+			return event;
+		},
+		py::return_value_policy::reference_internal)
 		;
+	m.def("FireFakeEvent", 
+		[](IGameEvent* event, bool bDontBroadcast) -> bool 
+		{
+			g_gameEventManager->FireEvent(event, bDontBroadcast);
+			return true;
+		});
+
+
 	/*
 	* Needed for IGameEvent if you want 
 	* virtual CPlayerSlot GetPlayerSlot( const GameEventKeySymbol_t &keySymbol ) = 0;

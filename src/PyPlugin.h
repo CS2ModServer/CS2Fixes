@@ -32,6 +32,9 @@ namespace Source2Py {
 		void PyPlayerSpawn_post(int playerSlot);
 		void PyPlayerSpawned(int playerSlot);
 		void PyPlayerActivate(int playerSlot);
+		void PyPlayerJump(int playerSlot);
+		void PyPlayerLand(int playerSlot);
+		void PyPlayerAirborn(int playerSlot);
 
 		bool IsValid() const { return m_Valid; }
 
