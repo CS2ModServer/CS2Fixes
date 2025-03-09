@@ -442,7 +442,10 @@ bool CS2Fixes::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, bool
 	});
 
 	// run our cfg
-	g_pEngineServer2->ServerCommand("exec cs2fixes/cs2fixes");
+	// remember for later, exec looks in ~/csgo/cfg/ for stuff.
+	// ~/csgo/cfg/cs2fixes/cs2fixes.cfg    <-- move to here
+	// ~/csgo/addons/cs2fixes/cfg/cs2fixes/cs2fixes.cfg     <-- from here
+	g_pEngineServer2->ServerCommand("exec CS2Fixes/cs2fixes");
 
 	srand(time(0));
 
@@ -820,6 +823,9 @@ void CS2Fixes::Hook_ClientCommand(CPlayerSlot slot, const CCommand& args)
 		ZR_Hook_ClientCommand_JoinTeam(slot, args);
 		RETURN_META(MRES_SUPERCEDE);
 	}
+
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyClientCommand(slot.Get(), args.GetCommandString());
 }
 
 void CS2Fixes::Hook_ClientSettingsChanged(CPlayerSlot slot)
@@ -1213,6 +1219,8 @@ void CS2Fixes::OnLevelInit(char const* pMapName,
 	g_iRoundNum = 0;
 
 	// run our cfg
+	//remember for later, this ~/game/csgo/cfg/cs2fixes/cs2fixes.cfg being executed.
+	//you'll need to move it from ~/addons/cs2fixes/cfg/cs2fixes/cs2fixes.cfg if you want it found.
 	g_pEngineServer2->ServerCommand("exec cs2fixes/cs2fixes");
 
 	// Run map cfg (if present)

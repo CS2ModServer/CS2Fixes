@@ -775,7 +775,7 @@ bool CPlayerManager::OnClientConnected(CPlayerSlot slot, uint64 xuid, const char
 		name = pc->GetPlayerName();
 
 	for (auto& plugin : g_CS2Fixes.m_Plugins)
-		plugin.PyOnClientConnected(
+		plugin.PyClientConnected(
 			slot.Get(), 
 			name, 
 			xuid, 

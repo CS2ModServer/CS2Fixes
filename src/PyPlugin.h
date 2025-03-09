@@ -1,6 +1,7 @@
 #pragma once
 
 #include "PyRuntime.h"
+#include "convar.h"
 
 #include <igameevents.h>
 
@@ -18,23 +19,31 @@ namespace Source2Py {
 		void Unload();
 
 		// Python plugin hooks
-		void PyGameFrame(bool simulating, bool firstTick, bool lastTick);
 		void PyClientActive(int playerSlot, bool loadGame, const char* name, uint64_t xuid);
 		void PyClientDisconnect(int playerSlot, int reason, const char* name, uint64_t xuid, const char* networkID);
+		void PyClientConnected(int playerSlot, const char* name, uint64_t xuid, const char* networkID, const char* address, bool fakePlayer);
 		void PyClientPutInServer(int playerSlot, char const* name, int type, uint64_t xuid);
 		void PyClientSettingsChanged(int playerSlot);
-		void PyOnClientConnected(int playerSlot, const char* name, uint64_t xuid, const char* networkID, const char* address, bool fakePlayer);
-		//void ClientCommand(int playerSlot, const CCommand& _cmd); (todo: port CCommand)
 		void PyFireGameEvent(IGameEvent* event);
+		void PyGameFrame(bool simulating, bool firstTick, bool lastTick);
+		void PyPlayerActivate(int playerSlot);
+		
+		void PyClientCommand(int playerSlot, const char* command);
+		void PyClientAbility1(int playerSlot);
+		void PyClientAbility2(int playerSlot);
+		void PyClientUltimate(int playerSlot);
+		
 		void PyPlayerHurt(IGameEvent* event);
 		void PyPlayerDeath(IGameEvent* event);
+		
+		void PyPlayerJump(int playerSlot);
+		void PyPlayerAirborn(int playerSlot);
+		void PyPlayerLand(int playerSlot);
+
 		void PyPlayerSpawn(int playerSlot);
 		void PyPlayerSpawn_post(int playerSlot);
 		void PyPlayerSpawned(int playerSlot);
-		void PyPlayerActivate(int playerSlot);
-		void PyPlayerJump(int playerSlot);
-		void PyPlayerLand(int playerSlot);
-		void PyPlayerAirborn(int playerSlot);
+
 
 		bool IsValid() const { return m_Valid; }
 

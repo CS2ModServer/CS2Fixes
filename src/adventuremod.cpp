@@ -1,5 +1,8 @@
 #include "adventuremod.h"
 
+#include "commands.h"
+#include "cs2fixes.h"
+
 int ADVAPI::GetHealth()
 {
 	CBaseEntity* pawn = GetPawn();
@@ -66,6 +69,28 @@ uint64* ADVAPI::GetButtonStates()
 	CPlayer_MovementServices* ms = base->m_pMovementServices();
 	// m_pButtonStates[0] is the mask of currently pressed buttons
 	// m_pButtonStates[1] is the mask of buttons that changed in the current frame
-	uint64* temp = ms->m_nButtons().m_pButtonStates();
-	return temp;
+	
+	//uint64* temp = ms->m_nButtons().m_pButtonStates();
+	//return temp;
+	
+	return ms->m_nButtons().m_pButtonStates();
+}
+
+CON_COMMAND_F(ability1, "Technique bound to ability1", FCVAR_NONE)
+{
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyClientAbility1(context.GetPlayerSlot().Get());
+	return;
+}
+CON_COMMAND_F(ability2, "Technique bound to ability2", FCVAR_NONE)
+{
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyClientAbility2(context.GetPlayerSlot().Get());
+	return;
+}
+CON_COMMAND_F(ultimate, "Technique bound to ultimate", FCVAR_NONE)
+{
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyClientUltimate(context.GetPlayerSlot().Get());
+	return;
 }

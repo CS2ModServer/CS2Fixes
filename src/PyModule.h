@@ -118,6 +118,27 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 			;
 	}
 
+	/*
+	//CCommand
+	{
+		//went another route and not using.
+		py::class_<CCommand>(m, "CCommand")
+			.def("GetArgCount", &CCommand::ArgC, "() -> int")
+			.def("GetMaxCommandLength", &CCommand::MaxCommandLength, "() -> int")
+			.def("GetArgS", &CCommand::ArgS, "() -> const char*")
+			.def("GetCommandString", &CCommand::GetCommandString, "() -> const char*")
+
+			.def("GetArg", &CCommand::Arg, "(int index) -> const char*")
+
+			.def("FindArg", &CCommand::FindArg, "(const char* pName) -> int")
+			.def("FindArgInt", &CCommand::FindArgInt, "(const char* pName, int nDefaultVal) -> int")
+
+			.def("__getitem__", &CCommand::operator[])
+			//.def("GetArgV", &CCommand::ArgV) //idk what this one is atm.
+			;
+	}
+	*/
+
 	//ADVAPI
 	{
 		py::class_<ADVAPI>(m, "ADVPlayer")
@@ -134,7 +155,7 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 			.def("GetIndex", &ADVAPI::GetIndex)
 			.def("IsOnGround", &ADVAPI::IsOnGround)
 			.def("IsOnLadder", &ADVAPI::IsOnLadder)
-			.def("GetButtons", &ADVAPI::GetButtonStates)
+			.def("GetButtonStates", &ADVAPI::GetButtonStates)
 			.def("test", 
 				[](ADVAPI& self) -> int 
 				//Tristen, don't delete this, you'll eventually forget again.

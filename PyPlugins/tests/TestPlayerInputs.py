@@ -19,52 +19,95 @@ class TestPlayerInputs:
     def OnPluginLoad(self):
         alog("")
         pass
-
-    def OnGameFrame(self, 
-        simulating: bool,
-        bFirstTick: bool,
-        bLastTick: bool
-        ):
-        #we will be only reporting button presses on frames where the state changed.
-        pass
-    def OnPlayer______(self, 
-        _slot: int
-        ):
-        alog("START")
+    def _checkButtonStates(self, _slot):
         try:
             alog("_slot: " + str(_slot))
             player = ADVPlayer(_slot)
             if (player.IsValid()):
-                name = player.GetName()
-                if (name):
-                    alog(name + " is airborn!")
-                else:
-                    alog("name was invalid")
+                bstates = player.GetButtonStates()
+
+                #incomplete list, missing weapon select 1,2,3,4 (eg)
+                IN_ATTACK =     1 << 0
+                alog(str(bstates & IN_ATTACK) + " IN_ATTACK")
+                IN_JUMP =       1 << 1
+                alog(str(bstates & IN_JUMP) + " IN_JUMP")
+                IN_DUCK =       1 << 2
+                alog(str(bstates & IN_DUCK) + " IN_DUCK")
+                IN_FORWARD =    1 << 3
+                alog(str(bstates & IN_FORWARD) + " IN_FORWARD")
+                IN_BACKWARD =   1 << 4
+                alog(str(bstates & IN_BACKWARD) + " IN_BACKWARD")
+                IN_USE =        1 << 5
+                alog(str(bstates & IN_USE) + " IN_USE")
+
+                #6
+                #7
+                #8
+
+                IN_MOVELEFT =   1 << 9
+                alog(str(bstates & IN_MOVELEFT) + " IN_MOVELEFT")
+                IN_MOVERIGHT =  1 << 10
+                alog(str(bstates & IN_MOVERIGHT) + " IN_MOVERIGHT")
+                IN_ATTACK2 =    1 << 11
+                alog(str(bstates & IN_ATTACK2) + " IN_ATTACK2")
+
+                #12
+
+                IN_RELOAD =     1 << 13
+                alog(str(bstates & IN_RELOAD) + " IN_RELOAD")
+
+                #14
+                #15
+
+                IN_SPRINT =     1 << 16
+                alog(str(bstates & IN_SPRINT) + " IN_SPRINT")
+
+                IN_SCORE = 0x200000000
+                alog(str(bstates & IN_SCORE) + " IN_SCORE")
+                IN_LOOK_AT_WEAPON = 0x800000000
+                alog(str(bstates & IN_LOOK_AT_WEAPON) + " IN_LOOK_AT_WEAPON")
+
         except Exception as e:
             alog(e)
-            alog(traceback.format_exc())
+            alog(traceback.format_exc())        
+    def OnClientCommand(self,
+        _slot: int,
+        _cmd: str):
+        player = ADVPlayer(_slot)
+        if (player.IsValid()):
+            self._checkButtonStates(self, _slot)
+            alog(player.GetName() + " used a ClientCommand: {0}".format(_cmd))
+        pass
+    def OnClientAbility1(self,
+        _slot: int
+        ):
+        player = ADVPlayer(_slot)
+        if (player.IsValid()):
+            self._checkButtonStates(self, _slot)
+            alog(player.GetName() + " used Ability1!")
+        pass
+    def OnClientAbility2(self,
+        _slot: int
+        ):
+        player = ADVPlayer(_slot)
+        if (player.IsValid()):
+            self._checkButtonStates(self, _slot)
+            alog(player.GetName() + " used Ability2!")
+        pass
+    def OnClientUltimate(self,
+        _slot: int
+        ):
+        player = ADVPlayer(_slot)
+        if (player.IsValid()):
+            self._checkButtonStates(self, _slot)
+            alog(player.GetName() + " used Ultimate!")
+        pass
+    def OnPlayerJump(self, 
+        _slot: int
+        ):
+        alog("START")
+        self._checkButtonStates(self, _slot)
         alog("END")
         pass
 
-
-'''button_flags = 
-{
-    "IN_NONE":          0x0,
-    "IN_ALL":           0xffffffffffffffff,
-    "IN_ATTACK":        0x1,
-    "IN_JUMP":          0x2,
-    "IN_DUCK":          0x4,
-    "IN_FORWARD":       0x8,
-    "IN_BACK":          0x10,
-    "IN_USE":           0x20,
-    "IN_TURNLEFT":      0x80,
-    "IN_TURNRIGHT":     0x100,
-    "IN_MOVELEFT":      0x200,
-    "IN_MOVERIGHT":     0x400,
-    "IN_ATTACK2":       0x800,
-    "IN_RELOAD":        0x2000,
-    "IN_SPEED":         0x10000,
-    "IN_JOYAUTOSPRINT": 0x20000,
-
-}'''
 

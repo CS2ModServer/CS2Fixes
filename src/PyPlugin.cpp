@@ -71,7 +71,7 @@ namespace Source2Py {
 		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnClientSettingsChanged", playerSlot);
 	}
 
-	void PyPlugin::PyOnClientConnected(
+	void PyPlugin::PyClientConnected(
 		int playerSlot, 
 		const char* name, 
 		uint64_t xuid, 
@@ -132,4 +132,23 @@ namespace Source2Py {
 		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnPlayerAirborn", playerSlot);
 	}
 
+	void PyPlugin::PyClientCommand(int playerSlot, const char* command)
+	{
+		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnClientCommand", playerSlot, command);
+	}
+
+	void PyPlugin::PyClientAbility1(int playerSlot)
+	{
+		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnClientAbility1", playerSlot);
+	}
+
+	void PyPlugin::PyClientAbility2(int playerSlot)
+	{
+		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnClientAbility2", playerSlot);
+	}
+
+	void PyPlugin::PyClientUltimate(int playerSlot)
+	{
+		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnClientUltimate", playerSlot);
+	}
 } // namespace Source2Py
