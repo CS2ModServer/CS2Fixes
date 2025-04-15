@@ -6,7 +6,23 @@
 #include <string>
 
 namespace Source2Py {
-
+	class testclass
+	{
+	public:
+		CUtlVector<const char*> frompython;
+		testclass()
+		{
+			frompython.Purge();
+		}
+		void append(const char* string)
+		{
+			frompython.AddToTail(string);
+		};
+		~testclass()
+		{
+			frompython.PurgeAndDeleteElements();
+		}
+	};
 	class PyAPI {
 	public:
 
@@ -25,6 +41,5 @@ namespace Source2Py {
 		// Set timescale
 		static void SetTimescale(float timeScale);
 
-		//int GetHealth(CEntityInstance* player);
 	};
 }

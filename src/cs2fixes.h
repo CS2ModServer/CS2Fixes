@@ -26,6 +26,7 @@
 #include <iserver.h>
 #include <sh_vector.h>
 
+#include <string>
 #include <vector>
 #include <filesystem>
 namespace fs = std::filesystem;
@@ -104,13 +105,15 @@ public:
 	// Get this plugin's directory path
 	fs::path GetPluginBaseDirectory() { return s_Source2PyDirectory; }
 	bool LoadPythonPlugins();
+	void ReloadPythonPlugins();
+	virtual std::vector<std::string> GetPlayerItems(CPlayerSlot slot);
 
 private:
 	const fs::path s_Source2PyDirectory = "../../csgo/addons/CS2Fixes/PyPlugins/";
 
 public:
 	std::vector<Source2Py::PyPlugin> m_Plugins;
-	
+	void* OnMetamodQuery(const char* iface, int *ret) override;
 	
 };
 

@@ -151,6 +151,7 @@ void ZR_Precache(IEntityResourceManifest* pResourceManifest)
 	pResourceManifest->AddResource(g_szHumanWinOverlayMaterial.c_str());
 	pResourceManifest->AddResource(g_szZombieWinOverlayMaterial.c_str());
 
+	Message("Precached the stuff TRISTEN TRISTEN\n");
 	pResourceManifest->AddResource("soundevents/soundevents_zr.vsndevts");
 }
 

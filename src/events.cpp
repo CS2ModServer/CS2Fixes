@@ -521,6 +521,11 @@ GAME_EVENT_F(cs_win_panel_match)
 		g_pMapVoteSystem->StartVote();
 }
 
+GAME_EVENT_F(player_score)
+{
+	Message("player_score fired, from where i don't know.\n");
+}
+
 GAME_EVENT_F(player_connect)
 {
 	Message("player_connect\n");

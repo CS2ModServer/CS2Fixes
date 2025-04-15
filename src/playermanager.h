@@ -31,6 +31,8 @@
 #include "utlvector.h"
 #include <playerslot.h>
 
+#include "adventuremod.h"
+
 #define NO_TARGET_BLOCKS (0)
 #define NO_RANDOM (1 << 1)
 #define NO_MULTIPLE (1 << 2)
@@ -144,6 +146,8 @@ private:
 	};
 };
 
+class ADVPlayer;
+
 class ZEPlayer
 {
 public:
@@ -193,6 +197,7 @@ public:
 		m_flEntwatchHudX = -7.5f;
 		m_flEntwatchHudY = -2.0f;
 		m_flEntwatchHudSize = 60.0f;
+		m_ADVPlayer = ADVPlayer(m_slot.Get());
 	}
 
 	~ZEPlayer()
@@ -382,6 +387,9 @@ private:
 	float m_flEntwatchHudX;
 	float m_flEntwatchHudY;
 	float m_flEntwatchHudSize;
+	
+public:
+	ADVPlayer m_ADVPlayer;
 };
 
 class CPlayerManager

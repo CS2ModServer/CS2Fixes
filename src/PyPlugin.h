@@ -44,10 +44,13 @@ namespace Source2Py {
 		void PyPlayerSpawn_post(int playerSlot);
 		void PyPlayerSpawned(int playerSlot);
 
+		//void PyMENU(auto& f);
 
 		bool IsValid() const { return m_Valid; }
 
 		operator bool() { return m_Valid; }
+
+		py::object GetSelf() {return m_PluginObject; }
 
 	private:
 		py::object m_PluginObject;

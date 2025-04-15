@@ -151,4 +151,8 @@ namespace Source2Py {
 	{
 		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnClientUltimate", playerSlot);
 	}
+	//void PyPlugin::PyMENU(auto& f)
+	//{
+	//	PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnMENU", f);
+	//}
 } // namespace Source2Py

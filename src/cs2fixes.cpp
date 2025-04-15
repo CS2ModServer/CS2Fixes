@@ -64,7 +64,9 @@
 //#include "Source2Py.h"
 #include "PyRuntime.h"
 //#include "PyInclude.h" //included in PyRuntime.h
-
+#include <vector>
+#include <string>
+#include "adventuremenu.h"
 #include <fstream>
 
 #include "tier0/memdbgon.h"
@@ -99,6 +101,7 @@ void Panic(const char* msg, ...)
 
 	va_end(args);
 }
+
 
 class GameSessionConfiguration_t
 {};
@@ -140,6 +143,24 @@ CGameConfig* g_GameConfig = nullptr;
 ISteamHTTP* g_http = nullptr;
 CSteamGameServerAPIContext g_steamAPI;
 CCSGameRules* g_pGameRules = nullptr;
+
+void* CS2Fixes::OnMetamodQuery(const char* iface, int* ret)
+{
+	//if (!strcmp(iface, "CS2Fixes v1.7-dev"))
+	if (!strcmp(iface, g_CS2Fixes.GetName()))
+	{
+		if (ret)
+			*ret = META_IFACE_OK;
+
+		return static_cast<CS2Fixes*>(this);
+	}
+
+	if (ret)
+		*ret = META_IFACE_FAILED;
+
+	return nullptr;
+}
+
 int g_iCGamePlayerEquipUseId = -1;
 int g_iCreateWorkshopMapGroupId = -1;
 int g_iOnTakeDamageAliveId = -1;
@@ -165,6 +186,43 @@ INetworkGameServer* GetNetworkGameServer()
 CGlobalVars* GetGlobals()
 {
 	return g_pEngineServer2->GetServerGlobals();
+}
+
+void CS2Fixes::ReloadPythonPlugins()
+{
+	Message("Restarting Python Plugins...\n");
+	//kill py plugins
+	m_Plugins.clear();
+
+	//kill py runtime
+	Source2Py::PyRuntime::Close();
+
+	//save current path and change to needed pypath
+	fs::path exePath = fs::current_path();
+	fs::current_path(GetPluginBaseDirectory());
+
+	//start py runtime
+	Source2Py::PyRuntime::Init();
+
+	//start py plugins
+	if (!LoadPythonPlugins())
+		Source2Py::PyRuntime::Close();
+
+	// and set the cwd back where the game expects it
+	fs::current_path(exePath);
+
+	return;
+}
+
+//CON_COMMAND_CHAT_FLAGS(cs2f_restart_py, "Drop and reload python plugins.", ADMFLAG_ROOT)
+// reload python plugins
+//CON_COMMAND_F(cs2f_restart_py, "Technique bound to ability1", FCVAR_NONE)
+CON_COMMAND_F(cs2f_restart_py, "Drop and reload python plugins.", ADMFLAG_ROOT)
+{
+
+	Message("You typed !cs2f_restart_py in chat.\n");
+	g_CS2Fixes.ReloadPythonPlugins();
+	return;
 }
 
 bool CS2Fixes::LoadPythonPlugins()
@@ -307,6 +365,7 @@ bool CS2Fixes::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, bool
 
 		// and set the cwd back where the game expects it
 		fs::current_path(exePath);
+
 	}
 
 	const auto pCGamePlayerEquipVTable = modules::server->FindVirtualTable("CGamePlayerEquip");
@@ -746,13 +805,104 @@ void CS2Fixes::Hook_PostEvent(CSplitScreenSlot nSlot, bool bLocalOnly, int nClie
 	}
 }
 
+#include <functional>
+#include "PyRuntime.h"
+#include "PyInclude.h"
+#include "PyAPI.h"
+//////////#include <pybind11/functional.h>
+//#include "PyPlugin.h"
+
 void CS2Fixes::AllPluginsLoaded()
 {
 	/* This is where we'd do stuff that relies on the mod or other plugins
 	 * being initialized (for example, cvars added and events registered).
 	 */
+	
+	// test changing an outer number. //works for whats needed
+	if (false)
+	{
+		int outernum=0;
+		std::function<void(int)> _testint(
+			[&outernum](int number) 
+			{
+				Message("AllPluginsLoaded() templatefunc - START\n");
+				outernum=number;
+				Message("AllPluginsLoaded() templatefunc - END\n");
+			});
 
-	Message("AllPluginsLoaded\n");
+		Message("AllPluginsLoaded() outernum before: %d\n", outernum);
+		for (auto& plugin : g_CS2Fixes.m_Plugins)
+		{
+			py::object object = plugin.GetSelf();
+			Source2Py::PyRuntime::ExecuteObjectMethod(object, "_testint", _testint);
+		}
+		Message("AllPluginsLoaded() outernum  after: %d\n\n\n", outernum);
+	}
+
+	// test changing an outer const char*. //didn't
+	if (false) {
+		const char* outerconstcharstar = "default";
+		std::function<void(const char*)> _testconstcharstar(
+			[&outerconstcharstar](const char* innerconstcharstar)
+			{
+				Message("templatefunc - START\n");
+				outerconstcharstar = innerconstcharstar;
+				Message("templatefunc - END\n");
+			});
+
+		Message("outerconstcharstar before: %s\n", outerconstcharstar);
+		for (auto& plugin : g_CS2Fixes.m_Plugins)
+		{
+			py::object object = plugin.GetSelf();
+			Source2Py::PyRuntime::ExecuteObjectMethod(object, "_testconstcharstar", _testconstcharstar);
+		}
+		Message("outerconstcharstar  after: %s\n\n\n", outerconstcharstar);
+	}
+
+	// test changing an outer py::str //didn't
+	if (false) {
+		py::str outerpystr = "default";
+		std::function<void(py::str)> _testpystr(
+			[&outerpystr](py::str innerpystr) {
+				Message("templatefunc - START\n");
+				outerpystr = innerpystr;
+				Message("templatefunc - END\n");
+			});
+
+		Message("outerpystr before: %s\n", outerpystr);
+		for (auto& plugin : g_CS2Fixes.m_Plugins)
+		{
+			py::object object = plugin.GetSelf();
+			Source2Py::PyRuntime::ExecuteObjectMethod(object, "_testpystr", _testpystr);
+		}
+		Message("outerpystr  after: %s\n\n\n", outerpystr);		
+	}
+
+	// test changing an outer std::string //also works
+	if (false) 
+	{
+		//outside
+		std::string outerstdstring = "default";
+
+		//special callable
+		std::function<bool(py::str&)> _teststdstring(
+			[&outerstdstring](py::str& innerstdstring) {
+				Message("cs2fixes templatefunc - START\n");
+				outerstdstring = innerstdstring;
+				Message("cs2fixes templatefunc - END\n");
+				return true;
+			});
+
+		//tell python plugins to use special callable
+		for (auto& plugin : g_CS2Fixes.m_Plugins)
+		{
+			Message("cs2fixes outerstdstring before: %s\n", outerstdstring);
+			py::object object = plugin.GetSelf();
+			Source2Py::PyRuntime::ExecuteObjectMethod(object, "_teststdstring", _teststdstring);
+			Message("cs2fixes outerstdstring  after: %s\n\n\n", outerstdstring);
+		}
+	}
+
 }
 
 CUtlVector<CServerSideClient*>* GetClientList()
@@ -1298,4 +1448,24 @@ const char* CS2Fixes::GetName()
 const char* CS2Fixes::GetURL()
 {
 	return "https://github.com/Source2ZE/CS2Fixes";
+}
+
+std::vector<std::string> CS2Fixes::GetPlayerItems(CPlayerSlot slot)
+{
+	Message("[CS2Fixes] CS2Fixes::GetPlayerItems(CPlayerSlot slot=%d)\n", slot.Get());
+	ZEPlayer* pPlayer = g_playerManager->GetPlayer(slot);
+
+	std::vector<std::string> inv = pPlayer->m_ADVPlayer.GetPlayerItems();
+	Message("[CS2Fixes] inv.size() is %d\n", inv.size());
+	if (inv.size() > 0)
+	{
+		Message("[CS2Fixes] inv.front() is %s\n", inv.front().c_str());
+		Message("[CS2Fixes] inv.back() is %s\n", inv.back().c_str());
+
+		for (std::string& str : inv)
+		{
+			Message("[CS2Fixes] str:inv is %s\n", str.c_str());
+		}
+	}
+	return inv;
 }
