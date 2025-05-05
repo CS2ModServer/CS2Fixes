@@ -37,7 +37,6 @@ class TestOnAllPluginsLoaded:
             alog(str(type(temp)))
             alog(str(wrap_func))
             alog(str(type(wrap_func)))
-            #wrap_func("new item") #this works, try more complicated.
             wrap_func(temp)
             alog("TRY2")
         except Exception as e:
