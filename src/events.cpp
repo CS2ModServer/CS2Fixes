@@ -57,6 +57,9 @@ void RegisterEventListeners()
 
 	if (bRegistered || !g_gameEventManager)
 		return;
+	
+	//E:/CS2Server/cs2/game/csgo/bin/win64/~ is where were at normally.
+	g_gameEventManager->LoadEventsFromFile("../../csgo/addons/CS2Fixes/resource/adventure.res", false);
 
 	FOR_EACH_VEC(g_vecEventListeners, i)
 	{
@@ -137,10 +140,32 @@ static bool g_bNoblock = false;
 
 FAKE_BOOL_CVAR(cs2f_noblock_enable, "Whether to use player noblock, which sets debris collision on every player", g_bNoblock, false, false)
 
+GAME_EVENT_F(player_spawned)
+{
+	int index = pEvent->GetPlayerSlot("userid").Get();
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyPlayerSpawned(index);
+	
+	return;
+}
+
+GAME_EVENT_F(player_activate)
+{
+	int index = pEvent->GetPlayerSlot("userid").Get();
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyPlayerActivate(index);
+	
+	return;
+}
+
 GAME_EVENT_F(player_spawn)
 {
-	CCSPlayerController* pController = (CCSPlayerController*)pEvent->GetPlayerController("userid");
+	int index = pEvent->GetPlayerSlot("userid").Get();
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyPlayerSpawn(index);
 
+	CCSPlayerController* pController = (CCSPlayerController*)pEvent->GetPlayerController("userid");
+	
 	if (!pController)
 		return;
 
@@ -161,6 +186,10 @@ GAME_EVENT_F(player_spawn)
 	// Gotta do this on the next frame...
 	new CTimer(0.0f, false, false, [hController]() {
 		CCSPlayerController* pController = hController.Get();
+
+		int index = pController->GetPlayerSlot();
+		for (auto& plugin : g_CS2Fixes.m_Plugins)
+			plugin.PyPlayerSpawn_post(index);
 
 		if (!pController)
 			return -1.0f;
@@ -200,6 +229,7 @@ GAME_EVENT_F(player_spawn)
 
 		return -1.0f;
 	});
+
 }
 
 static bool g_bEnableTopDefender = false;
@@ -234,22 +264,20 @@ FAKE_BOOL_CVAR(cs2f_topdefender_enable, "Whether to use TopDefender", g_bEnableT
 //remember this is firing at the moment the player is hurt, before the damage is applied.
 GAME_EVENT_F(player_hurt) //new
 {
-	if (g_bEnableZR)
-		ZR_OnPlayerHurt(pEvent);
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyPlayerHurt(pEvent);
 
-	//	if (!g_bEnableTopDefender)
-	//		return;
+	//if (g_bEnableZR)
+	//	ZR_OnPlayerHurt(pEvent);
+
+	//if (!g_bEnableTopDefender)
+	//	return;
 
 	CCSPlayerController* pAttacker = (CCSPlayerController*)pEvent->GetPlayerController("attacker");
 	CCSPlayerController* pVictim = (CCSPlayerController*)pEvent->GetPlayerController("userid");
-
+	
 	//pEvent->SetInt("attacker_slot", pAttacker->GetPlayerSlot());
 	//pEvent->SetInt("victim_slot", pVictim->GetPlayerSlot());
-
-	for (auto& plugin : g_CS2Fixes.m_Plugins)
-	{
-		plugin.PyPlayerHurt(pEvent);
-	}
 
 	// Ignore Ts/zombies and CTs hurting themselves
 	if (!pAttacker || pAttacker->m_iTeamNum() != CS_TEAM_CT || pAttacker->m_iTeamNum() == pVictim->m_iTeamNum())
@@ -288,23 +316,137 @@ GAME_EVENT_F(old_player_hurt)
 	pPlayer->SetTotalHits(pPlayer->GetTotalHits() + 1);
 }
 
+GAME_EVENT_F(bomb_planted)
+{
+	/*
+		"bomb_planted":dict({
+            "userid":"slot",
+            "userid_pawn":"strict_ehandle",
+            "site":"short",
+            }),
+	*/
+	CPlayerSlot slot = pEvent->GetPlayerSlot("userid");
+	int site = pEvent->GetInt("site");
+
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyBombPlanted(pEvent, slot.Get(), site);
+}
+
+GAME_EVENT_F(bomb_defused)
+{
+	/*
+	    "bomb_defused":dict({
+            "userid":"slot",
+            "userid_pawn":"strict_ehandle",
+            "site":"short",
+            }),
+	*/
+	CPlayerSlot slot = pEvent->GetPlayerSlot("userid");
+	int site = pEvent->GetInt("site");
+
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyBombDefused(pEvent, slot.Get(), site);
+}
+
+GAME_EVENT_F(bomb_exploded)
+{
+	/*
+		"bomb_exploded":dict({
+			"userid":"slot",
+			"userid_pawn":"strict_ehandle",
+			"site":"short",
+			}),
+	*/
+	CPlayerSlot slot = pEvent->GetPlayerSlot("userid");
+	int site = pEvent->GetInt("site");
+
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyBombExploded(pEvent, slot.Get(), site);
+}
+
 GAME_EVENT_F(player_death)
 {
-	if (g_bEnableZR)
-		ZR_OnPlayerDeath(pEvent);
+	/*
+		"player_death":dict
+		({
+			"userid":"playercontroller",
+			"userid_pawn":"strict_ehandle",
+			"attacker":"playercontroller",
+			"attacker_pawn":"strict_ehandle",
+			"assister":"playercontroller",
+			"assister_pawn":"strict_ehandle",
+			"assistedflash":"bool",
+			"weapon":"string",
+			"weapon_itemid":"string",
+			"weapon_fauxitemid":"string",
+			"weapon_originalowner_xuid":"string",
+			"headshot":"bool",
+			"dominated":"short",
+			"revenge":"short",
+			"wipe":"short",
+			"penetrated":"short",
+			"noreplay":"bool",
+			"noscope":"bool",
+			"thrusmoke":"bool",
+			"attackerblind":"bool",
+			"distance":"float",
+			"dmg_health":"short",
+			"dmg_armor":"byte",
+			"hitgroup":"byte",
+			"attackerinair":"bool",
+		}),
+	*/
 
-	if (g_bEnableEntWatch)
-		EW_PlayerDeath(pEvent);
+	//if (g_bEnableZR)
+	//	ZR_OnPlayerDeath(pEvent);
 
-	if (!g_bEnableTopDefender)
-		return;
+	//if (g_bEnableEntWatch)
+	//	EW_PlayerDeath(pEvent);
+
+	//if (!g_bEnableTopDefender)
+	//	return;
+
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyPlayerDeath(pEvent);
 
 	CCSPlayerController* pAttacker = (CCSPlayerController*)pEvent->GetPlayerController("attacker");
 	CCSPlayerController* pVictim = (CCSPlayerController*)pEvent->GetPlayerController("userid");
 
+	bool noattacker = false;
+	if (!pAttacker)
+	{
+		Message("noattacker=true");
+		noattacker = true;
+	}
+
+	bool novictim = false;
+	if (!pVictim)
+	{
+		Message("novictim=true");
+		novictim = true;
+	}
+	
+	bool teamkill = false;
+	if (pAttacker->m_iTeamNum == pVictim->m_iTeamNum)
+		teamkill = true;
+
+	bool suicide = false;
+	if (pAttacker == pVictim)
+		suicide = true;
+
 	// Ignore Ts/zombie kills and ignore CT teamkilling or suicide
-	if (!pAttacker || !pVictim || pAttacker->m_iTeamNum != CS_TEAM_CT || pAttacker->m_iTeamNum == pVictim->m_iTeamNum)
+	if (	
+			noattacker  ||
+			novictim    ||
+			teamkill    || 
+			suicide     ||
+			pAttacker->m_iTeamNum != CS_TEAM_CT || 
+			pAttacker->m_iTeamNum == pVictim->m_iTeamNum
+			)
+	{
 		return;
+	}
+
 
 	ZEPlayer* pPlayer = pAttacker->GetZEPlayer();
 
@@ -312,6 +454,49 @@ GAME_EVENT_F(player_death)
 		return;
 
 	pPlayer->SetTotalKills(pPlayer->GetTotalKills() + 1);
+	
+}
+
+GAME_EVENT_F(player_jump)
+{
+    /*	"player_jump":dict({
+			"userid":"playercontroller",
+        }),	*/
+	int index = pEvent->GetPlayerSlot("userid").Get();
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyPlayerJump(index);
+
+	CCSPlayerController* pController = CCSPlayerController::FromSlot(index);
+
+	/* //uncomment if you need to find any of these things again because you forgot!
+	//you broke it here likely tristen
+	CBaseEntity* pPawn = (CBaseEntity*)pController->GetPawn();
+	CCSPlayerPawnBase* ppb = (CCSPlayerPawnBase*)pPawn;
+	CCSPlayer_ItemServices* pItemServices = static_cast<CCSPlayer_ItemServices*>(ppb->m_pItemServices());
+	Message("has defuser: %d\n", pItemServices->m_bHasDefuser()); // works
+	Message("has helmet: %d\n", pItemServices->m_bHasHelmet()); //works
+	Message("has armor: %d\n", pItemServices->m_bHasHeavyArmor()); //works
+
+	CCSPlayerPawn* ccsPB = (CCSPlayerPawn*)pController->GetPawn();
+	Message("has m_bIsDefusing: %d\n", ccsPB->m_bIsDefusing()); //not tested
+	Message("has m_nWhichBombZone: %d\n", ccsPB->m_nWhichBombZone()); //works  A=1, B=2
+	Message("has m_bInBuyZone: %d\n", ccsPB->m_bInBuyZone()); //works, "in buy zone" + "buy time not expired" = true, else false
+	Message("has m_bInBombZone: %d\n", ccsPB->m_bInBombZone()); //works, "in bomb zone" + "with bomb" = true, else false.
+	*/
+}
+
+GAME_EVENT_F(player_land)
+{
+	int index = pEvent->GetPlayerSlot("userid").Get();
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyPlayerLand(index);
+}
+
+GAME_EVENT_F(player_airborn)
+{
+	int index = pEvent->GetPlayerSlot("userid").Get();
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyPlayerAirborn(index);
 }
 
 bool g_bFullAllTalk = false;
@@ -445,4 +630,35 @@ GAME_EVENT_F(cs_win_panel_match)
 
 	if (!g_pMapVoteSystem->IsVoteOngoing())
 		g_pMapVoteSystem->StartVote();
+}
+
+GAME_EVENT_F(player_score)
+{
+	Message("player_score fired, from where i don't know.\n");
+}
+
+GAME_EVENT_F(player_connect)
+{
+	Message("player_connect\n");
+}
+GAME_EVENT_F(gc_connected)
+{
+	Message("gc_connected\n");
+}
+GAME_EVENT_F(player_connect_full)
+{
+	Message("player_connect_full\n");
+}
+
+GAME_EVENT_F(player_disconnect)
+{
+	Message("player_disconnect\n");
+}
+GAME_EVENT_F(client_disconnect)
+{
+	Message("client_disconnect\n");
+}
+GAME_EVENT_F(cs_game_disconnected)
+{
+	Message("cs_game_disconnected\n");
 }

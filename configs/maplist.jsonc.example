@@ -48,5 +48,32 @@
 			"max_players": 20,
 			"groups": [ "MyFirstGroup", "MySecondGroup" ] // A map can be in multiple groups
 		}
+		"de_ancient":{"enabled": true},
+		"de_train":{"enabled": true},
+		"de_vertigo":{"enabled": true},
+		"de_anubis":{"enabled": true},
+		"de_nuke":{"enabled": true},
+		"de_inferno":{"enabled": true},
+		"cs_italy":{"enabled": true},
+		"cs_office":{"enabled": true},
+		"ze_my_first_ze_map": {
+			"enabled": true,
+			"workshop_id": 123,
+			"min_players": 30,
+			"cooldown": 2
+		},
+		"ze_my_second_ze_map": {
+			"enabled": true,
+			"workshop_id": 456,
+			"min_players": 5,
+			"max_players": 10,
+			"cooldown": 3
+		},
+		"ze_my_third_ze_map": {
+			"enabled": true,
+			"workshop_id": 789,
+			"max_players": 20,
+			"cooldown": 1
+		}
 	}
 }

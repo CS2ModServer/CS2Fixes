@@ -163,7 +163,10 @@ class CCSPlayer_ItemServices
 {
 public:
 	DECLARE_SCHEMA_CLASS(CCSPlayer_ItemServices);
-
+	SCHEMA_FIELD(CSMatchStats_t, m_matchStats);
+	SCHEMA_FIELD(bool, m_bHasDefuser);
+	SCHEMA_FIELD(bool, m_bHasHelmet);
+	SCHEMA_FIELD(bool, m_bHasHeavyArmor);
 	virtual ~CCSPlayer_ItemServices() = 0;
 
 private:

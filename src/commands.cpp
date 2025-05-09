@@ -43,7 +43,6 @@
 #include "zombiereborn.h"
 #undef snprintf
 #include "vendor/nlohmann/json.hpp"
-
 #include "tier0/memdbgon.h"
 
 using json = nlohmann::json;
@@ -653,6 +652,17 @@ CON_COMMAND_CHAT(spec, "[name] - Spectate another player or join spectators")
 		return -1.0f;
 	});
 }
+CON_COMMAND_CHAT(menu, "- cs2fixes menu access")
+{
+	if (!player)
+		return;
+
+	Vector vecAbsOrigin = player->GetPawn()->GetAbsOrigin();
+	QAngle angRotation = player->GetPawn()->GetAbsRotation();
+
+	ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "setpos %f %f %f;setang %f %f %f", vecAbsOrigin.x, vecAbsOrigin.y, vecAbsOrigin.z, angRotation.x, angRotation.y, angRotation.z);
+	ClientPrint(player, HUD_PRINTCONSOLE, "setpos %f %f %f;setang %f %f %f", vecAbsOrigin.x, vecAbsOrigin.y, vecAbsOrigin.z, angRotation.x, angRotation.y, angRotation.z);
+}
 
 CON_COMMAND_CHAT(getpos, "- Get your position and angles")
 {
@@ -1061,4 +1071,6 @@ CON_COMMAND_CHAT(discordbot, "<bot> <message> - Send a message to a discord webh
 
 	g_pDiscordBotManager->PostDiscordMessage(args[1], args[2]);
 }
-#endif // _DEBUG
+#endif 
+// _DEBUG
+

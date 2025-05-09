@@ -21,6 +21,8 @@
 #include "irecipientfilter.h"
 #include "playermanager.h"
 
+
+
 // Simple filter for when only 1 recipient is needed
 class CSingleRecipientFilter : public IRecipientFilter
 {
