@@ -41,8 +41,7 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 				//py::init<const char*>(((std::string*)s)->c_str());
 				return GameEventKeySymbol_t(((std::string*)s)->c_str());
 			}))
-			
-		;
+			;
 	}
 
 	//IGameEvent player_hurt

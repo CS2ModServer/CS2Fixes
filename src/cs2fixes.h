@@ -107,6 +107,7 @@ public:
 	bool LoadPythonPlugins();
 	void ReloadPythonPlugins();
 	virtual std::vector<std::string> GetPlayerItems(CPlayerSlot slot);
+	void MenuSelection(int selection); //they interacted with a menu item
 
 private:
 	const fs::path s_Source2PyDirectory = "../../csgo/addons/CS2Fixes/PyPlugins/";

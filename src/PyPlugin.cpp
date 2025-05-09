@@ -97,6 +97,33 @@ namespace Source2Py {
 		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnPlayerDeath", event);
 	}
 
+	void PyPlugin::PyPlayerDeathNew(
+		IGameEvent* event,
+		CPlayerSlot killerSlot,
+		uint64_t killerSteam,
+		CPlayerSlot victimSlot,
+		uint64_t victimSteam,
+		CPlayerSlot assisterSlot,
+		uint64_t assisterSteam,
+		bool suicide)
+	{
+		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnPlayerDeath", event, killerSlot, killerSteam, victimSlot, victimSteam, assisterSlot, assisterSteam, suicide);
+	}
+	void PyPlugin::PyBombPlanted(IGameEvent* event, int slot, int site)
+	{
+		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnBombPlanted", event, slot, site);
+	}
+
+	void PyPlugin::PyBombDefused(IGameEvent* event, int slot, int site)
+	{
+		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnBombDefused", event, slot, site);
+	}
+
+	void PyPlugin::PyBombExploded(IGameEvent* event, int slot, int site)
+	{
+		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnBombExploded", event, slot, site);
+	}
+
 	void PyPlugin::PyPlayerSpawn(int playerSlot)
 	{
 		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnPlayerSpawn", playerSlot);
