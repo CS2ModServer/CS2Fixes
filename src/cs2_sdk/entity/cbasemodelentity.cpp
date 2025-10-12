@@ -17,34 +17,13 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "cbasemodelentity.h"
+#include "ccsplayerpawn.h"
 
-#include "platform.h"
+void CBaseModelEntity::SetModel(const char* szModel)
+{
+	addresses::CBaseModelEntity_SetModel(this, szModel);
 
-#define VPROF_LEVEL 1
-
-#define CS_TEAM_NONE 0
-#define CS_TEAM_SPECTATOR 1
-#define CS_TEAM_T 2
-#define CS_TEAM_CT 3
-
-#define HUD_PRINTNOTIFY 1
-#define HUD_PRINTCONSOLE 2
-#define HUD_PRINTTALK 3
-#define HUD_PRINTCENTER 4
-
-#define MAXPLAYERS 64
-
-#ifdef _WIN32
-	#define ROOTBIN "/bin/win64/"
-	#define GAMEBIN "/csgo/bin/win64/"
-#else
-	#define ROOTBIN "/bin/linuxsteamrt64/"
-	#define GAMEBIN "/csgo/bin/linuxsteamrt64/"
-#endif
-
-void UnlockConVars();
-void UnlockConCommands();
-
-void Message(const char*, ...);
-void Panic(const char*, ...);
+	if (IsPawn())
+		((CCSPlayerPawn*)this)->FixPlayerModelAnimations();
+}

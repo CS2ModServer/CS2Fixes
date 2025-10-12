@@ -45,9 +45,13 @@ extern IGameTypes* g_pGameTypes;
 
 CMapVoteSystem* g_pMapVoteSystem = nullptr;
 
+CConVar<float> g_cvarVoteMapsCooldown("cs2f_vote_maps_cooldown", FCVAR_NONE, "Default number of hours until a map can be played again i.e. cooldown", 6.0f);
+CConVar<int> g_cvarVoteMaxNominations("cs2f_vote_max_nominations", FCVAR_NONE, "Number of nominations to include per vote, out of a maximum of 10", 10, true, 0, true, 10);
+CConVar<int> g_cvarVoteMaxMaps("cs2f_vote_max_maps", FCVAR_NONE, "Number of total maps to include per vote, including nominations, out of a maximum of 10", 10, true, 2, true, 10);
+
 CON_COMMAND_CHAT_FLAGS(reload_map_list, "- Reload map list, also reloads current map on completion", ADMFLAG_ROOT)
 {
-	if (!g_bVoteManagerEnable)
+	if (!g_cvarVoteManagerEnable.Get())
 		return;
 
 	if (g_pMapVoteSystem->GetDownloadQueueSize() != 0)
@@ -77,53 +81,9 @@ CON_COMMAND_CHAT_FLAGS(reload_map_list, "- Reload map list, also reloads current
 	ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "Map list reloaded!");
 }
 
-CON_COMMAND_F(cs2f_vote_maps_cooldown, "Default number of hours until a map can be played again i.e. cooldown", FCVAR_LINKED_CONCOMMAND | FCVAR_SPONLY)
-{
-	float fCurrentCooldown = g_pMapVoteSystem->GetDefaultMapCooldown();
-
-	if (args.ArgC() < 2)
-		Msg("%s %f\n", args[0], fCurrentCooldown);
-	else
-		g_pMapVoteSystem->SetDefaultMapCooldown(V_StringToFloat32(args[1], fCurrentCooldown));
-}
-
-CON_COMMAND_F(cs2f_vote_max_nominations, "Number of nominations to include per vote, out of a maximum of 10", FCVAR_LINKED_CONCOMMAND | FCVAR_SPONLY)
-{
-	int iMaxNominatedMaps = g_pMapVoteSystem->GetMaxNominatedMaps();
-
-	if (args.ArgC() < 2)
-		Msg("%s %d\n", args[0], iMaxNominatedMaps);
-	else
-	{
-		int iValue = V_StringToInt32(args[1], iMaxNominatedMaps);
-
-		if (iValue < 0 || iValue > 10)
-			Msg("Value must be between 0-10!\n");
-		else
-			g_pMapVoteSystem->SetMaxNominatedMaps(iValue);
-	}
-}
-
-CON_COMMAND_F(cs2f_vote_max_maps, "Number of total maps to include per vote, including nominations, out of a maximum of 10", FCVAR_LINKED_CONCOMMAND | FCVAR_SPONLY)
-{
-	int iMaxVoteMaps = g_pMapVoteSystem->GetMaxVoteMaps();
-
-	if (args.ArgC() < 2)
-		Msg("%s %d\n", args[0], iMaxVoteMaps);
-	else
-	{
-		int iValue = V_StringToInt32(args[1], iMaxVoteMaps);
-
-		if (iValue < 2 || iValue > 10)
-			Msg("Value must be between 2-10!\n");
-		else
-			g_pMapVoteSystem->SetMaxVoteMaps(iValue);
-	}
-}
-
 CON_COMMAND_CHAT_FLAGS(map, "<name/id> - Change map", ADMFLAG_CHANGEMAP)
 {
-	if (!g_bVoteManagerEnable)
+	if (!g_cvarVoteManagerEnable.Get())
 		return;
 
 	if (args.ArgC() < 2)
@@ -188,7 +148,7 @@ CON_COMMAND_CHAT_FLAGS(map, "<name/id> - Change map", ADMFLAG_CHANGEMAP)
 
 CON_COMMAND_CHAT_FLAGS(setnextmap, "[name/id] - Force next map (empty to clear forced next map)", ADMFLAG_CHANGEMAP)
 {
-	if (!g_bVoteManagerEnable)
+	if (!g_cvarVoteManagerEnable.Get())
 		return;
 
 	g_pMapVoteSystem->ForceNextMap(player, args.ArgC() < 2 ? "" : args[1]);
@@ -196,7 +156,7 @@ CON_COMMAND_CHAT_FLAGS(setnextmap, "[name/id] - Force next map (empty to clear f
 
 CON_COMMAND_CHAT(nominate, "[mapname] - Nominate a map (empty to clear nomination or list all maps)")
 {
-	if (!g_bVoteManagerEnable || !player)
+	if (!g_cvarVoteManagerEnable.Get() || !player)
 		return;
 
 	g_pMapVoteSystem->AttemptNomination(player, args.ArgC() < 2 ? "" : args[1]);
@@ -204,7 +164,7 @@ CON_COMMAND_CHAT(nominate, "[mapname] - Nominate a map (empty to clear nominatio
 
 CON_COMMAND_CHAT(nomlist, "- List the list of nominations")
 {
-	if (!g_bVoteManagerEnable)
+	if (!g_cvarVoteManagerEnable.Get())
 		return;
 
 	if (g_pMapVoteSystem->GetForcedNextMap() != -1)
@@ -224,12 +184,12 @@ CON_COMMAND_CHAT(nomlist, "- List the list of nominations")
 	ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "Current nominations:");
 
 	for (auto pair : mapNominatedMaps)
-		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "- %s (%d times)\n", g_pMapVoteSystem->GetMapName(pair.first), pair.second);
+		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "- %s (%d time%s)\n", g_pMapVoteSystem->GetMapName(pair.first), pair.second, pair.second > 1 ? "s" : "");
 }
 
 CON_COMMAND_CHAT(mapcooldowns, "- List the maps currently in cooldown")
 {
-	if (!g_bVoteManagerEnable)
+	if (!g_cvarVoteManagerEnable.Get())
 		return;
 
 	// Use a new vector, because we want to sort the command output
@@ -261,7 +221,7 @@ CON_COMMAND_CHAT(mapcooldowns, "- List the maps currently in cooldown")
 
 CON_COMMAND_CHAT(nextmap, "- Check the next map if it was forced")
 {
-	if (!g_bVoteManagerEnable)
+	if (!g_cvarVoteManagerEnable.Get())
 		return;
 
 	if (g_pMapVoteSystem->GetForcedNextMap() == -1)
@@ -292,7 +252,7 @@ bool CMapVoteSystem::IsMapIndexEnabled(int iMapIndex)
 
 void CMapVoteSystem::OnLevelInit(const char* pMapName)
 {
-	if (!g_bVoteManagerEnable)
+	if (!g_cvarVoteManagerEnable.Get())
 		return;
 
 	m_bIsVoteOngoing = false;
@@ -324,12 +284,11 @@ void CMapVoteSystem::StartVote()
 		if (IsMapIndexEnabled(i))
 			vecPossibleMaps.push_back(i);
 
-	m_iVoteSize = std::min((int)vecPossibleMaps.size(), GetMaxVoteMaps());
+	m_iVoteSize = std::min((int)vecPossibleMaps.size(), g_cvarVoteMaxMaps.Get());
 	bool bAbort = false;
-	// CONVAR_TODO
-	ConVar* pVoteCvar = g_pCVar->GetConVar(g_pCVar->FindConVar("mp_endmatch_votenextmap"));
-	// HACK: values is actually the cvar value itself, hence this ugly cast.
-	bool bVoteEnabled = *(bool*)&pVoteCvar->values;
+
+	static ConVarRefAbstract mp_endmatch_votenextmap("mp_endmatch_votenextmap");
+	bool bVoteEnabled = mp_endmatch_votenextmap.GetBool();
 
 	if (!bVoteEnabled)
 	{
@@ -367,7 +326,7 @@ void CMapVoteSystem::StartVote()
 	}
 
 	// We're checking this later, so we can always disable the map vote if mp_endmatch_votenextmap is disabled
-	if (!g_bVoteManagerEnable)
+	if (!g_cvarVoteManagerEnable.Get())
 		return;
 
 	// Reset the player vote counts as the vote just started
@@ -423,9 +382,8 @@ void CMapVoteSystem::StartVote()
 	}
 
 	// Start the end-of-vote timer to finish the vote
-	// CONVAR_TODO
-	ConVar* pVoteTimeCvar = g_pCVar->GetConVar(g_pCVar->FindConVar("mp_endmatch_votenextleveltime"));
-	float flVoteTime = *(float*)&pVoteTimeCvar->values;
+	static ConVarRefAbstract mp_endmatch_votenextleveltime("mp_endmatch_votenextleveltime");
+	float flVoteTime = mp_endmatch_votenextleveltime.GetFloat();
 	new CTimer(flVoteTime, false, true, []() {
 		g_pMapVoteSystem->FinishVote();
 		return -1.0;
@@ -624,7 +582,7 @@ std::vector<int> CMapVoteSystem::GetNominatedMapsForVote()
 	std::unordered_map<int, int> mapAvailableNominatedMaps(mapOriginalNominatedMaps); // A copy of the map that we can remove from without worry
 	std::vector<int> vecTiedNominations;											  // Nominations with tied nom counts
 	std::vector<int> vecChosenNominatedMaps;										  // Final vector of chosen nominations
-	int iMapsToIncludeInNominate = std::min({(int)mapOriginalNominatedMaps.size(), GetMaxNominatedMaps(), GetMaxVoteMaps()});
+	int iMapsToIncludeInNominate = std::min({(int)mapOriginalNominatedMaps.size(), g_cvarVoteMaxNominations.Get(), g_cvarVoteMaxMaps.Get()});
 	int iMostNominations;
 	auto rng = std::default_random_engine{std::random_device{}()};
 
@@ -744,7 +702,7 @@ uint64 CMapVoteSystem::HandlePlayerMapLookup(CCSPlayerController* pController, c
 
 void CMapVoteSystem::ClearPlayerInfo(int iSlot)
 {
-	if (!g_bVoteManagerEnable)
+	if (!g_cvarVoteManagerEnable.Get())
 		return;
 
 	m_arrPlayerNominations[iSlot] = -1;
@@ -777,7 +735,7 @@ void CMapVoteSystem::AttemptNomination(CCSPlayerController* pController, const c
 	if (!pPlayer || !GetGlobals())
 		return;
 
-	if (GetMaxNominatedMaps() == 0)
+	if (g_cvarVoteMaxNominations.Get() == 0)
 	{
 		ClientPrint(pController, HUD_PRINTTALK, CHAT_PREFIX "Nominations are currently disabled.");
 		return;
@@ -1091,7 +1049,7 @@ bool CMapVoteSystem::LoadMapList()
 
 bool CMapVoteSystem::IsIntermissionAllowed()
 {
-	if (!g_bVoteManagerEnable)
+	if (!g_cvarVoteManagerEnable.Get())
 		return true;
 
 	// We need to prevent "ending the map twice" as it messes with ongoing map votes
@@ -1135,7 +1093,7 @@ bool CMapVoteSystem::WriteMapCooldownsToFile()
 
 void CMapVoteSystem::ClearInvalidNominations()
 {
-	if (!g_bVoteManagerEnable || m_bIsVoteOngoing || !GetGlobals())
+	if (!g_cvarVoteManagerEnable.Get() || m_bIsVoteOngoing || !GetGlobals())
 		return;
 
 	for (int i = 0; i < GetGlobals()->maxClients; i++)
@@ -1175,7 +1133,7 @@ void CMapVoteSystem::UpdateCurrentMapIndex()
 
 void CMapVoteSystem::ApplyGameSettings(KeyValues* pKV)
 {
-	if (!g_bVoteManagerEnable)
+	if (!g_cvarVoteManagerEnable.Get())
 		return;
 
 	if (pKV->FindKey("launchoptions") && pKV->FindKey("launchoptions")->FindKey("customgamemode"))
@@ -1199,8 +1157,13 @@ void CMapVoteSystem::OnLevelShutdown()
 
 	// Fully apply pending group cooldowns
 	for (std::shared_ptr<CCooldown> pCooldown : m_vecCooldowns)
+	{
 		if (pCooldown->GetPendingCooldown() > 0.0f)
+		{
 			PutMapOnCooldown(pCooldown->GetMapName(), pCooldown->GetPendingCooldown());
+			pCooldown->SetPendingCooldown(0.0f);
+		}
+	}
 
 	WriteMapCooldownsToFile();
 }
@@ -1282,7 +1245,7 @@ void CMapVoteSystem::PutMapOnCooldown(const char* pszMapName, float fCooldown)
 		if (iMapIndex != -1 && GetMapCustomCooldown(iMapIndex) != 0.0f)
 			fCooldown = GetMapCustomCooldown(iMapIndex);
 		else
-			fCooldown = GetDefaultMapCooldown();
+			fCooldown = g_cvarVoteMapsCooldown.Get();
 	}
 
 	time_t timeCooldown = std::time(0) + (time_t)(fCooldown * 60 * 60);
@@ -1290,12 +1253,7 @@ void CMapVoteSystem::PutMapOnCooldown(const char* pszMapName, float fCooldown)
 
 	// Ensure we don't overwrite a longer cooldown
 	if (pCooldown->GetTimeCooldown() < timeCooldown)
-	{
 		pCooldown->SetTimeCooldown(timeCooldown);
-
-		// Pending cooldown should be invalidated at this point
-		pCooldown->SetPendingCooldown(0.0f);
-	}
 }
 
 void CMapVoteSystem::ProcessGroupCooldowns()
@@ -1325,7 +1283,7 @@ void CMapVoteSystem::ProcessGroupCooldowns()
 		{
 			if (iCurrentMapIndex != i && GetMapEnabledStatus(i) && m_vecMapList[i]->HasGroup(groupName))
 			{
-				float fCooldown = pGroup->GetCooldown() == 0.0f ? GetDefaultMapCooldown() : pGroup->GetCooldown();
+				float fCooldown = pGroup->GetCooldown() == 0.0f ? g_cvarVoteMapsCooldown.Get() : pGroup->GetCooldown();
 				std::shared_ptr<CCooldown> pCooldown = GetMapCooldown(i);
 
 				// Ensure we don't overwrite a longer cooldown

@@ -107,7 +107,7 @@ namespace Source2Py {
 		uint64_t assisterSteam,
 		bool suicide)
 	{
-		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnPlayerDeath", event, killerSlot, killerSteam, victimSlot, victimSteam, assisterSlot, assisterSteam, suicide);
+		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnPlayerDeathNew", event, killerSlot, killerSteam, victimSlot, victimSteam, assisterSlot, assisterSteam, suicide);
 	}
 	void PyPlugin::PyBombPlanted(IGameEvent* event, int slot, int site)
 	{
@@ -177,6 +177,11 @@ namespace Source2Py {
 	void PyPlugin::PyClientUltimate(int playerSlot)
 	{
 		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnClientUltimate", playerSlot);
+	}
+
+	void PyPlugin::PyRoundEnd(IGameEvent* event)
+	{
+		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnRoundEnd", event);
 	}
 	//void PyPlugin::PyMENU(auto& f)
 	//{

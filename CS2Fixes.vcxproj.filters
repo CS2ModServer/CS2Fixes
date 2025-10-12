@@ -179,6 +179,18 @@
     <ClCompile Include="src\entwatch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\utils\weapon.cpp">
+      <Filter>Source Files\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cs2_sdk\entity\services.cpp">
+      <Filter>Source Files\cs2_sdk\entity</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cs2_sdk\entity\ccsplayerpawn.cpp">
+      <Filter>Source Files\cs2_sdk\entity</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cs2_sdk\entity\cbasemodelentity.cpp">
+      <Filter>Source Files\cs2_sdk\entity</Filter>
+    </ClCompile>
     <ClCompile Include="src\PyAPI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -402,6 +414,12 @@
     </ClInclude>
     <ClInclude Include="src\cs2_sdk\entity\viewmodels.h">
       <Filter>Header Files\cs2_sdk\entity</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cs2_sdk\entity\cpointhurt.h">
+      <Filter>Header Files\cs2_sdk\entity</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils\weapon.h">
+      <Filter>Header Files\utils</Filter>
     </ClInclude>
     <ClInclude Include="src\PyInclude.h">
       <Filter>Header Files</Filter>

@@ -61,7 +61,8 @@ namespace Source2Py {
 		void PyPlayerSpawn_post(int playerSlot);
 		void PyPlayerSpawned(int playerSlot);
 
-		//void PyMENU(auto& f);
+		void PyRoundEnd(IGameEvent* event);
+		// void PyMENU(auto& f);
 
 		bool IsValid() const { return m_Valid; }
 

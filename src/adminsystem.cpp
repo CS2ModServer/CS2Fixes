@@ -112,7 +112,7 @@ void PrintMultiAdminAction(ETargetType nType, const char* pszAdminName, const ch
 	}
 }
 
-CON_COMMAND_F(c_reload_admins, "Reload admin config", FCVAR_SPONLY | FCVAR_LINKED_CONCOMMAND)
+CON_COMMAND_F(c_reload_admins, "- Reload admin config", FCVAR_SPONLY | FCVAR_LINKED_CONCOMMAND)
 {
 	if (!g_pAdminSystem->LoadAdmins() || !GetGlobals())
 		return;
@@ -130,7 +130,7 @@ CON_COMMAND_F(c_reload_admins, "Reload admin config", FCVAR_SPONLY | FCVAR_LINKE
 	Message("Admins reloaded\n");
 }
 
-CON_COMMAND_F(c_reload_infractions, "Reload infractions file", FCVAR_SPONLY | FCVAR_LINKED_CONCOMMAND)
+CON_COMMAND_F(c_reload_infractions, "- Reload infractions file", FCVAR_SPONLY | FCVAR_LINKED_CONCOMMAND)
 {
 	if (!g_pAdminSystem->LoadInfractions() || !GetGlobals())
 		return;
@@ -199,7 +199,7 @@ CON_COMMAND_CHAT_FLAGS(ungag, "<name> - Ungag a player", ADMFLAG_CHAT)
 
 CON_COMMAND_CHAT_FLAGS(eban, "<name> <duration|0 (permanent)> - Ban a player from picking up items", ADMFLAG_BAN)
 {
-	if (!g_bEnableEntWatch)
+	if (!g_cvarEnableEntWatch.Get())
 		return;
 
 	ParseInfraction(args, player, true, CInfractionBase::EInfractionType::Eban);
@@ -207,7 +207,7 @@ CON_COMMAND_CHAT_FLAGS(eban, "<name> <duration|0 (permanent)> - Ban a player fro
 
 CON_COMMAND_CHAT_FLAGS(eunban, "<name> - Unban a player from picking up items", ADMFLAG_BAN)
 {
-	if (!g_bEnableEntWatch)
+	if (!g_cvarEnableEntWatch.Get())
 		return;
 
 	ParseInfraction(args, player, false, CInfractionBase::EInfractionType::Eban);
@@ -536,7 +536,7 @@ CON_COMMAND_CHAT_FLAGS(entfire, "<name> <input> [parameter] - Fire outputs at en
 		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "Input successful on %i entities.", iFoundEnts);
 }
 
-CON_COMMAND_CHAT_FLAGS(entfirepawn, "<name> <inpu> [parameter] - Fire outputs at player pawns", ADMFLAG_RCON)
+CON_COMMAND_CHAT_FLAGS(entfirepawn, "<name> <input> [parameter] - Fire outputs at player pawns", ADMFLAG_RCON)
 {
 	if (args.ArgC() < 3)
 	{
@@ -632,6 +632,12 @@ CON_COMMAND_CHAT_FLAGS(extend, "<minutes> - Extend current map (negative value r
 
 	int iExtendTime = V_StringToInt32(args[1], 0);
 
+	if (iExtendTime == 0)
+	{
+		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "Remaining map time has not been changed");
+		return;
+	}
+
 	g_pVoteManager->ExtendMap(iExtendTime);
 
 	const char* pszCommandPlayerName = player ? player->GetPlayerName() : CONSOLE_NAME;
@@ -702,6 +708,18 @@ CON_COMMAND_CHAT_FLAGS(pm, "<name> <message> - Private message a player. This wi
 	Message("[PM to %s] %s: %s\n", pTarget->GetPlayerName(), pszName, strMessage.c_str());
 }
 
+size_t CountCharacters(const std::string& str)
+{
+	size_t count = 0;
+	for (size_t i = 0; i < str.length(); ++i)
+	{
+		// Check if byte is a UTF-8 lead byte (indicating a new character)
+		if ((str[i] & 0xC0) != 0x80)
+			++count;
+	}
+	return count;
+}
+
 CON_COMMAND_CHAT_FLAGS(who, "- List the flags of all online players", ADMFLAG_GENERIC)
 {
 	if (!GetGlobals())
@@ -724,8 +742,8 @@ CON_COMMAND_CHAT_FLAGS(who, "- List the flags of all online players", ADMFLAG_GE
 		std::string strName = ccsPly->GetPlayerName();
 		if (strName.length() == 0)
 			strName = "< blank >";
-		else if (strName.length() > 20)
-			strName = strName.substr(0, 17) + "...";
+		else if (CountCharacters(strName) > 20)
+			strName = strName.substr(0, 17) + "..."; // This may extra shorten unicode character names, but whatever
 
 		if (pPlayer->IsFakeClient())
 		{
@@ -733,7 +751,13 @@ CON_COMMAND_CHAT_FLAGS(who, "- List the flags of all online players", ADMFLAG_GE
 			continue;
 		}
 
-		uint64 iSteamID = pPlayer->IsAuthenticated() ? pPlayer->GetSteamId64() : pPlayer->GetUnauthenticatedSteamId64();
+		if (!pPlayer->IsAuthenticated())
+		{
+			rgNameSlotID.push_back(std::tuple<std::string, std::string, uint64>(strName, "UNAUTHENTICATED", pPlayer->GetUnauthenticatedSteamId64()));
+			continue;
+		}
+
+		uint64 iSteamID = pPlayer->GetSteamId64();
 		uint64 iFlags = pPlayer->GetAdminFlags();
 		std::string strFlags = "";
 
@@ -795,7 +819,7 @@ CON_COMMAND_CHAT_FLAGS(who, "- List the flags of all online players", ADMFLAG_GE
 			if (strFlags.length() > 1)
 				strFlags = strFlags.substr(2);
 			else
-				strFlags = "NONE";
+				strFlags = "-";
 		}
 
 		rgNameSlotID.push_back(std::tuple<std::string, std::string, uint64>(strName, strFlags, iSteamID));
@@ -808,16 +832,22 @@ CON_COMMAND_CHAT_FLAGS(who, "- List the flags of all online players", ADMFLAG_GE
 		return f < s;
 	});
 
+	if (rgNameSlotID.size() == 0)
+	{
+		ClientPrint(player, HUD_PRINTTALK, "There are no clients currently online.");
+		return;
+	}
+
 	ClientPrint(player, HUD_PRINTCONSOLE, "c_who output: %i client%s", rgNameSlotID.size(), rgNameSlotID.size() == 1 ? "" : "s");
 	ClientPrint(player, HUD_PRINTCONSOLE, "|----------------------|----------------------------------------------------|-------------------|");
 	ClientPrint(player, HUD_PRINTCONSOLE, "|         Name         |                       Flags                        |    Steam64 ID     |");
 	ClientPrint(player, HUD_PRINTCONSOLE, "|----------------------|----------------------------------------------------|-------------------|");
 	for (auto [strPlayerName, strFlags, iSteamID] : rgNameSlotID)
 	{
-		if (strPlayerName.length() % 2 == 1)
+		if (CountCharacters(strPlayerName) % 2 == 1)
 			strPlayerName = strPlayerName + ' ';
-		if (strPlayerName.length() < 20)
-			strPlayerName = std::string((20 - strPlayerName.length()) / 2, ' ') + strPlayerName + std::string((20 - strPlayerName.length()) / 2, ' ');
+		if (CountCharacters(strPlayerName) < 20)
+			strPlayerName = std::string((20 - CountCharacters(strPlayerName)) / 2, ' ') + strPlayerName + std::string((20 - CountCharacters(strPlayerName)) / 2, ' ');
 
 		if (strFlags.length() <= 50)
 		{
@@ -867,7 +897,8 @@ CON_COMMAND_CHAT_FLAGS(who, "- List the flags of all online players", ADMFLAG_GE
 		}
 	}
 	ClientPrint(player, HUD_PRINTCONSOLE, "|----------------------|----------------------------------------------------|-------------------|");
-	ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "Check console for output.");
+	if (player)
+		ClientPrint(player, HUD_PRINTTALK, CHAT_PREFIX "Check console for output.");
 }
 
 CON_COMMAND_CHAT(status, "<name> - Checks a player's active punishments. Non-admins may only check their own punishments")
@@ -1349,8 +1380,9 @@ void CAdminSystem::ShowDisconnectedPlayers(CCSPlayerController* const pAdmin)
 				bAnyDCedPlayers = true;
 			}
 
-			std::string strTemp = std::get<0>(ply) + "\n\tSteam64 ID - " + std::to_string(std::get<1>(ply)) + "\n\tIP Address - " + std::get<2>(ply);
-			ClientPrint(pAdmin, HUD_PRINTCONSOLE, "%i. %s", i, strTemp.c_str());
+			ClientPrint(pAdmin, HUD_PRINTCONSOLE, "%i. %s", i, std::get<0>(ply).c_str());
+			ClientPrint(pAdmin, HUD_PRINTCONSOLE, "\tSteam64 ID - %s", std::to_string(std::get<1>(ply)).c_str());
+			ClientPrint(pAdmin, HUD_PRINTCONSOLE, "\tIP Address - %s", std::get<2>(ply).c_str());
 		}
 	}
 	if (!bAnyDCedPlayers)
@@ -1420,16 +1452,17 @@ std::string FormatTime(std::time_t wTime, bool bInSeconds)
 	return std::to_string(static_cast<int>(std::floor(wTime))) + " month" + (wTime >= 2 ? "s" : "");
 }
 
-int ParseTimeInput(std::string strTime)
+int ParseTimeInput(std::string strTime, int iDefaultValue)
 {
-	if (strTime.length() == 0 || std::find_if(strTime.begin(), strTime.end(), [](char c) { return c == '-'; }) != strTime.end())
+	// Check if first character is a minus sign, and just return negative 1 if so.
+	if (strTime.length() > 0 && std::find_if(strTime.begin(), strTime.begin() + 1, [](char c) { return c == '-'; }) != (strTime.begin() + 1))
 		return -1;
 
 	std::string strNumbers = "";
 	std::copy_if(strTime.begin(), strTime.end(), std::back_inserter(strNumbers), [](char c) { return std::isdigit(c); });
 
 	if (strNumbers.length() == 0)
-		return -1;
+		return iDefaultValue;
 	else if (strNumbers.length() > 9)
 		// Really high number, just return perma
 		return 0;

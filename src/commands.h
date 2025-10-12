@@ -1,4 +1,4 @@
-/**
+﻿/**
  * =============================================================================
  * CS2Fixes
  * Copyright (C) 2023-2025 Source2ZE
@@ -36,13 +36,13 @@ class CChatCommand;
 
 extern CUtlMap<uint32, CChatCommand*> g_CommandList;
 
-extern bool g_bEnableCommands;
-extern bool g_bEnableAdminCommands;
+extern CConVar<bool> g_cvarEnableCommands;
+extern CConVar<bool> g_cvarEnableAdminCommands;
 
-extern bool g_bEnableHide;
-extern bool g_bEnableStopSound;
-extern bool g_bEnableNoShake;
-extern float g_flMaxShakeAmp;
+extern CConVar<bool> g_cvarEnableHide;
+extern CConVar<bool> g_cvarEnableStopSound;
+extern CConVar<bool> g_cvarEnableNoShake;
+extern CConVar<float> g_cvarMaxShakeAmp;
 
 void ClientPrintAll(int destination, const char* msg, ...);
 void ClientPrint(CCSPlayerController* player, int destination, const char* msg, ...);
@@ -60,11 +60,11 @@ public:
 	void operator()(const CCommand& args, CCSPlayerController* player)
 	{
 		// Server disabled ALL chat commands
-		if (!g_bEnableCommands)
+		if (!g_cvarEnableCommands.Get())
 			return;
 
 		// Server disabled admin chat commands
-		if (!g_bEnableAdminCommands && m_nAdminFlags > ADMFLAG_NONE)
+		if (!g_cvarEnableAdminCommands.Get() && m_nAdminFlags > ADMFLAG_NONE)
 			return;
 
 		// Only allow connected players to run chat commands
@@ -96,17 +96,6 @@ private:
 	uint64 m_nCmdFlags;
 };
 
-struct WeaponMapEntry_t
-{
-	std::vector<std::string> aliases;
-	const char* szClassName;
-	const char* szWeaponName;
-	int iPrice;
-	uint16 iItemDefIndex;
-	gear_slot_t iGearSlot;
-	int maxAmount = 0;
-};
-
 void RegisterWeaponCommands();
 void ParseChatCommand(const char*, CCSPlayerController*);
 
@@ -121,8 +110,7 @@ void ParseChatCommand(const char*, CCSPlayerController*);
                                                                                                                                        \
 		name##_chat_command(args, pController);                                                                                        \
 	}                                                                                                                                  \
-	static ConCommandRefAbstract name##_ref;                                                                                           \
-	static ConCommand name##_command(&name##_ref, COMMAND_PREFIX #name, name##_con_callback,                                           \
+	static ConCommand name##_command(COMMAND_PREFIX #name, name##_con_callback,                                                        \
 									 description, FCVAR_CLIENT_CAN_EXECUTE | FCVAR_LINKED_CONCOMMAND);                                 \
 	void name##_callback(const CCommand& args, CCSPlayerController* player)
 

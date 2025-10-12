@@ -151,20 +151,33 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 	//		;
 	//}
 
-	m.def("GetZEPlayer", &CPlayerManager::GetPlayer);
 	//ZEPlayer
 	{
-		py::class_<ZEPlayer*>(m, "ZEPlayer")
-			.def("GetADVPlayer", 
+		m.def("GetZEPlayerOld", &CPlayerManager::GetPlayer);
+
+		py::class_<ZEPlayer>(m, "ZEPlayer")
+			.def("GetADVPlayerOld", 
 				[](ZEPlayer& self) {
 					return self.m_ADVPlayer;})
+			.def("GetADVPlayer", &ZEPlayer::GetADVPlayer)
 			;
 			
 	}
 
 	//ADVPlayer
 	{
-		py::class_<ADVPlayer>(m, "ADVPlayer") //was ADVPlayer
+		m.def("GetADVPlayer", 
+			[](int slot) -> ADVPlayer* {
+				  CPlayerSlot cpSlot = CPlayerSlot(slot);
+				  ZEPlayer* zp = g_playerManager->GetPlayer(cpSlot);
+				  return (ADVPlayer*)zp->GetADVPlayer();
+			});
+		m.def("GetZEPlayer",
+			  [](int slot) -> ZEPlayer* {
+				  CPlayerSlot cpSlot = CPlayerSlot(slot);
+				  return (ZEPlayer*)g_playerManager->GetPlayer(cpSlot);
+			  });
+		py::class_<ADVPlayer>(m, "ADVPlayer") // was ADVPlayer
 			//-1    = invalid
 			// 0..n = player of some kind
 			.def(py::init<int>())
@@ -176,6 +189,7 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 			.def("GetName", &ADVPlayer::GetName)
 			.def("GetSlot", &ADVPlayer::GetSlot)
 			.def("GetIndex", &ADVPlayer::GetIndex)
+			.def("GetTeam", &ADVPlayer::GetTeam)
 			.def("IsOnGround", &ADVPlayer::IsOnGround)
 			.def("IsOnLadder", &ADVPlayer::IsOnLadder)
 			.def("GetButtonStates", &ADVPlayer::GetButtonStates)
@@ -184,6 +198,9 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 			.def("EmitSoundAll", &ADVPlayer::EmitSoundAll)
 			.def_readwrite("_items_last_update", &ADVPlayer::_items_last_update)
 			.def_readwrite("_last_inventory_change", &ADVPlayer::_last_inventory_change)
+			.def_readwrite("_maptest_last_update", &ADVPlayer::_maptest_last_update)
+			.def_readwrite("_maptest_last_class_list_change", &ADVPlayer::_maptest_last_class_list_change)
+			.def_readwrite("_classes", &ADVPlayer::_classes)
 			.def("test", 
 				[](ADVPlayer& self) -> int 
 				//Tristen, don't delete this, you'll eventually forget again.
@@ -192,7 +209,6 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 				})
 			;
 	}
-
 
 	m.def("CreateFakeEvent", 
 		[](const char* name, bool bForce) -> IGameEvent*

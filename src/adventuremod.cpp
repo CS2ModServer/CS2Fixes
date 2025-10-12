@@ -141,24 +141,26 @@ bool ADVPlayer::EmitSoundAll(
 	}
 
 
-CON_COMMAND_F(ability1, "Technique bound to ability1", FCVAR_NONE)
-{
+CON_COMMAND_F(ability1, "Technique bound to ability1", FCVAR_CLIENT_CAN_EXECUTE)
+	{
 	for (auto& plugin : g_CS2Fixes.m_Plugins)
 		plugin.PyClientAbility1(context.GetPlayerSlot().Get());
 	return;
 }
-CON_COMMAND_F(ability2, "Technique bound to ability2", FCVAR_NONE)
+CON_COMMAND_F(ability2, "Technique bound to ability2", FCVAR_CLIENT_CAN_EXECUTE)
 {
 	for (auto& plugin : g_CS2Fixes.m_Plugins)
 		plugin.PyClientAbility2(context.GetPlayerSlot().Get());
 	return;
 }
-CON_COMMAND_F(ultimate, "Technique bound to ultimate", FCVAR_NONE)
+CON_COMMAND_F(ultimate, "Technique bound to ultimate", FCVAR_CLIENT_CAN_EXECUTE)
 {
 	for (auto& plugin : g_CS2Fixes.m_Plugins)
 		plugin.PyClientUltimate(context.GetPlayerSlot().Get());
 	return;
 }
+
+
 // return a list of the players current items.
 std::vector<std::string> ADVPlayer::GetPlayerItems()
 {
@@ -168,7 +170,6 @@ std::vector<std::string> ADVPlayer::GetPlayerItems()
 
 	return *_items;
 }
-
 int ADVPlayer::GetLastUpdateTime()
 {
 	return _items_last_update;
@@ -177,7 +178,6 @@ int ADVPlayer::GetLastInventoryChange()
 {
 	return _last_inventory_change;
 }
-
 bool ADVPlayer::UpdatePlayerItems()
 {
 	_items_last_update = GetGlobals()->tickcount;
@@ -198,14 +198,52 @@ bool ADVPlayer::UpdatePlayerItems()
 	{
 		Message("cs2fixes outerstdstring before: %s\n", outerstdstring);
 		py::object object = plugin.GetSelf();
-		bool success = Source2Py::PyRuntime::ExecuteObjectMethod(object, "_teststdstring", _teststdstring);
+		bool success = Source2Py::PyRuntime::ExecuteObjectMethod(object, "_teststdstring", index, _teststdstring);
 		Message("success=%d\n", success);
 		Message("cs2fixes outerstdstring  after: %s\n\n\n", outerstdstring);
 	}
 
-	_items[index].clear();
-	_items[index].push_back(outerstdstring);
+	_items->clear();
+	_items->push_back(outerstdstring);
 	_items_last_update = GetGlobals()->tickcount;
+	return true;
+}
+
+
+//_maptest stuff
+py::list ADVPlayer::_maptest_GetPlayerClasses()
+{
+	if (_maptest_GetLastUpdateTime() < _maptest_GetLastClassListChange())
+		_maptest_UpdatePlayerClassList();
+	return _classes;
+}
+int ADVPlayer::_maptest_GetLastUpdateTime()
+{
+	return _maptest_last_update;
+}
+int ADVPlayer::_maptest_GetLastClassListChange()
+{
+	return _maptest_last_class_list_change;
+}
+bool ADVPlayer::_maptest_UpdatePlayerClassList()
+{
+	_maptest_last_update = GetGlobals()->tickcount;
+
+	// lambda
+	std::function<bool(py::list&)> _maptest_lambda(
+		[&_classes = _classes](py::list& inner_dict) {
+			_classes = inner_dict;
+			return true;
+		});
+
+	// tell python plugins to use lambda
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+	{
+		py::object object = plugin.GetSelf();
+		Source2Py::PyRuntime::ExecuteObjectMethod(object, "_py_dict_lambda", index, _maptest_lambda);
+	}
+
+	_maptest_last_class_list_change = GetGlobals()->tickcount;
 	return true;
 }
 
@@ -221,4 +259,15 @@ CBaseEntity* ADVPlayer::GetPawn()
 		return (CBaseEntity*)pc->GetPawn();
 	else
 		return nullptr;
+}
+
+int ADVPlayer::GetTeam()
+{
+	//CS_TEAM_NONE      0
+	//CS_TEAM_SPECTATOR 1
+	//CS_TEAM_T         2
+	//CS_TEAM_CT        3
+
+	CCSPlayerController* p = GetPC();
+	return p->m_iTeamNum;
 }
