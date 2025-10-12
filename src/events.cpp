@@ -82,8 +82,7 @@ void UnregisterEventListeners()
 	g_vecEventListeners.Purge();
 }
 
-bool g_bPurgeEntityNames = false;
-FAKE_BOOL_CVAR(cs2f_purge_entity_strings, "Whether to purge the EntityNames stringtable on new rounds", g_bPurgeEntityNames, false, false);
+CConVar<bool> g_cvarPurgeEntityNames("cs2f_purge_entity_strings", FCVAR_NONE, "Whether to purge the EntityNames stringtable on new rounds", false);
 
 extern void FullUpdateAllClients();
 
@@ -91,7 +90,7 @@ GAME_EVENT_F(round_prestart)
 {
 	g_iRoundNum++;
 
-	if (g_bPurgeEntityNames)
+	if (g_cvarPurgeEntityNames.Get())
 	{
 		INetworkStringTable* pEntityNames = g_pNetworkStringTableServer->FindTable("EntityNames");
 
@@ -118,27 +117,23 @@ GAME_EVENT_F(round_prestart)
 	while ((pShake = UTIL_FindEntityByClassname(pShake, "env_shake")))
 		pShake->AcceptInput("StopShake");
 
-	if (g_bEnableZR)
+	if (g_cvarEnableZR.Get())
 		ZR_OnRoundPrestart(pEvent);
 
-	if (g_bEnableEntWatch)
+	if (g_cvarEnableEntWatch.Get())
 		EW_RoundPreStart();
 }
 
-static bool g_bBlockTeamMessages = false;
-
-FAKE_BOOL_CVAR(cs2f_block_team_messages, "Whether to block team join messages", g_bBlockTeamMessages, false, false)
+CConVar<bool> g_cvarBlockTeamMessages("cs2f_block_team_messages", FCVAR_NONE, "Whether to block team join messages", false);
 
 GAME_EVENT_F(player_team)
 {
 	// Remove chat message for team changes
-	if (g_bBlockTeamMessages)
+	if (g_cvarBlockTeamMessages.Get())
 		pEvent->SetBool("silent", true);
 }
 
-static bool g_bNoblock = false;
-
-FAKE_BOOL_CVAR(cs2f_noblock_enable, "Whether to use player noblock, which sets debris collision on every player", g_bNoblock, false, false)
+CConVar<bool> g_cvarNoblock("cs2f_noblock_enable", FCVAR_NONE, "Whether to use player noblock, which sets debris collision on every player", false);
 
 GAME_EVENT_F(player_spawned)
 {
@@ -175,7 +170,7 @@ GAME_EVENT_F(player_spawn)
 	if (pPlayer)
 		pPlayer->SetMaxSpeed(1.f);
 
-	if (g_bEnableZR)
+	if (g_cvarEnableZR.Get())
 		ZR_OnPlayerSpawn(pController);
 
 	if (pController->IsConnected())
@@ -203,7 +198,7 @@ GAME_EVENT_F(player_spawn)
 		CBasePlayerPawn* pPawn = pController->GetPawn();
 
 		// Just in case somehow there's health but the player is, say, an observer
-		if (!g_bNoblock || !pPawn || !pPawn->IsAlive())
+		if (!g_cvarNoblock.Get() || !pPawn || !pPawn->IsAlive())
 			return -1.0f;
 
 		pPawn->SetCollisionGroup(COLLISION_GROUP_DEBRIS);
@@ -232,9 +227,7 @@ GAME_EVENT_F(player_spawn)
 
 }
 
-static bool g_bEnableTopDefender = false;
-
-FAKE_BOOL_CVAR(cs2f_topdefender_enable, "Whether to use TopDefender", g_bEnableTopDefender, false, false)
+CConVar<bool> g_cvarEnableTopDefender("cs2f_topdefender_enable", FCVAR_NONE, "Whether to use TopDefender", false);
 
 /*
 //core.gameevents
@@ -264,14 +257,15 @@ FAKE_BOOL_CVAR(cs2f_topdefender_enable, "Whether to use TopDefender", g_bEnableT
 //remember this is firing at the moment the player is hurt, before the damage is applied.
 GAME_EVENT_F(player_hurt) //new
 {
+	//if (g_cvarEnableZR.Get())
+	//	ZR_OnPlayerHurt(pEvent);
+
+	//if (!g_cvarEnableTopDefender.Get())
+	//	return;
 	for (auto& plugin : g_CS2Fixes.m_Plugins)
 		plugin.PyPlayerHurt(pEvent);
 
-	//if (g_bEnableZR)
-	//	ZR_OnPlayerHurt(pEvent);
 
-	//if (!g_bEnableTopDefender)
-	//	return;
 
 	CCSPlayerController* pAttacker = (CCSPlayerController*)pEvent->GetPlayerController("attacker");
 	CCSPlayerController* pVictim = (CCSPlayerController*)pEvent->GetPlayerController("userid");
@@ -292,29 +286,7 @@ GAME_EVENT_F(player_hurt) //new
 	pPlayer->SetTotalHits(pPlayer->GetTotalHits() + 1);
 }
 
-GAME_EVENT_F(old_player_hurt)
-{
-	if (g_bEnableZR)
-		ZR_OnPlayerHurt(pEvent);
 
-	if (!g_bEnableTopDefender)
-		return;
-
-	CCSPlayerController* pAttacker = (CCSPlayerController*)pEvent->GetPlayerController("attacker");
-	CCSPlayerController* pVictim = (CCSPlayerController*)pEvent->GetPlayerController("userid");
-
-	// Ignore Ts/zombies and CTs hurting themselves
-	if (!pAttacker || pAttacker->m_iTeamNum() != CS_TEAM_CT || pAttacker->m_iTeamNum() == pVictim->m_iTeamNum())
-		return;
-
-	ZEPlayer* pPlayer = pAttacker->GetZEPlayer();
-
-	if (!pPlayer)
-		return;
-
-	pPlayer->SetTotalDamage(pPlayer->GetTotalDamage() + pEvent->GetInt("dmg_health"));
-	pPlayer->SetTotalHits(pPlayer->GetTotalHits() + 1);
-}
 
 GAME_EVENT_F(bomb_planted)
 {
@@ -397,11 +369,21 @@ GAME_EVENT_F(player_death)
 		}),
 	*/
 
-	//if (g_bEnableZR)
+	//if (g_bEnableEntWatch) //old
+	//	EW_PlayerDeath(pEvent);
+	//if (g_cvarEnableEntWatch.Get()) //new
+	//	EW_PlayerDeath(pEvent);
+
+	//if (!g_bEnableTopDefender) //old
+	//	return;
+	//if (!g_cvarEnableTopDefender.Get()) //new
+	//	return;
+
+	//if (g_bEnableZR) //old
+	//	ZR_OnPlayerDeath(pEvent);
+	//if (g_cvarEnableZR.Get()) //new
 	//	ZR_OnPlayerDeath(pEvent);
 
-	//if (g_bEnableEntWatch)
-	//	EW_PlayerDeath(pEvent);
 
 	//if (!g_bEnableTopDefender)
 	//	return;
@@ -499,24 +481,23 @@ GAME_EVENT_F(player_airborn)
 		plugin.PyPlayerAirborn(index);
 }
 
-bool g_bFullAllTalk = false;
-FAKE_BOOL_CVAR(cs2f_full_alltalk, "Whether to enforce sv_full_alltalk 1", g_bFullAllTalk, false, false);
 
+CConVar<bool> g_cvarFullAllTalk("cs2f_full_alltalk", FCVAR_NONE, "Whether to enforce sv_full_alltalk 1", false);
 GAME_EVENT_F(round_start)
 {
 	g_pPanoramaVoteHandler->Init();
 
-	if (g_bEnableZR)
+	if (g_cvarEnableZR.Get())
 		ZR_OnRoundStart(pEvent);
 
-	if (g_bEnableLeader)
+	if (g_cvarEnableLeader.Get())
 		Leader_OnRoundStart(pEvent);
 
 	// Dumb workaround for CS2 always overriding sv_full_alltalk on state changes
-	if (g_bFullAllTalk)
+	if (g_cvarFullAllTalk.Get())
 		g_pEngineServer2->ServerCommand("sv_full_alltalk 1");
 
-	if (!g_bEnableTopDefender || !GetGlobals())
+	if (!g_cvarEnableTopDefender.Get() || !GetGlobals())
 		return;
 
 	for (int i = 0; i < GetGlobals()->maxClients; i++)
@@ -534,10 +515,13 @@ GAME_EVENT_F(round_start)
 
 GAME_EVENT_F(round_end)
 {
-	if (g_bVoteManagerEnable)
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyRoundEnd(pEvent);
+
+	if (g_cvarVoteManagerEnable.Get())
 		g_pVoteManager->OnRoundEnd();
 
-	if (!g_bEnableTopDefender || !GetGlobals())
+	if (!g_cvarEnableTopDefender.Get() || !GetGlobals())
 		return;
 
 	CUtlVector<ZEPlayer*> sortedPlayers;
@@ -586,19 +570,19 @@ GAME_EVENT_F(round_end)
 
 GAME_EVENT_F(round_freeze_end)
 {
-	if (g_bEnableZR)
+	if (g_cvarEnableZR.Get())
 		ZR_OnRoundFreezeEnd(pEvent);
 }
 
 GAME_EVENT_F(round_time_warning)
 {
-	if (g_bEnableZR)
+	if (g_cvarEnableZR.Get())
 		ZR_OnRoundTimeWarning(pEvent);
 }
 
 GAME_EVENT_F(bullet_impact)
 {
-	if (g_bEnableLeader)
+	if (g_cvarEnableLeader.Get())
 		Leader_BulletImpact(pEvent);
 }
 

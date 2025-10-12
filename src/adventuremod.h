@@ -7,6 +7,8 @@
 #include "common.h"
 #include <string>
 #include <vector>
+#include <map>
+#include "PyInclude.h"
 //#include "adventuremenu.h"
 
 #define MAXITEMS 50
@@ -22,6 +24,8 @@ public:
 		index = -1;
 		_items_last_update = -1;
 		_last_inventory_change = -1;
+		_maptest_last_update = -1;
+		_maptest_last_class_list_change = -1;
 	};
 
 	ADVPlayer(int _index) :
@@ -29,7 +33,10 @@ public:
 	{
 		_items_last_update = -1;
 		_last_inventory_change = -1;
+		_maptest_last_update = -1;
+		_maptest_last_class_list_change = -1;
 		UpdatePlayerItems();
+		_maptest_UpdatePlayerClassList();
 	};
 
 private:
@@ -38,6 +45,7 @@ private:
 public: 
 	int						GetIndex() const	{ return index; };
 	int						GetSlot() const		{ return index; };
+	int						GetTeam();
 
 	CCSPlayerController*    GetPC();
 	CBaseEntity*			GetPawn();
@@ -63,12 +71,13 @@ public:
 		float _flVolume);
 
 	
-	// menu interaction
+	// chr menu interaction
 private: 
 	//vector of item names the player has in python.
 	std::vector<std::string> _items[MAXITEMS];
 
 public:
+
 	// the last time the _players_items list was updated.
 	int _items_last_update;
 	int _last_inventory_change;
@@ -81,5 +90,18 @@ public:
 	int GetLastUpdateTime();
 	int GetLastInventoryChange();
 
+public:
+
+	int _maptest_last_update;
+	int _maptest_last_class_list_change;
+	//py::list _classes[MAXITEMS];
+	py::list _classes;
+
+	//std::map<std::string, int> _maptest_GetPlayerClasses(int slot, int menutype);
+	py::list _maptest_GetPlayerClasses();
+
+	bool _maptest_UpdatePlayerClassList();
+	int _maptest_GetLastUpdateTime();
+	int _maptest_GetLastClassListChange();
 };
 

@@ -17,34 +17,28 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "ccsplayerpawn.h"
+#include "../ctimer.h"
 
-#include "platform.h"
+// Silly workaround for an animation bug that's been happening since 2024-11-06 CS2 update
+// Clients need to see the new playermodel with zero velocity for at least one tick to properly render animations
+void CCSPlayerPawn::FixPlayerModelAnimations()
+{
+	CHandle<CCSPlayerPawn> hPawn = GetHandle();
+	Vector originalVelocity = m_vecAbsVelocity;
 
-#define VPROF_LEVEL 1
+	Teleport(nullptr, nullptr, &vec3_origin);
+	SetMoveType(MOVETYPE_OBSOLETE);
 
-#define CS_TEAM_NONE 0
-#define CS_TEAM_SPECTATOR 1
-#define CS_TEAM_T 2
-#define CS_TEAM_CT 3
+	new CTimer(0.01f, false, false, [hPawn, originalVelocity]() {
+		CCSPlayerPawn* pPawn = hPawn.Get();
 
-#define HUD_PRINTNOTIFY 1
-#define HUD_PRINTCONSOLE 2
-#define HUD_PRINTTALK 3
-#define HUD_PRINTCENTER 4
+		if (!pPawn || !pPawn->IsAlive())
+			return -1.0f;
 
-#define MAXPLAYERS 64
+		pPawn->SetMoveType(MOVETYPE_WALK);
+		pPawn->Teleport(nullptr, nullptr, &originalVelocity);
 
-#ifdef _WIN32
-	#define ROOTBIN "/bin/win64/"
-	#define GAMEBIN "/csgo/bin/win64/"
-#else
-	#define ROOTBIN "/bin/linuxsteamrt64/"
-	#define GAMEBIN "/csgo/bin/linuxsteamrt64/"
-#endif
-
-void UnlockConVars();
-void UnlockConCommands();
-
-void Message(const char*, ...);
-void Panic(const char*, ...);
+		return -1.0f;
+	});
+}
