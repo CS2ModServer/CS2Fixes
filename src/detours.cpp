@@ -22,6 +22,7 @@
 #include "usercmd.pb.h"
 
 #include "addresses.h"
+#include "bspflags.h"
 #include "buttonwatch.h"
 #include "cdetour.h"
 #include "commands.h"
