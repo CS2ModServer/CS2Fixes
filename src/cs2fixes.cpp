@@ -1335,6 +1335,7 @@ void CS2Fixes::Hook_CheckTransmit(CCheckTransmitInfo** ppInfoList, int infoCount
 			if (pSelfZEPlayer->ShouldBlockTransmit(j) && pOtherZEPlayer && !pOtherZEPlayer->IsLeader() && g_pEWHandler->FindItemInstanceByOwner(j, false, 0) == -1)
 			{
 				pInfo->m_pTransmitEntity->Clear(pPawn->entindex());
+				pInfo->m_pTransmitNonPlayers->Set(pPawn->entindex());
 
 				if (g_cvarHideWeapons.Get())
 				{
@@ -1345,8 +1346,11 @@ void CS2Fixes::Hook_CheckTransmit(CCheckTransmitInfo** ppInfoList, int infoCount
 						auto pWeapon = (*pVecWeapons)[i].Get();
 
 						if (pWeapon)
+						{
 							pInfo->m_pTransmitEntity->Clear(pWeapon->entindex());
-		}
+							pInfo->m_pTransmitNonPlayers->Set(pWeapon->entindex());
+						}
+					}
 				}
 			}
 		}
