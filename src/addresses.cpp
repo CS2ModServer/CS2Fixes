@@ -1,4 +1,4 @@
-﻿/**
+/**
  * =============================================================================
  * CS2Fixes
  * Copyright (C) 2023-2026 Source2ZE
@@ -29,6 +29,7 @@
 		return false;                                                  \
 	Message("Found %s at 0x%p\n", name, variable);
 
+//temporary comment
 bool addresses::Initialize(CGameConfig* g_GameConfig)
 {
 	modules::engine = new CModule(ROOTBIN, "engine2");

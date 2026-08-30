@@ -31,6 +31,7 @@
 #include "entities.h"
 #include "entity/ccsplayercontroller.h"
 #include "entity/services.h"
+#include "entity/services.h"
 #include "entitylistener.h"
 #include "entitysystem.h"
 #include "entwatch.h"
@@ -61,6 +62,12 @@
 #include "votemanager.h"
 #include "zombiereborn.h"
 #include <entity.h>
+
+//#include "Source2Py.h"
+#include "PyRuntime.h"
+//#include "PyInclude.h" //included in PyRuntime.h
+
+#include <fstream>
 
 #include "tier0/memdbgon.h"
 
@@ -130,6 +137,52 @@ CGameEntitySystem* GameEntitySystem()
 	static int offset = g_GameConfig->GetOffset("GameEntitySystem");
 	return *reinterpret_cast<CGameEntitySystem**>((uintptr_t)(g_pGameResourceServiceServer) + offset);
 }
+
+bool CS2Fixes::LoadPythonPlugins()
+{
+	fs::path pypluginsFilepath = "pyplugins.ini";
+
+	if (!fs::exists(pypluginsFilepath))
+	{
+		Message("Failed to load pyplugins.ini!\n");
+		// Log::Error("Failed to load pyplugins.ini!");
+		return false;
+	}
+
+	// Read from pyplugins.ini
+	std::ifstream pypluginsFile(pypluginsFilepath);
+
+	if (pypluginsFile.fail())
+	{
+		Message("Failed to open pyplugins.ini!\n\0");
+		// Log::Error("Failed to open pyplugins.ini!");
+		return false;
+	}
+
+	std::string line;
+	while (std::getline(pypluginsFile, line))
+	{
+		// ignore comments
+		if (line[0] == '#' || line[0] == ';' || line.empty())
+			continue;
+
+		Source2Py::PyPlugin plugin(line);
+		if (plugin)
+		{
+			Message("Loaded %s %s\n", line.c_str(), "from pyplugins.ini");
+			// Log::Write("Loaded " + line + " from pyplugins.ini");
+				
+			m_Plugins.push_back(plugin);
+			m_Plugins.back().Load();
+		}
+	}
+
+	Message("Loaded %s %s\n", std::to_string(m_Plugins.size()), "Python plugin(s)");
+	// Log::Write("Loaded " + std::to_string(m_Plugins.size()) + " Python plugin(s)");
+
+	return true;
+}
+
 
 // Will return null between map end & new map startup, null check if necessary!
 INetworkGameServer* GetNetworkGameServer()
@@ -212,6 +265,24 @@ bool CS2Fixes::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, bool
 
 	if (!InitGameSystems())
 		bRequiredInitLoaded = false;
+
+	//this' all i've added here.
+	{
+	fs::path exePath = fs::current_path();
+	fs::current_path(GetPluginBaseDirectory());
+
+	if (!Source2Py::PyRuntime::Init())
+		bRequiredInitLoaded = false;
+
+	if (!LoadPythonPlugins())
+	{
+		Source2Py::PyRuntime::Close();
+		bRequiredInitLoaded = false;
+	}
+
+		// and set the cwd back where the game expects it
+	fs::current_path(exePath);
+	}
 
 	const auto pCGamePlayerEquipVTable = modules::server->FindVirtualTable("CGamePlayerEquip");
 	if (!pCGamePlayerEquipVTable)
@@ -378,7 +449,10 @@ bool CS2Fixes::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, bool
 	});
 
 	// run our cfg
-	g_pEngineServer2->ServerCommand("exec cs2fixes/cs2fixes");
+	// remember for later, exec looks in ~/csgo/cfg/ for stuff.
+	// ~/csgo/cfg/cs2fixes/cs2fixes.cfg    <-- move to here
+	// ~/csgo/addons/cs2fixes/cfg/cs2fixes/cs2fixes.cfg     <-- from here
+	g_pEngineServer2->ServerCommand("exec CS2Fixes/cs2fixes");
 
 	srand(time(0));
 
@@ -441,6 +515,9 @@ bool CS2Fixes::Unload(char* error, size_t maxlen)
 	if (g_iSetGameSpawnGroupMgrId != -1)
 		SH_REMOVE_HOOK_ID(g_iSetGameSpawnGroupMgrId);
 
+	if (g_iCGamePlayerEquipPrecacheId != -1)
+		SH_REMOVE_HOOK_ID(g_iCGamePlayerEquipPrecacheId);
+
 	ConVar_Unregister();
 
 	UnregisterGameSystem();
@@ -481,11 +558,16 @@ bool CS2Fixes::Unload(char* error, size_t maxlen)
 
 	if (g_pZRWeaponConfig)
 		delete g_pZRWeaponConfig;
+	
+	if (g_pZRHitgroupConfig)
+		delete g_pZRHitgroupConfig;
 
 	if (g_pZRHitgroupConfig)
 		delete g_pZRHitgroupConfig;
 
 	if (g_pEntitySystem && g_pEntityListener)
+	{
+		g_pEntitySystem->RemoveListenerEntity(g_pEntityListener);
 	{
 		g_pEntitySystem->RemoveListenerEntity(g_pEntityListener);
 		delete g_pEntityListener;
@@ -848,6 +930,9 @@ void CS2Fixes::Hook_ClientCommand(CPlayerSlot slot, const CCommand& args)
 		ZR_Hook_ClientCommand_JoinTeam(slot, args);
 		RETURN_META(MRES_SUPERCEDE);
 	}
+
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyClientCommand(slot.Get(), args.GetCommandString());
 }
 
 void CS2Fixes::Hook_ClientSettingsChanged(CPlayerSlot slot)
@@ -882,6 +967,18 @@ bool CS2Fixes::Hook_ClientConnect(CPlayerSlot slot, const char* pszName, uint64 
 
 void CS2Fixes::Hook_ClientPutInServer(CPlayerSlot slot, char const* pszName, int type, uint64 xuid)
 {
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyClientPutInServer(
+			slot.Get(),
+			pszName,
+			type,
+			// type values could be:
+			// 0 - player
+			// 1 - fake player (bot)
+			// 2 - unknown
+			xuid
+			);
+
 	Message("Hook_ClientPutInServer(%d, \"%s\", %d, %d, %lli)\n", slot, pszName, type, xuid);
 
 	if (!g_playerManager->GetPlayer(slot))
@@ -895,6 +992,16 @@ void CS2Fixes::Hook_ClientPutInServer(CPlayerSlot slot, char const* pszName, int
 
 void CS2Fixes::Hook_ClientDisconnect(CPlayerSlot slot, ENetworkDisconnectionReason reason, const char* pszName, uint64 xuid, const char* pszNetworkID)
 {
+
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyClientDisconnect(
+			slot.Get(),
+			reason,
+			pszName,
+			xuid,
+			pszNetworkID
+			);
+
 	Message("Hook_ClientDisconnect(%d, %d, \"%s\", %lli)\n", slot, reason, pszName, xuid);
 
 	CCSPlayerController* player = CCSPlayerController::FromSlot(slot);
@@ -940,6 +1047,12 @@ void CS2Fixes::Hook_GameFramePost(bool simulating, bool bFirstTick, bool bLastTi
 
 	RunTimers();
 	EntityHandler_OnGameFramePost(simulating, GetGlobals()->tickcount);
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyGameFrame(
+			simulating,
+			bFirstTick,
+			bLastTick
+			);
 }
 
 void CS2Fixes::Hook_CheckTransmit(CCheckTransmitInfo** ppInfoList, int infoCount, CBitVec<16384>& unionTransmitEdicts,
@@ -1183,7 +1296,11 @@ void CS2Fixes::Hook_DropWeaponPost(CBasePlayerWeapon* pWeapon, Vector* pVecTarge
 
 int CS2Fixes::Hook_LoadEventsFromFile(const char* filename, bool bSearchAll)
 {
-	ExecuteOnce(g_gameEventManager = META_IFACEPTR(IGameEventManager2));
+	ExecuteOnce
+	(
+		g_gameEventManager = META_IFACEPTR(IGameEventManager2);
+		RegisterEventListeners();
+	)
 
 	RETURN_META_VALUE(MRES_IGNORED, 0);
 }
@@ -1318,6 +1435,8 @@ void CS2Fixes::OnLevelInit(char const* pMapName,
 	Message("OnLevelInit(%s)\n", pMapName);
 
 	// run our cfg
+	//remember for later, this ~/game/csgo/cfg/cs2fixes/cs2fixes.cfg being executed.
+	//you'll need to move it from ~/addons/cs2fixes/cfg/cs2fixes/cs2fixes.cfg if you want it found.
 	g_pEngineServer2->ServerCommand("exec cs2fixes/cs2fixes");
 
 	// Run map cfg (if present)

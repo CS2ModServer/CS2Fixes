@@ -23,7 +23,6 @@
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{2a734041-5881-4ea1-bf05-46f361443af3}</ProjectGuid>
     <RootNamespace>Dll1</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
     <ProjectName>CS2Fixes</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -74,12 +73,15 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <TargetName>cs2fixes</TargetName>
     <LibraryPath>sdk\lib\public\win64;vendor/funchook/lib;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
-    <OutDir>$(SolutionDir)/package/addons/cs2fixes/bin/win64/</OutDir>
+    <OutDir>$(SolutionDir)/build/package/addons/cs2fixes/bin/win64/</OutDir>
+    <IntDir>$(SolutionDir)/build/$(ShortProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <ExecutablePath>$(VC_ExecutablePath_x64);$(CommonExecutablePath)</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <TargetName>cs2fixes</TargetName>
     <LibraryPath>sdk\lib\public\win64;vendor/funchook/lib;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
     <OutDir>$(SolutionDir)/package/addons/cs2fixes/bin/win64/</OutDir>
+    <ExecutablePath>$(VC_ExecutablePath_x64);$(CommonExecutablePath)</ExecutablePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -117,17 +119,68 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>__STDC_LIMIT_MACROS;X64BITS;WIN32;COMPILER_MSVC;COMPILER_MSVC64;_CRT_NO_VA_START_VALIDATION;_ITERATOR_DEBUG_LEVEL=0;_DEBUG;CS2Fixes_EXPORTS;_WINDOWS;_USRDLL;META_IS_SOURCE2;SUBHOOK_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <WarningLevel>Level1</WarningLevel>
+      <PreprocessorDefinitions>X64BITS;WIN32;COMPILER_MSVC;COMPILER_MSVC64;_CRT_NO_VA_START_VALIDATION;_ITERATOR_DEBUG_LEVEL=0;_DEBUG;CS2Fixes_EXPORTS;_WINDOWS;_USRDLL;META_IS_SOURCE2;SUBHOOK_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>build/cs2fixes.cs2/windows-x86_64;src/utils;src/cs2_sdk;sdk/public;sdk/public/tier0;sdk/game/shared;sdk/game/server;sdk/public/tier1;sdk/public/mathlib;minhook/include;$(MMSOURCE112)/core;$(MMSOURCE112)/core/sourcehook;$(MMSOURCE_DEV)/core;$(MMSOURCE_DEV)/core/sourcehook;vendor/subhook;vendor/funchook/include;sdk/public/entity2;sdk/public/game/server;sdk/thirdparty/protobuf-3.21.8/src;$(SolutionDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <!--
+		<AdditionalIncludeDirectories>
+			//src/utils;
+			//src/cs2_sdk;
+			//sdk/public;
+			//sdk/public/tier0;
+			//sdk/game/shared;
+			//sdk/game/server;
+			//sdk/public/tier1;
+			//sdk/public/mathlib;
+			//minhook/include;
+			//vendor/subhook;
+			//vendor/funchook/include;
+			//sdk/public/entity2;
+			//sdk/public/game/server;
+			//sdk/thirdparty/protobuf-3.21.8/src;
+			//$(SolutionDir);
+			//%(AdditionalIncludeDirectories)
+
+			../metamod-source/core;
+			../metamod-source/core/sourcehook;
+			protobuf/generated;
+			vendor/funchook/lib;
+
+		</AdditionalIncludeDirectories>
+//above, mine, old.
+//below, original
+		<AdditionalIncludeDirectories>
+			build/cs2fixes.cs2/windows-x86_64;
+			src/utils;
+			src/cs2_sdk;
+			sdk/public;
+			sdk/public/tier0;
+			sdk/game/shared;
+			sdk/game/server;
+			sdk/public/tier1;
+			sdk/public/mathlib;
+			minhook/include;
+			$(MMSOURCE112)/core;
+			$(MMSOURCE112)/core/sourcehook;
+			$(MMSOURCE_DEV)/core;
+			$(MMSOURCE_DEV)/core/sourcehook;
+			vendor/subhook;
+			vendor/funchook/include;
+			sdk/public/entity2;
+			sdk/public/game/server;
+			sdk/thirdparty/protobuf-3.21.8/src;
+			$(SolutionDir);
+			%(AdditionalIncludeDirectories)
+		</AdditionalIncludeDirectories>
+      -->
+      <AdditionalIncludeDirectories>build/cs2fixes.cs2/windows-x86_64;src/utils;src/cs2_sdk;E:\repo\CS2Server-Addons\hl2sdk-cs2/public;E:\repo\CS2Server-Addons\hl2sdk-cs2/public/tier0;E:\repo\CS2Server-Addons\hl2sdk-cs2/game/shared;E:\repo\CS2Server-Addons\hl2sdk-cs2/game/server;E:\repo\CS2Server-Addons\hl2sdk-cs2/public/entity2;E:\repo\CS2Server-Addons\hl2sdk-cs2/public/game/server;E:\repo\CS2Server-Addons\hl2sdk-cs2/public/mathlib;E:\repo\CS2Server-Addons\hl2sdk-cs2/public/tier1;E:\repo\CS2Server-Addons\hl2sdk-cs2/thirdparty/protobuf-3.21.8/src;minhook/include;vendor/subhook;vendor/funchook/include;protobuf/generated;vendor/funchook/lib;$(SolutionDir);%(AdditionalIncludeDirectories);E:\repo\CS2Server-Addons\metamod-source\core;E:\repo\CS2Server-Addons\metamod-source\core\sourcehook;vendor\pybind11\include</AdditionalIncludeDirectories>
       <UndefinePreprocessorDefinitions>%(UndefinePreprocessorDefinitions)</UndefinePreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <LanguageStandard_C>Default</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -144,16 +197,19 @@
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>__STDC_LIMIT_MACROS;X64BITS;WIN32;COMPILER_MSVC;COMPILER_MSVC64;_CRT_NO_VA_START_VALIDATION;_ITERATOR_DEBUG_LEVEL=0;NDEBUG;_WINDOWS;CS2Fixes_EXPORTS;_USRDLL;META_IS_SOURCE2;SUBHOOK_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>X64BITS;WIN32;COMPILER_MSVC;COMPILER_MSVC64;_CRT_NO_VA_START_VALIDATION;_ITERATOR_DEBUG_LEVEL=0;NDEBUG;_WINDOWS;CS2Fixes_EXPORTS;_USRDLL;META_IS_SOURCE2;SUBHOOK_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>Default</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>build/cs2fixes.cs2/windows-x86_64;src/utils;src/cs2_sdk;sdk/public;sdk/public/tier0;sdk/game/shared;sdk/game/server;sdk/public/tier1;sdk/public/mathlib;minhook/include;$(MMSOURCE112)/core;$(MMSOURCE112)/core/sourcehook;$(MMSOURCE_DEV)/core;$(MMSOURCE_DEV)/core/sourcehook;vendor/subhook;vendor/funchook/include;sdk/public/entity2;sdk/public/game/server;sdk/thirdparty/protobuf-3.21.8/src;$(SolutionDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <!--
+      //<AdditionalIncludeDirectories>protobuf/generated;src/utils;src/cs2_sdk;sdk/public;sdk/public/tier0;sdk/game/shared;sdk/game/server;sdk/public/tier1;sdk/public/mathlib;minhook/include;../metamod-source/core;../metamod-source/core/sourcehook;vendor/subhook;vendor/funchook/include;sdk/public/entity2;sdk/public/game/server;sdk/thirdparty/protobuf-3.21.8/src;$(SolutionDir);vendor/funchook/lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      -->
+      <AdditionalIncludeDirectories>build/cs2fixes.cs2/windows-x86_64;src/utils;src/cs2_sdk;E:\repo\CS2Server-Addons\hl2sdk-cs2/public;E:\repo\CS2Server-Addons\hl2sdk-cs2/public/tier0;E:\repo\CS2Server-Addons\hl2sdk-cs2/game/shared;E:\repo\CS2Server-Addons\hl2sdk-cs2/game/server;E:\repo\CS2Server-Addons\hl2sdk-cs2/public/tier1;E:\repo\CS2Server-Addons\hl2sdk-cs2/public/mathlib;E:\repo\CS2Server-Addons\hl2sdk-cs2/public/entity2;E:\repo\CS2Server-Addons\hl2sdk-cs2/public/game/server;minhook/include;vendor/subhook;vendor/funchook/include;E:\repo\CS2Server-Addons\hl2sdk-cs2/thirdparty/protobuf-3.21.8/src;$(SolutionDir);%(AdditionalIncludeDirectories);E:\repo\CS2Server-Addons\metamod-source\core\sourcehook;E:\repo\CS2Server-Addons\metamod-source\core;E:\repo\CS2Server-Addons\metamod-source;vendor\pybind11</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <UndefinePreprocessorDefinitions>%(UndefinePreprocessorDefinitions)</UndefinePreprocessorDefinitions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <LanguageStandard_C>Default</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -162,10 +218,13 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
       <AdditionalDependencies>interfaces.lib;mathlib.lib;tier0.lib;tier1.lib;psapi.lib;funchook.lib;distorm.lib;steam_api64.lib;vendor/protobuf-lib/Release/libprotobuf.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>sdk/lib/public/win64;vendor/funchook/lib/Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>sdk/lib/public/win64;vendor/funchook/lib/Release;/NODEFAULTLIB;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ShowProgress>
       </ShowProgress>
     </Link>
+    <PostBuildEvent>
+      <Command>$(SolutionDir)/build/Compile.Success.CS2Fixes.bat</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\buttonwatch.cpp" />
@@ -207,6 +266,9 @@
     <ClCompile Include="src\panoramavote.cpp" />
     <ClCompile Include="src\patches.cpp" />
     <ClCompile Include="src\playermanager.cpp" />
+    <ClCompile Include="src\PyAPI.cpp" />
+    <ClCompile Include="src\PyPlugin.cpp" />
+    <ClCompile Include="src\PyRuntime.cpp" />
     <ClCompile Include="src\topdefender.cpp" />
     <ClCompile Include="src\user_preferences.cpp" />
     <ClCompile Include="src\votemanager.cpp" />
@@ -300,6 +362,7 @@
     <ClInclude Include="src\utils\version_gen_placeholder.h" />
     <ClInclude Include="src\utils\hud_manager.h" />
     <ClInclude Include="src\utils\utils.h" />
+    <ClInclude Include="src\utils\weapon.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

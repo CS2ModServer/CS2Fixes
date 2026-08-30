@@ -1518,6 +1518,12 @@ bool ZR_Detour_CEntityIdentity_AcceptInput(CEntityIdentity* pThis, CUtlSymbolLar
 			// This would allow maps to mess with timeleft, so we're actually just going to block it entirely
 			case CSRoundEndReason::GameStart:
 				return false;
+	const char* pszWeaponClassname = pPlayerWeapon->GetWeaponClassname();
+	if (pPawn->m_iTeamNum() == CS_TEAM_T && !CCSPlayer_ItemServices::IsAwsProcessing() && V_strncmp(pszWeaponClassname, "weapon_knife", 12) && V_strncmp(pszWeaponClassname, "weapon_c4", 9))
+		return false;
+	if (pPawn->m_iTeamNum() == CS_TEAM_CT && V_strlen(pszWeaponClassname) > 7 && !g_pZRWeaponConfig->FindWeapon(pszWeaponClassname + 7))
+		return false;
+	// doesn't guarantee the player will pick the weapon up, it just allows the original function to run
 			case CSRoundEndReason::Draw:
 			default:
 				ZR_FinishRound(CS_TEAM_NONE);

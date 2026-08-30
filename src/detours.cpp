@@ -53,6 +53,7 @@
 #include "tier0/vprof.h"
 #include "votemanager.h"
 #include "zombiereborn.h"
+#include "buttonwatch.h"
 
 #include "tier0/memdbgon.h"
 

@@ -145,6 +145,9 @@ void ParseWeaponCommand(const CCommand& args, CCSPlayerController* player)
 
 	if (pWeaponInfo->m_eSlot == GEAR_SLOT_GRENADES)
 	{
+		int iGrenadeLimitDefault = ammo_grenade_limit_default.GetInt();
+		int iGrenadeLimitTotal = ammo_grenade_limit_total.GetInt();
+
 		int iMatchingGrenades = GetGrenadeAmmo(pWeaponServices, pWeaponInfo);
 		int iTotalGrenades = GetGrenadeAmmoTotal(pWeaponServices);
 
@@ -509,6 +512,12 @@ void PrintHelp(const CCommand& args, CCSPlayerController* player)
 			{
 				auto cmd = cmdPair.second;
 				uint64 flags = cmd->GetAdminFlags();
+			
+			if ((pZEPlayer->IsAdminFlagSet(flags) || ((flags & FLAG_LEADER) == FLAG_LEADER && pZEPlayer->IsLeader()))
+				&& !cmd->IsCommandFlagSet(CMDFLAG_NOHELP))
+				rgstrCommands.push_back(std::string("!") + cmd->GetName() + " " + cmd->GetDescription());
+		}
+	}
 
 				if ((pZEPlayer->IsAdminFlagSet(flags) || ((flags & FLAG_LEADER) == FLAG_LEADER && pZEPlayer->IsLeader()))
 					&& !cmd->IsCommandFlagSet(CMDFLAG_NOHELP))

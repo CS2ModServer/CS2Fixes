@@ -1,4 +1,4 @@
-/**
+﻿/**
  * =============================================================================
  * CS2Fixes
  * Copyright (C) 2023-2026 Source2ZE
@@ -43,6 +43,7 @@ static uint32_t GetEntityUnique(CBaseEntity* pEntity)
 	if (sUniqueHammerID.IsEmpty())
 		return ENTITY_UNIQUE_INVALID;
 
+static bool StripPlayer(CCSPlayerPawn* pPawn)
 	return MurmurHash2LowerCase(sUniqueHammerID.Get(), ENTITY_MURMURHASH_SEED);
 }
 

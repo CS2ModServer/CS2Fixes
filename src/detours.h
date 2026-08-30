@@ -21,6 +21,7 @@
 #include "cdetour.h"
 #include "cs2_sdk/entityio.h"
 #include <utlsymbollarge.h>
+#include "cs2_sdk/entityio.h"
 
 class CCheckTransmitInfo;
 class IRecipientFilter;

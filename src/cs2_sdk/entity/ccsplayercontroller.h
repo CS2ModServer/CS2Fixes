@@ -148,6 +148,8 @@ public:
 		m_iScore() = m_iScore() + iScore;
 	}
 
+
+
 	void SetClanTag(const char* pszClanTag)
 	{
 		// Skip if clan tag is unchanged, since name swap trick has a bit of overhead
