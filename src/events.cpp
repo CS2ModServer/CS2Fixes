@@ -1,7 +1,7 @@
 /**
  * =============================================================================
  * CS2Fixes
- * Copyright (C) 2023-2025 Source2ZE
+ * Copyright (C) 2023-2026 Source2ZE
  * =============================================================================
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -26,12 +26,14 @@
 #include "entity/cgamerules.h"
 #include "entwatch.h"
 #include "eventlistener.h"
+#include "hud_manager.h"
 #include "idlemanager.h"
 #include "leader.h"
 #include "map_votes.h"
-#include "networkstringtabledefs.h"
+#include "mapmigrations.h"
 #include "panoramavote.h"
 #include "recipientfilters.h"
+#include "topdefender.h"
 #include "votemanager.h"
 #include "zombiereborn.h"
 #include "adventuremod.h"
@@ -40,16 +42,7 @@
 
 #include "tier0/memdbgon.h"
 
-extern IGameEventManager2* g_gameEventManager;
-extern IServerGameClients* g_pSource2GameClients;
-extern CGameEntitySystem* g_pEntitySystem;
-extern CGlobalVars* GetGlobals();
-extern CCSGameRules* g_pGameRules;
-extern IVEngineServer2* g_pEngineServer2;
-
-extern int g_iRoundNum;
-
-CUtlVector<CGameEventListener*> g_vecEventListeners;
+std::vector<CGameEventListener*> g_vecEventListeners;
 
 void RegisterEventListeners()
 {
@@ -61,10 +54,8 @@ void RegisterEventListeners()
 	//E:/CS2Server/cs2/game/csgo/bin/win64/~ is where were at normally.
 	g_gameEventManager->LoadEventsFromFile("../../csgo/addons/CS2Fixes/resource/adventure.res", false);
 
-	FOR_EACH_VEC(g_vecEventListeners, i)
-	{
-		g_gameEventManager->AddListener(g_vecEventListeners[i], g_vecEventListeners[i]->GetEventName(), true);
-	}
+	for (CGameEventListener* pListener : g_vecEventListeners)
+		g_gameEventManager->AddListener(pListener, pListener->GetEventName(), true);
 
 	bRegistered = true;
 }
@@ -74,40 +65,15 @@ void UnregisterEventListeners()
 	if (!g_gameEventManager)
 		return;
 
-	FOR_EACH_VEC(g_vecEventListeners, i)
-	{
-		g_gameEventManager->RemoveListener(g_vecEventListeners[i]);
-	}
+	for (CGameEventListener* pListener : g_vecEventListeners)
+		g_gameEventManager->RemoveListener(pListener);
 
-	g_vecEventListeners.Purge();
+	g_vecEventListeners.clear();
 }
-
-CConVar<bool> g_cvarPurgeEntityNames("cs2f_purge_entity_strings", FCVAR_NONE, "Whether to purge the EntityNames stringtable on new rounds", false);
-
-extern void FullUpdateAllClients();
 
 GAME_EVENT_F(round_prestart)
 {
-	g_iRoundNum++;
-
-	if (g_cvarPurgeEntityNames.Get())
-	{
-		INetworkStringTable* pEntityNames = g_pNetworkStringTableServer->FindTable("EntityNames");
-
-		if (pEntityNames)
-		{
-			int iStringCount = pEntityNames->GetNumStrings();
-			addresses::CNetworkStringTable_DeleteAllStrings(pEntityNames);
-
-			Message("Purged %i strings from EntityNames\n", iStringCount);
-
-			// Vauff: Not fixing cubemap fog in my testing
-			// This also breaks round start particle resets, so disabling for now
-			// pEntityNames->SetTick(-1, nullptr);
-
-			// FullUpdateAllClients();
-		}
-	}
+	RemoveTimers(TIMERFLAG_ROUND);
 
 	EntityHandler_OnRoundRestart();
 
@@ -122,6 +88,8 @@ GAME_EVENT_F(round_prestart)
 
 	if (g_cvarEnableEntWatch.Get())
 		EW_RoundPreStart();
+
+	g_pMapMigrations->OnRoundPrestart();
 }
 
 CConVar<bool> g_cvarBlockTeamMessages("cs2f_block_team_messages", FCVAR_NONE, "Whether to block team join messages", false);
@@ -134,6 +102,7 @@ GAME_EVENT_F(player_team)
 }
 
 CConVar<bool> g_cvarNoblock("cs2f_noblock_enable", FCVAR_NONE, "Whether to use player noblock, which sets debris collision on every player", false);
+CConVar<int> g_cvarFreeArmor("cs2f_free_armor", FCVAR_NONE, "Whether kevlar (1+) and/or helmet (2) are given automatically", 0, true, 0, true, 2);
 
 GAME_EVENT_F(player_spawned)
 {
@@ -179,7 +148,7 @@ GAME_EVENT_F(player_spawn)
 	CHandle<CCSPlayerController> hController = pController->GetHandle();
 
 	// Gotta do this on the next frame...
-	new CTimer(0.0f, false, false, [hController]() {
+	CTimer::Create(0.0f, TIMERFLAG_MAP | TIMERFLAG_ROUND, [hController]() {
 		CCSPlayerController* pController = hController.Get();
 
 		int index = pController->GetPlayerSlot();
@@ -206,28 +175,47 @@ GAME_EVENT_F(player_spawn)
 		return -1.0f;
 	});
 
-	// And this needs even more delay..? Don't even know if this is enough, bug can't be reproduced
-	new CTimer(0.1f, false, false, [hController]() {
-		CCSPlayerController* pController = hController.Get();
+	CCSPlayerPawn* pPawn = (CCSPlayerPawn*)pController->GetPawn();
 
-		if (!pController)
-			return -1.0f;
+	if (!pPawn)
+		return;
 
-		CBasePlayerPawn* pPawn = pController->GetPawn();
+	CCSPlayer_ItemServices* pItemServices = pPawn->m_pItemServices();
 
-		if (pPawn)
-		{
-			// Fix new haunted CS2 bug? https://www.reddit.com/r/cs2/comments/1glvg9s/thank_you_for_choosing_anubis_airlines/
-			// We've seen this several times across different maps at this point
-			pPawn->m_vecAbsVelocity = Vector(0, 0, 0);
-		}
+	if (!pItemServices)
+		return;
 
-		return -1.0f;
-	});
+	// Dumb workaround for mp_free_armor breaking kevlar rebuys in buy menu
+	if (g_cvarFreeArmor.GetInt() == 1)
+		pItemServices->GiveNamedItem("item_kevlar");
+	else if (g_cvarFreeArmor.GetInt() == 2)
+		pItemServices->GiveNamedItem("item_assaultsuit");
+
 
 }
 
-CConVar<bool> g_cvarEnableTopDefender("cs2f_topdefender_enable", FCVAR_NONE, "Whether to use TopDefender", false);
+/*
+//core.gameevents
+"player_hurt":	dict({
+					"userid":			"playercontroller",
+					"userid_pawn":		"strict_ehandle",
+					"attacker":			"playercontroller",
+					"attacker_pawn":	"strict_ehandle",
+					"health":			"byte",
+				}),
+//mod.gameevents
+"player_hurt":	dict({
+					"userid":			"playercontroller",
+					"userid_pawn":		"strict_ehandle",
+					"attacker":			"playercontroller",
+					"attacker_pawn":	"strict_ehandle",
+					"health":			"byte",
+					"armor":			"byte",
+					"weapon":			"string",
+					"dmg_health":		"short",
+					"dmg_armor":		"byte",
+					"hitgroup":			"byte",
+				}),
 
 /*
 //core.gameevents
@@ -257,15 +245,11 @@ CConVar<bool> g_cvarEnableTopDefender("cs2f_topdefender_enable", FCVAR_NONE, "Wh
 //remember this is firing at the moment the player is hurt, before the damage is applied.
 GAME_EVENT_F(player_hurt) //new
 {
-	//if (g_cvarEnableZR.Get())
-	//	ZR_OnPlayerHurt(pEvent);
-
-	//if (!g_cvarEnableTopDefender.Get())
-	//	return;
 	for (auto& plugin : g_CS2Fixes.m_Plugins)
 		plugin.PyPlayerHurt(pEvent);
 
-
+	//if (!g_bEnableTopDefender)
+	//		return;
 
 	CCSPlayerController* pAttacker = (CCSPlayerController*)pEvent->GetPlayerController("attacker");
 	CCSPlayerController* pVictim = (CCSPlayerController*)pEvent->GetPlayerController("userid");
@@ -284,22 +268,125 @@ GAME_EVENT_F(player_hurt) //new
 
 	pPlayer->SetTotalDamage(pPlayer->GetTotalDamage() + pEvent->GetInt("dmg_health"));
 	pPlayer->SetTotalHits(pPlayer->GetTotalHits() + 1);
+	if (g_cvarEnableTopDefender.Get())
+		TD_OnPlayerHurt(pEvent);
+}
+
+GAME_EVENT_F(old_player_hurt)
+{
+	if (g_cvarEnableTopDefender.Get())
+		TD_OnPlayerHurt(pEvent);
+
+	//if (!g_bEnableTopDefender) //old
+	//	return;
+	//if (!g_cvarEnableTopDefender.Get()) //new
+	//	return;
+
+	//if (g_bEnableZR) //old
+	//	ZR_OnPlayerDeath(pEvent);
+	//if (g_cvarEnableZR.Get()) //new
+	//	ZR_OnPlayerDeath(pEvent);
+
+
+	//if (!g_bEnableTopDefender)
+	//	return;
+
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyPlayerDeath(pEvent);
+
+	CCSPlayerController* pAttacker = (CCSPlayerController*)pEvent->GetPlayerController("attacker");
+	CCSPlayerController* pVictim = (CCSPlayerController*)pEvent->GetPlayerController("userid");
+
+	bool noattacker = false;
+	if (!pAttacker)
+	{
+		Message("noattacker=true");
+		noattacker = true;
+	}
+
+	bool novictim = false;
+	if (!pVictim)
+	{
+		Message("novictim=true");
+		novictim = true;
+	}
+	
+	bool teamkill = false;
+	if (pAttacker->m_iTeamNum == pVictim->m_iTeamNum)
+		teamkill = true;
+
+	bool suicide = false;
+	if (pAttacker == pVictim)
+		suicide = true;
+
+	// Ignore Ts/zombie kills and ignore CT teamkilling or suicide
+	if (	
+			noattacker  ||
+			novictim    ||
+			teamkill    || 
+			suicide     ||
+			pAttacker->m_iTeamNum != CS_TEAM_CT || 
+			pAttacker->m_iTeamNum == pVictim->m_iTeamNum
+			)
+	{
+		return;
+	}
+
+
+	ZEPlayer* pPlayer = pAttacker->GetZEPlayer();
+
+	if (!pPlayer)
+		return;
+
+	pPlayer->SetTotalDamage(pPlayer->GetTotalDamage() + pEvent->GetInt("dmg_health"));
+	pPlayer->SetTotalHits(pPlayer->GetTotalHits() + 1);
+	
+}
+
+GAME_EVENT_F(player_jump)
+{
+    /*	"player_jump":dict({
+			"userid":"playercontroller",
+        }),	*/
+	int index = pEvent->GetPlayerSlot("userid").Get();
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyPlayerJump(index);
+
+	CCSPlayerController* pController = CCSPlayerController::FromSlot(index);
+
+	/* //uncomment if you need to find any of these things again because you forgot!
+	//you broke it here likely tristen
+	CBaseEntity* pPawn = (CBaseEntity*)pController->GetPawn();
+	CCSPlayerPawnBase* ppb = (CCSPlayerPawnBase*)pPawn;
+	CCSPlayer_ItemServices* pItemServices = static_cast<CCSPlayer_ItemServices*>(ppb->m_pItemServices());
+	Message("has defuser: %d\n", pItemServices->m_bHasDefuser()); // works
+	Message("has helmet: %d\n", pItemServices->m_bHasHelmet()); //works
+	Message("has armor: %d\n", pItemServices->m_bHasHeavyArmor()); //works
+
+	CCSPlayerPawn* ccsPB = (CCSPlayerPawn*)pController->GetPawn();
+	Message("has m_bIsDefusing: %d\n", ccsPB->m_bIsDefusing()); //not tested
+	Message("has m_nWhichBombZone: %d\n", ccsPB->m_nWhichBombZone()); //works  A=1, B=2
+	Message("has m_bInBuyZone: %d\n", ccsPB->m_bInBuyZone()); //works, "in buy zone" + "buy time not expired" = true, else false
+	Message("has m_bInBombZone: %d\n", ccsPB->m_bInBombZone()); //works, "in bomb zone" + "with bomb" = true, else false.
+	*/
+}
+
+GAME_EVENT_F(player_land)
+{
+	int index = pEvent->GetPlayerSlot("userid").Get();
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyPlayerLand(index);
+}
+
+GAME_EVENT_F(player_airborn)
+{
+	int index = pEvent->GetPlayerSlot("userid").Get();
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyPlayerAirborn(index);
 }
 
 
-
-GAME_EVENT_F(bomb_planted)
-{
-	/*
-		"bomb_planted":dict({
-            "userid":"slot",
-            "userid_pawn":"strict_ehandle",
-            "site":"short",
-            }),
-	*/
-	CPlayerSlot slot = pEvent->GetPlayerSlot("userid");
-	int site = pEvent->GetInt("site");
-
+CConVar<bool> g_cvarFullAllTalk("cs2f_full_alltalk", FCVAR_NONE, "Whether to enforce sv_full_alltalk 1", false);
 	for (auto& plugin : g_CS2Fixes.m_Plugins)
 		plugin.PyBombPlanted(pEvent, slot.Get(), site);
 }
@@ -369,21 +456,13 @@ GAME_EVENT_F(player_death)
 		}),
 	*/
 
-	//if (g_bEnableEntWatch) //old
-	//	EW_PlayerDeath(pEvent);
-	//if (g_cvarEnableEntWatch.Get()) //new
-	//	EW_PlayerDeath(pEvent);
-
-	//if (!g_bEnableTopDefender) //old
-	//	return;
-	//if (!g_cvarEnableTopDefender.Get()) //new
-	//	return;
-
-	//if (g_bEnableZR) //old
+	//if (g_bEnableZR)
 	//	ZR_OnPlayerDeath(pEvent);
-	//if (g_cvarEnableZR.Get()) //new
-	//	ZR_OnPlayerDeath(pEvent);
+	if (g_cvarEnableEntWatch.Get())
+		EW_PlayerDeath(pEvent);
 
+	//if (g_bEnableEntWatch)
+	//	EW_PlayerDeath(pEvent);
 
 	//if (!g_bEnableTopDefender)
 	//	return;
@@ -432,11 +511,12 @@ GAME_EVENT_F(player_death)
 
 	ZEPlayer* pPlayer = pAttacker->GetZEPlayer();
 
-	if (!pPlayer)
+		if (!pPlayer)
 		return;
 
 	pPlayer->SetTotalKills(pPlayer->GetTotalKills() + 1);
-	
+	if (g_cvarEnableTopDefender.Get())
+		TD_OnPlayerDeath(pEvent);
 }
 
 GAME_EVENT_F(player_jump)
@@ -481,8 +561,8 @@ GAME_EVENT_F(player_airborn)
 		plugin.PyPlayerAirborn(index);
 }
 
+CConVar<bool> g_cvarFullAllTalk("cs2f_full_alltalk", 0, "Whether to enforce sv_full_alltalk 1", false);
 
-CConVar<bool> g_cvarFullAllTalk("cs2f_full_alltalk", FCVAR_NONE, "Whether to enforce sv_full_alltalk 1", false);
 GAME_EVENT_F(round_start)
 {
 	g_pPanoramaVoteHandler->Init();
@@ -497,75 +577,24 @@ GAME_EVENT_F(round_start)
 	if (g_cvarFullAllTalk.Get())
 		g_pEngineServer2->ServerCommand("sv_full_alltalk 1");
 
-	if (!g_cvarEnableTopDefender.Get() || !GetGlobals())
-		return;
+	// Ensure there's no warmup, because mp_warmup_online_enabled gets randomly ignored for some reason, this is a problem with cs2f_fix_hud_flashing
+	if (g_cvarFixHudFlashing.Get() && g_pGameRules && g_pGameRules->m_bWarmupPeriod)
+		g_pEngineServer2->ServerCommand("mp_warmup_end");
 
-	for (int i = 0; i < GetGlobals()->maxClients; i++)
-	{
-		ZEPlayer* pPlayer = g_playerManager->GetPlayer(i);
-
-		if (!pPlayer)
-			continue;
-
-		pPlayer->SetTotalDamage(0);
-		pPlayer->SetTotalHits(0);
-		pPlayer->SetTotalKills(0);
-	}
+	if (g_cvarEnableTopDefender.Get())
+		TD_OnRoundStart(pEvent);
 }
 
 GAME_EVENT_F(round_end)
 {
+	if (g_cvarFixHudFlashing.Get() && g_pGameRules)
+		g_pGameRules->m_bGameRestart = false;
+
 	for (auto& plugin : g_CS2Fixes.m_Plugins)
 		plugin.PyRoundEnd(pEvent);
 
-	if (g_cvarVoteManagerEnable.Get())
-		g_pVoteManager->OnRoundEnd();
-
-	if (!g_cvarEnableTopDefender.Get() || !GetGlobals())
-		return;
-
-	CUtlVector<ZEPlayer*> sortedPlayers;
-
-	for (int i = 0; i < GetGlobals()->maxClients; i++)
-	{
-		ZEPlayer* pPlayer = g_playerManager->GetPlayer(i);
-
-		if (!pPlayer || pPlayer->GetTotalDamage() == 0)
-			continue;
-
-		CCSPlayerController* pController = CCSPlayerController::FromSlot(pPlayer->GetPlayerSlot());
-
-		if (!pController)
-			continue;
-
-		sortedPlayers.AddToTail(pPlayer);
-	}
-
-	if (sortedPlayers.Count() == 0)
-		return;
-
-	sortedPlayers.Sort([](ZEPlayer* const* a, ZEPlayer* const* b) -> int {
-		return (*a)->GetTotalDamage() < (*b)->GetTotalDamage();
-	});
-
-	ClientPrintAll(HUD_PRINTTALK, " \x09TOP DEFENDERS");
-
-	char colorMap[] = {'\x10', '\x08', '\x09', '\x0B'};
-
-	for (int i = 0; i < sortedPlayers.Count(); i++)
-	{
-		ZEPlayer* pPlayer = sortedPlayers[i];
-		CCSPlayerController* pController = CCSPlayerController::FromSlot(pPlayer->GetPlayerSlot());
-
-		if (i < 5)
-			ClientPrintAll(HUD_PRINTTALK, " %c%i. %s \x01- \x07%i DMG \x05(%i HITS & %i KILLS)", colorMap[MIN(i, 3)], i + 1, pController->GetPlayerName(), pPlayer->GetTotalDamage(), pPlayer->GetTotalHits(), pPlayer->GetTotalKills());
-		else
-			ClientPrint(pController, HUD_PRINTTALK, " \x0C%i. %s \x01- \x07%i DMG \x05(%i HITS & %i KILLS)", i + 1, pController->GetPlayerName(), pPlayer->GetTotalDamage(), pPlayer->GetTotalHits(), pPlayer->GetTotalKills());
-
-		pPlayer->SetTotalDamage(0);
-		pPlayer->SetTotalHits(0);
-		pPlayer->SetTotalKills(0);
-	}
+	if (g_cvarEnableTopDefender.Get())
+		TD_OnRoundEnd(pEvent);
 }
 
 GAME_EVENT_F(round_freeze_end)

@@ -1,7 +1,7 @@
 /**
  * =============================================================================
  * CS2Fixes
- * Copyright (C) 2023-2025 Source2ZE
+ * Copyright (C) 2023-2026 Source2ZE
  * =============================================================================
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -19,13 +19,10 @@
 
 #pragma once
 
+#include "../entwatch.h"
 #include "cbaseentity.h"
 #include "cbasemodelentity.h"
 #include "services.h"
-
-extern CConVar<bool> g_cvarDropMapWeapons;
-void EW_PlayerDeathPre(CCSPlayerController* pController);
-extern CConVar<bool> g_cvarEnableEntWatch;
 
 class CBasePlayerPawn : public CBaseModelEntity
 {
@@ -65,8 +62,19 @@ public:
 			}
 		}
 
+		Vector pos = GetEyePosition();
 		for (CBasePlayerWeapon* pWeapon : vecWeaponsToDrop)
+		{
 			m_pWeaponServices()->DropWeapon(pWeapon);
+
+			CHandle<CBasePlayerWeapon> hWep = pWeapon->GetHandle();
+			CTimer::Create(0.0, TIMERFLAG_MAP | TIMERFLAG_ROUND, [hWep, pos] {
+				CBasePlayerWeapon* pWep = hWep.Get();
+				if (pWep)
+					pWep->Teleport(&pos, nullptr, nullptr);
+				return -1.0f;
+			});
+		}
 	}
 
 	void CommitSuicide(bool bExplode, bool bForce)
@@ -86,6 +94,11 @@ public:
 
 		static int offset = g_GameConfig->GetOffset("CBasePlayerPawn_CommitSuicide");
 		CALL_VIRTUAL(void, offset, this, bExplode, bForce);
+	}
+
+	void SnapViewAngles(QAngle* pAngles)
+	{
+		addresses::CBasePlayerPawn_SnapViewAngles(this, pAngles);
 	}
 
 	CBasePlayerController* GetController() { return m_hController.Get(); }

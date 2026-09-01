@@ -1,8 +1,8 @@
 #pragma once
 
-#include "entities.h"
+//#include "entities.h"
 #include "entity/ccsplayercontroller.h"
-#include "cs2fixes.h"
+//#include "cs2fixes.h"
 #include <string>
 
 namespace Source2Py {

@@ -1,7 +1,7 @@
 /**
  * =============================================================================
  * CS2Fixes
- * Copyright (C) 2023-2025 Source2ZE
+ * Copyright (C) 2023-2026 Source2ZE
  * =============================================================================
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -19,10 +19,16 @@
 
 #pragma once
 
+#include "cs2_sdk/netmessages.h"
+#include "engine/igameeventsystem.h"
+#include "entity/cgamerules.h"
+#include "gamesystems/spawngroup_manager.h"
 #include "igameevents.h"
 #include "networksystem/inetworkserializer.h"
+#include "public/ics2fixes.h"
+#include "steam/isteamhttp.h"
 #include <ISmmPlugin.h>
-#include <iplayerinfo.h>
+//#include <iplayerinfo.h>
 #include <iserver.h>
 #include <sh_vector.h>
 
@@ -33,13 +39,30 @@ namespace fs = std::filesystem;
 #include "PyPlugin.h"
 
 struct CTakeDamageInfoContainer;
+#ifdef AMBUILD
+	#include "version_gen.h"
+#else
+	#include "version_gen_placeholder.h"
+#endif
+
 class CCSPlayer_MovementServices;
 class CServerSideClient;
 struct TouchLinked_t;
 class CCSPlayer_WeaponServices;
 class CBasePlayerWeapon;
 
-class CS2Fixes : public ISmmPlugin, public IMetamodListener
+extern IGameEventSystem* g_gameEventSystem;
+extern IGameEventManager2* g_gameEventManager;
+extern CGameEntitySystem* g_pEntitySystem;
+extern IVEngineServer2* g_pEngineServer2;
+extern CCSGameRules* g_pGameRules;
+extern CSpawnGroupMgrGameSystem* g_pSpawnGroupMgr;
+extern double g_flUniversalTime;
+extern INetworkGameServer* GetNetworkGameServer();
+extern CGlobalVars* GetGlobals();
+extern CConVar<bool> g_cvarDropMapWeapons;
+
+class CS2Fixes : public ISmmPlugin, public IMetamodListener, public ICS2Fixes
 {
 public:
 	bool Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, bool late);
@@ -52,7 +75,6 @@ public:
 
 public: // hooks
 	void Hook_GameServerSteamAPIActivated();
-	void Hook_GameServerSteamAPIDeactivated();
 	void OnLevelInit(char const* pMapName,
 					 char const* pMapEntities,
 					 char const* pOldLevel,
@@ -70,16 +92,19 @@ public: // hooks
 	void Hook_ClientCommand(CPlayerSlot nSlot, const CCommand& _cmd);
 	
 	void Hook_CheckTransmit(CCheckTransmitInfo** ppInfoList, int infoCount, CBitVec<16384>& unionTransmitEdicts,
-							const Entity2Networkable_t** pNetworkables, const uint16* pEntityIndicies, int nEntities, bool bEnablePVSBits);
+							CBitVec<16384>&, const Entity2Networkable_t** pNetworkables, const uint16* pEntityIndicies, int nEntities);
 	void Hook_DispatchConCommand(ConCommandRef cmd, const CCommandContext& ctx, const CCommand& args);
 	void Hook_CGamePlayerEquipUse(class InputData_t*);
-	void Hook_CGamePlayerEquipPrecache(void**);
+	void Hook_CGamePlayerEquipPrecache(CEntityPrecacheContext*);
+	void Hook_CTriggerGravityPrecache(CEntityPrecacheContext* param);
+	void Hook_CTriggerGravityEndTouch(CBaseEntity* pOther);
 	void Hook_StartupServer(const GameSessionConfiguration_t& config, ISource2WorldSession*, const char*);
 	void Hook_ApplyGameSettings(KeyValues* pKV);
 	void Hook_CreateWorkshopMapGroup(const char* name, const CUtlStringList& mapList);
-	void Hook_GoToIntermission(bool bAbortedMatch);
-	bool Hook_OnTakeDamage_Alive(CTakeDamageInfoContainer* pInfoContainer);
+	bool Hook_OnTakeDamage_Alive(CTakeDamageResult* pDamageResult);
 	void Hook_PhysicsTouchShuffle(CUtlVector<TouchLinked_t>* pList, bool unknown);
+	void Hook_CCSPlayerPawn_Teleport(const Vector* pPosition, const QAngle* pAngles, const Vector* pVelocity);
+	void Hook_CCSPlayerPawn_Teleport_Post(const Vector* pPosition, const QAngle* pAngles, const Vector* pVelocity);
 #ifdef PLATFORM_WINDOWS
 	Vector* Hook_GetEyePosition(Vector*);
 	QAngle* Hook_GetEyeAngles(QAngle*);
@@ -90,16 +115,42 @@ public: // hooks
 	void Hook_CheckMovingGround(double frametime);
 	void Hook_DropWeaponPost(CBasePlayerWeapon* pWeapon, Vector* pVecTarget, Vector* pVelocity);
 	int Hook_LoadEventsFromFile(const char* filename, bool bSearchAll);
+	void Hook_SetGameSpawnGroupMgr(IGameSpawnGroupMgr* pSpawnGroupMgr);
+	bool Hook_ProcessVoiceData(const CCLCMsg_VoiceData_t& msg);
+	void Hook_Spawn(int nCount, const EntitySpawnInfo_t* pInfo);
+
+public: // MetaMod API
+	void* OnMetamodQuery(const char* iface, int* ret);
+	std::uint64_t GetAdminFlags(std::uint64_t iSteam64ID) const override;
+	bool SetAdminFlags(std::uint64_t iSteam64ID, std::uint64_t iFlags) override;
+	int GetAdminImmunity(std::uint64_t iSteam64ID) const override;
+	bool SetAdminImmunity(std::uint64_t iSteam64ID, std::uint32_t iImmunity) override;
 
 public:
-	const char* GetAuthor();
-	const char* GetName();
-	const char* GetDescription();
-	const char* GetURL();
-	const char* GetLicense();
-	const char* GetVersion();
-	const char* GetDate();
-	const char* GetLogTag();
+	const char* GetAuthor() { return PLUGIN_AUTHOR; }
+	const char* GetName() { return PLUGIN_DISPLAY_NAME; }
+	const char* GetDescription() { return PLUGIN_DESCRIPTION; }
+	const char* GetURL() { return PLUGIN_URL; }
+	const char* GetLicense() { return PLUGIN_LICENSE; }
+	const char* GetVersion() { return PLUGIN_FULL_VERSION; }
+	const char* GetDate() { return __DATE__; }
+	const char* GetLogTag() { return PLUGIN_LOGTAG; }
+
+
+public:
+	// Get this plugin's directory path
+	fs::path GetPluginBaseDirectory() { return s_Source2PyDirectory; }
+	bool LoadPythonPlugins();
+	void ReloadPythonPlugins();
+	
+	void MenuSelection(int selection); //they interacted with a menu item
+
+private:
+	const fs::path s_Source2PyDirectory = "../../csgo/addons/CS2Fixes/PyPlugins/";
+
+public:
+	std::vector<Source2Py::PyPlugin> m_Plugins;
+	
 
 
 public:

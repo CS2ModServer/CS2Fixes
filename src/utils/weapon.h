@@ -1,7 +1,7 @@
 ﻿/**
  * =============================================================================
  * CS2Fixes
- * Copyright (C) 2023-2025 Source2ZE
+ * Copyright (C) 2023-2026 Source2ZE
  * =============================================================================
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -39,8 +39,9 @@ struct WeaponInfo_t
 	{}
 };
 
-const WeaponInfo_t* FindWeaponInfoByClass(const char* pClass);
-const WeaponInfo_t* FindWeaponInfoByClassCaseInsensitive(const char* pClass);
+const WeaponInfo_t* FindWeaponInfoByClass(std::string strClass);
+const WeaponInfo_t* FindWeaponInfoByClassCaseInsensitive(std::string strClass);
 const WeaponInfo_t* FindWeaponInfoByAlias(const char* pAlias);
+const WeaponInfo_t* FindWeaponInfoByItemDefIndex(int16_t iItemDefinitionIndex);
 
 std::vector<std::pair<std::string, std::vector<std::string>>> GenerateWeaponCommands();

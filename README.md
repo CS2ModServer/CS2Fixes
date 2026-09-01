@@ -8,7 +8,7 @@ CS2Fixes is a Metamod plugin with fixes and features aimed but not limited to zo
 - Download the [latest release package](https://github.com/Source2ZE/CS2Fixes/releases) for your OS
 - Extract the package contents into `game/csgo` on your server
 - Configure the plugin cvars as desired in `cfg/cs2fixes/cs2fixes.cfg`, many features are disabled by default
-- OPTIONAL: If you want to setup admins, rename `admins.cfg.example` to `admins.cfg` which can be found in `addons/cs2fixes/configs` and follow the instructions within to add admins
+- OPTIONAL: If you want to setup admins, rename `admins.jsonc.example` to `admins.jsonc` which can be found in `addons/cs2fixes/configs` and follow the instructions within to add admins
 
 ## Fixes and Features
 You can find the documentation of the fixes and features [here](../../wiki/Home).
@@ -33,7 +33,7 @@ Requires Docker to be installed. Produces Linux builds only.
 docker compose up
 ```
 
-Copy the contents of `dockerbuild/package/` to your server's `game/csgo/` directory.
+Copy the contents of `dockerbuild/package/cs2/` to your server's `game/csgo/` directory.
 
 ### Manual
 
@@ -43,7 +43,7 @@ Copy the contents of `dockerbuild/package/` to your server's `game/csgo/` direct
 
 #### Linux
 ```bash
-export MMSOURCE112=/path/to/metamod
+export MMSOURCE_DEV=/path/to/metamod
 export HL2SDKCS2=/path/to/sdk/submodule
 
 mkdir build && cd build
@@ -53,10 +53,10 @@ ambuild
 
 #### Windows
 
-Make sure to run in "x64 Native Tools Command Prompt for VS"
+Make sure to run in "x64 Native Tools Command Prompt for VS". Doing an initial build here is also required to setup the protobuf headers for Visual Studio to reference.
 
 ```bash
-set MMSOURCE112=\path\to\metamod
+set MMSOURCE_DEV=\path\to\metamod
 set HL2SDKCS2=\path\to\sdk\submodule
 
 mkdir build && cd build
@@ -64,4 +64,4 @@ py ../configure.py --enable-optimize --sdks cs2
 ambuild
 ```
 
-Copy the contents of `build/package/` to your server's `game/csgo/` directory.
+Copy the contents of `build/package/cs2/` to your server's `game/csgo/` directory.

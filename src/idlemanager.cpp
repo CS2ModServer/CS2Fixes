@@ -1,7 +1,7 @@
 /**
  * =============================================================================
  * CS2Fixes
- * Copyright (C) 2023-2025 Source2ZE
+ * Copyright (C) 2023-2026 Source2ZE
  * =============================================================================
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -19,11 +19,8 @@
 
 #include "idlemanager.h"
 #include "commands.h"
+#include "cs2fixes.h"
 #include <vprof.h>
-
-extern IVEngineServer2* g_pEngineServer2;
-extern CGlobalVars* GetGlobals();
-extern CPlayerManager* g_playerManager;
 
 CIdleSystem* g_pIdleSystem = nullptr;
 

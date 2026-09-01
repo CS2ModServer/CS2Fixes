@@ -1,7 +1,7 @@
 /**
  * =============================================================================
  * CS2Fixes
- * Copyright (C) 2023-2025 Source2ZE
+ * Copyright (C) 2023-2026 Source2ZE
  * =============================================================================
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -20,7 +20,6 @@
 #pragma once
 #include "platform.h"
 #include "playermanager.h"
-#include "utlvector.h"
 #include <ctime>
 
 // clang-format off
@@ -56,8 +55,8 @@
 #define ADMIN_PREFIX "Admin %s has "
 #define CONSOLE_NAME "\2CONSOLE\1" // color it to indicate that it isnt a regular player using the command
 
-void PrintSingleAdminAction(const char* pszAdminName, const char* pszTargetName, const char* pszAction, const char* pszAction2, const char* prefix);
-void PrintMultiAdminAction(ETargetType nType, const char* pszAdminName, const char* pszAction, const char* pszAction2, const char* prefix);
+void PrintSingleAdminAction(std::string strAdminName, std::string strTargetName, const char* pszAction, const char* pszAction2, const char* prefix);
+void PrintMultiAdminAction(ETargetType nType, std::string strAdminName, const char* pszAction, const char* pszAction2, const char* prefix);
 
 enum GrammarTense
 {
@@ -139,23 +138,37 @@ public:
 	void UndoInfraction(ZEPlayer*) override;
 };
 
-class CAdmin
+class CAdminBase
 {
 public:
-	CAdmin(const char* pszName, uint64 iSteamID, uint64 iFlags, int iAdminImmunity) :
-		m_pszName(pszName), m_iSteamID(iSteamID), m_iFlags(iFlags), m_iAdminImmunity(iAdminImmunity)
+	CAdminBase(uint64 iFlags, int iAdminImmunity) :
+		m_iFlags(iFlags), m_iAdminImmunity(iAdminImmunity)
 	{}
 
-	const char* GetName() { return m_pszName; }
-	uint64 GetSteamID() { return m_iSteamID; }
-	uint64 GetFlags() { return m_iFlags; }
-	int GetImmunity() { return m_iAdminImmunity; }
+	void SetFlags(uint64 iFlags) { m_iFlags = iFlags; };
+	uint64 GetFlags() const { return m_iFlags; }
+	void SetImmunity(std::uint32_t iAdminImmunity) { m_iAdminImmunity = static_cast<int>(iAdminImmunity); }
+	int GetImmunity() const { return m_iAdminImmunity; }
 
 private:
-	const char* m_pszName;
-	uint64 m_iSteamID;
 	uint64 m_iFlags;
 	int m_iAdminImmunity;
+};
+
+class CAdmin : public CAdminBase
+{
+public:
+	CAdmin(std::string strName, uint64 iFlags, int iAdminImmunity, uint64 iSteamID) :
+		CAdminBase(iFlags, iAdminImmunity), m_strName(strName), m_iSteamID(iSteamID)
+	{}
+
+	std::string GetName() { return m_strName; }
+	void SetFlags(uint64 iFlags);
+	void SetImmunity(std::uint32_t iAdminImmunity);
+
+private:
+	std::string m_strName;
+	uint64 m_iSteamID;
 };
 
 class CAdminSystem
@@ -163,20 +176,23 @@ class CAdminSystem
 public:
 	CAdminSystem();
 	bool LoadAdmins();
+	void AddOrUpdateAdmin(uint64 iSteamID, uint64 iFlags = 0, int iAdminImmunity = 0);
 	bool LoadInfractions();
-	void AddInfraction(CInfractionBase*);
+	void AddInfraction(std::shared_ptr<CInfractionBase> pInfraction);
 	void SaveInfractions();
 	bool ApplyInfractions(ZEPlayer* player);
 	bool FindAndRemoveInfraction(ZEPlayer* player, CInfractionBase::EInfractionType type);
 	bool FindAndRemoveInfractionSteamId64(uint64 steamid64, CInfractionBase::EInfractionType type);
 	CAdmin* FindAdmin(uint64 iSteamID);
-	uint64 ParseFlags(const char* pszFlags);
+	uint64 ParseFlags(std::string strFlags);
+	std::string StringifyFlags(uint64 iFlags);
 	void AddDisconnectedPlayer(const char* pszName, uint64 xuid, const char* pszIP);
 	void ShowDisconnectedPlayers(CCSPlayerController* const pAdmin);
 
 private:
-	CUtlVector<CAdmin> m_vecAdmins;
-	CUtlVector<CInfractionBase*> m_vecInfractions;
+	std::map<std::string, CAdminBase> m_mapAdminGroups;
+	std::map<uint64, CAdmin> m_mapAdmins;
+	std::vector<std::shared_ptr<CInfractionBase>> m_vecInfractions;
 
 	// Implemented as a circular buffer.
 	std::tuple<std::string, uint64, std::string> m_rgDCPly[20];

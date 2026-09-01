@@ -1,7 +1,7 @@
 /**
  * =============================================================================
  * CS2Fixes
- * Copyright (C) 2023-2025 Source2ZE
+ * Copyright (C) 2023-2026 Source2ZE
  * =============================================================================
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -26,6 +26,13 @@ class CGameUI;
 class CPointViewControl;
 class CCSPlayerPawn;
 class CEntityKeyValues;
+
+namespace CTriggerGravityHandler
+{
+	void OnPrecache(CBaseEntity* pEntity, const CEntityKeyValues* kv);
+	bool GravityTouching(CBaseEntity* pEntity, CBaseEntity* pOther);
+	void OnEndTouch(CBaseEntity* pEntity, CBaseEntity* pOther);
+} // namespace CTriggerGravityHandler
 
 namespace CGamePlayerEquipHandler
 {

@@ -1,7 +1,7 @@
 /**
  * =============================================================================
  * CS2Fixes
- * Copyright (C) 2023-2025 Source2ZE
+ * Copyright (C) 2023-2026 Source2ZE
  * Original code from D2Lobby2
  * Copyright (C) 2023 Nicholas Hastings
  * =============================================================================
@@ -37,9 +37,6 @@
 
 using json = nlohmann::json;
 
-class HTTPManager;
-extern HTTPManager g_HTTPManager;
-
 #define CompletedCallback std::function<void(HTTPRequestHandle, json)>
 #define ErrorCallback std::function<void(HTTPRequestHandle, EHTTPStatusCode, json)>
 
@@ -62,15 +59,15 @@ private:
 class HTTPManager
 {
 public:
-	void Get(const char* pszUrl, CompletedCallback callbackCompleted,
+	void Get(std::string strUrl, CompletedCallback callbackCompleted,
 			 ErrorCallback callbackError = nullptr, std::vector<HTTPHeader>* headers = nullptr);
-	void Post(const char* pszUrl, const char* pszText, CompletedCallback callbackCompleted,
+	void Post(std::string strUrl, std::string strText, CompletedCallback callbackCompleted,
 			  ErrorCallback callbackError = nullptr, std::vector<HTTPHeader>* headers = nullptr);
-	void Put(const char* pszUrl, const char* pszText, CompletedCallback callbackCompleted,
+	void Put(std::string strUrl, std::string strText, CompletedCallback callbackCompleted,
 			 ErrorCallback callbackError = nullptr, std::vector<HTTPHeader>* headers = nullptr);
-	void Patch(const char* pszUrl, const char* pszText, CompletedCallback callbackCompleted,
+	void Patch(std::string strUrl, std::string strText, CompletedCallback callbackCompleted,
 			   ErrorCallback callbackError = nullptr, std::vector<HTTPHeader>* headers = nullptr);
-	void Delete(const char* pszUrl, const char* pszText, CompletedCallback callbackCompleted,
+	void Delete(std::string strUrl, std::string strText, CompletedCallback callbackCompleted,
 				ErrorCallback callbackError = nullptr, std::vector<HTTPHeader>* headers = nullptr);
 	bool HasAnyPendingRequests() const { return m_PendingRequests.size() > 0; }
 
@@ -97,7 +94,9 @@ private:
 
 private:
 	std::vector<HTTPManager::TrackedRequest*> m_PendingRequests;
-	void GenerateRequest(EHTTPMethod method, const char* pszUrl, const char* pszText,
+	void GenerateRequest(EHTTPMethod method, std::string strUrl, std::string strText,
 						 CompletedCallback callbackCompleted, ErrorCallback callbackError,
 						 std::vector<HTTPHeader>* headers);
 };
+
+extern HTTPManager g_HTTPManager;

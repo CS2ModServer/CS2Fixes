@@ -1,7 +1,7 @@
 ﻿/**
  * =============================================================================
  * CS2Fixes
- * Copyright (C) 2023-2025 Source2ZE
+ * Copyright (C) 2023-2026 Source2ZE
  * =============================================================================
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -36,16 +36,16 @@ static std::unordered_map<std::string, WeaponInfo_t> s_WeaponMap = {
 	{"weapon_m4a1",					{"weapon_m4a1", 16, 3, GEAR_SLOT_RIFLE, 2900, "M4A4", {"m4a4"}}								   },
 	{"weapon_mac10",				 {"weapon_mac10", 17, 2, GEAR_SLOT_RIFLE, 1050, "MAC-10", {"mac10"}}								},
 	{"weapon_p90",				   {"weapon_p90", 19, 0, GEAR_SLOT_RIFLE, 2350, "P90", {"p90"}}									   },
-	{"weapon_mp5sd",				 {"weapon_mp5sd", 23, 0, GEAR_SLOT_RIFLE, 1500, "MP5-SD", {"mp5sd", "mp5"}}						   },
+	{"weapon_mp5sd",				 {"weapon_mp5sd", 23, 0, GEAR_SLOT_RIFLE, 1400, "MP5-SD", {"mp5sd", "mp5"}}						   },
 	{"weapon_ump45",				 {"weapon_ump45", 24, 0, GEAR_SLOT_RIFLE, 1200, "UMP-45", {"ump45", "ump"}}						   },
 	{"weapon_xm1014",				  {"weapon_xm1014", 25, 0, GEAR_SLOT_RIFLE, 2000, "XM1014", {"xm1014", "xm"}}						 },
-	{"weapon_bizon",				 {"weapon_bizon", 26, 0, GEAR_SLOT_RIFLE, 1400, "PP-Bizon", {"bizon"}}							  },
+	{"weapon_bizon",				 {"weapon_bizon", 26, 0, GEAR_SLOT_RIFLE, 1300, "PP-Bizon", {"bizon"}}							  },
 	{"weapon_mag7",					{"weapon_mag7", 27, 3, GEAR_SLOT_RIFLE, 1300, "MAG-7", {"mag7", "mag"}}						   },
 	{"weapon_negev",				 {"weapon_negev", 28, 0, GEAR_SLOT_RIFLE, 1700, "Negev", {"negev"}}								   },
 	{"weapon_sawedoff",				{"weapon_sawedoff", 29, 2, GEAR_SLOT_RIFLE, 1100, "Sawed-Off", {"sawedoff"}}						},
 	{"weapon_tec9",					{"weapon_tec9", 30, 2, GEAR_SLOT_PISTOL, 500, "Tec-9", {"tec9"}}									},
 	{"weapon_hkp2000",			   {"weapon_hkp2000", 32, 3, GEAR_SLOT_PISTOL, 200, "P2000", {"p2000"}}							   },
-	{"weapon_mp7",				   {"weapon_mp7", 33, 0, GEAR_SLOT_RIFLE, 1500, "MP7", {"mp7"}}									   },
+	{"weapon_mp7",				   {"weapon_mp7", 33, 0, GEAR_SLOT_RIFLE, 1400, "MP7", {"mp7"}}									   },
 	{"weapon_mp9",				   {"weapon_mp9", 34, 0, GEAR_SLOT_RIFLE, 1250, "MP9", {"mp9"}}									   },
 	{"weapon_nova",					{"weapon_nova", 35, 0, GEAR_SLOT_RIFLE, 1050, "Nova", {"nova"}}								   },
 	{"weapon_p250",					{"weapon_p250", 36, 0, GEAR_SLOT_PISTOL, 300, "P250", {"p250"}}								   },
@@ -58,9 +58,9 @@ static std::unordered_map<std::string, WeaponInfo_t> s_WeaponMap = {
 	{"weapon_revolver",				{"weapon_revolver", 64, 0, GEAR_SLOT_PISTOL, 600, "R8 Revolver", {"r8revolver", "revolver", "r8"}}},
 
 	{"weapon_flashbang",			 {"weapon_flashbang", 43, 0, GEAR_SLOT_GRENADES}													},
-	{"weapon_hegrenade",			 {"weapon_hegrenade", 44, 0, GEAR_SLOT_GRENADES, 300, "HE Grenade", {"hegrenade", "he"}, 1}		   },
+	{"weapon_hegrenade",			 {"weapon_hegrenade", 44, 0, GEAR_SLOT_GRENADES, 300, "HE Grenade", {"hegrenade", "he"}}			},
 	{"weapon_smokegrenade",			{"weapon_smokegrenade", 45, 0, GEAR_SLOT_GRENADES}												  },
-	{"weapon_molotov",			   {"weapon_molotov", 46, 0, GEAR_SLOT_GRENADES, 400, "Molotov", {"molotov"}, 1}						},
+	{"weapon_molotov",			   {"weapon_molotov", 46, 0, GEAR_SLOT_GRENADES, 400, "Molotov", {"molotov"}}						 },
 	{"weapon_decoy",				 {"weapon_decoy", 47, 0, GEAR_SLOT_GRENADES}														},
 	{"weapon_incgrenade",			  {"weapon_incgrenade", 48, 0, GEAR_SLOT_GRENADES}												  },
 
@@ -90,25 +90,24 @@ static std::unordered_map<std::string, WeaponInfo_t> s_WeaponMap = {
 	{"weapon_knife_skeleton",		  {"weapon_knife", 525, 0, GEAR_SLOT_KNIFE}														   },
 	{"weapon_knife_kukri",		   {"weapon_knife", 526, 0, GEAR_SLOT_KNIFE}															},
 
-	{"item_kevlar",					{"item_kevlar", 0, 0, GEAR_SLOT_UTILITY, 650, "Kevlar Vest", {"kevlar"}}							},
-	{"item_assaultsuit",			 {"item_assaultsuit", 0, 0, GEAR_SLOT_UTILITY}													  },
-	{"item_heavyassaultsuit",		  {"item_heavyassaultsuit", 0, 0, GEAR_SLOT_UTILITY}												},
-	{"item_defuser",				 {"item_defuser", 0, 0, GEAR_SLOT_UTILITY}														  },
+	{"item_kevlar",					{"item_kevlar", 50, 0, GEAR_SLOT_UTILITY, 650, "Kevlar Vest", {"kevlar"}}						 },
+	{"item_assaultsuit",			 {"item_assaultsuit", 51, 0, GEAR_SLOT_UTILITY}													   },
+	{"item_heavyassaultsuit",		  {"item_heavyassaultsuit", 52, 0, GEAR_SLOT_UTILITY}												 },
+	{"item_defuser",				 {"item_defuser", 55, 0, GEAR_SLOT_UTILITY}														   },
 	{"ammo_50ae",					{"ammo_50ae", 0, 0, GEAR_SLOT_UTILITY}															},
 };
 
-const WeaponInfo_t* FindWeaponInfoByClass(const char* pClass)
+const WeaponInfo_t* FindWeaponInfoByClass(std::string strClass)
 {
-	const auto& find = s_WeaponMap.find(pClass);
+	const auto& find = s_WeaponMap.find(strClass);
 	return find == s_WeaponMap.end() ? nullptr : &find->second;
 }
 
-const WeaponInfo_t* FindWeaponInfoByClassCaseInsensitive(const char* pClass)
+const WeaponInfo_t* FindWeaponInfoByClassCaseInsensitive(std::string strClass)
 {
-	CUtlString string(pClass);
-	string.ToLowerFast();
-	const auto& find = s_WeaponMap.find(string.Get());
-	return find == s_WeaponMap.end() ? nullptr : &find->second;
+	std::transform(strClass.begin(), strClass.end(), strClass.begin(), [](unsigned char c) { return std::tolower(c); });
+
+	return FindWeaponInfoByClass(strClass);
 }
 
 const WeaponInfo_t* FindWeaponInfoByAlias(const char* pAlias)
@@ -122,6 +121,15 @@ const WeaponInfo_t* FindWeaponInfoByAlias(const char* pAlias)
 			if (V_stricmp(pAlias, alias.c_str()) == 0)
 				return &info;
 	}
+
+	return nullptr;
+}
+
+const WeaponInfo_t* FindWeaponInfoByItemDefIndex(int16_t iItemDefinitionIndex)
+{
+	for (const auto& info : s_WeaponMap | std::views::values)
+		if (iItemDefinitionIndex == info.m_iItemDefinitionIndex)
+			return &info;
 
 	return nullptr;
 }

@@ -4,9 +4,10 @@
 //#include "entity/ccsplayerpawn.h"
 //#include "playerslot.h"
 //
-#include "common.h"
+//#include "common.h"
 #include <string>
 #include <vector>
+#include <platform.h>
 #include <map>
 #include "PyInclude.h"
 //#include "adventuremenu.h"

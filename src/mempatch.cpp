@@ -1,7 +1,7 @@
 /**
  * =============================================================================
  * CS2Fixes
- * Copyright (C) 2023-2025 Source2ZE
+ * Copyright (C) 2023-2026 Source2ZE
  * =============================================================================
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -46,7 +46,7 @@ bool CMemPatch::PerformPatch(CGameConfig* gameConfig)
 		Panic("Failed to find patch for %s\n", m_pszName);
 		return false;
 	}
-	m_pPatch = gameConfig->HexToByte(patch, m_iPatchLength);
+	m_pPatch = gameConfig->IDASigToUint8Array(patch, m_iPatchLength);
 	if (!m_pPatch)
 		return false;
 
@@ -73,7 +73,7 @@ bool CMemPatch::PerformPatch(CGameConfig* gameConfig)
 
 void CMemPatch::UndoPatch()
 {
-	if (!m_pPatchAddress)
+	if (!m_pOriginalBytes)
 		return;
 
 	Message("Undoing patch %s at %p\n", m_pszName, m_pPatchAddress);

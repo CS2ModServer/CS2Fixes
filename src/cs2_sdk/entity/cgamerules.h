@@ -1,7 +1,7 @@
 /**
  * =============================================================================
  * CS2Fixes
- * Copyright (C) 2023-2025 Source2ZE
+ * Copyright (C) 2023-2026 Source2ZE
  * =============================================================================
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -69,12 +69,16 @@ public:
 	SCHEMA_FIELD(int, m_nEndMatchMapVoteWinner)
 	SCHEMA_FIELD(int, m_iRoundTime)
 	SCHEMA_FIELD(bool, m_bFreezePeriod)
-	SCHEMA_FIELD_POINTER(CUtlVector<SpawnPoint*>, m_CTSpawnPoints)
-	SCHEMA_FIELD_POINTER(CUtlVector<SpawnPoint*>, m_TerroristSpawnPoints)
+	SCHEMA_FIELD_POINTER(CUtlVector<CHandle<SpawnPoint>>, m_CTSpawnPoints)
+	SCHEMA_FIELD_POINTER(CUtlVector<CHandle<SpawnPoint>>, m_TerroristSpawnPoints)
+	SCHEMA_FIELD(int, m_iMaxNumTerrorists)
+	SCHEMA_FIELD(int, m_iMaxNumCTs)
+	SCHEMA_FIELD(bool, m_bGameRestart)
+	SCHEMA_FIELD(bool, m_bWarmupPeriod)
 
 	void TerminateRound(float flDelay, CSRoundEndReason reason)
 	{
-		addresses::CGameRules_TerminateRound(this, flDelay, reason, 0, 0);
+		addresses::CGameRules_TerminateRound(this, flDelay, reason, 0);
 	}
 };
 

@@ -1,7 +1,7 @@
 /**
  * =============================================================================
  * CS2Fixes
- * Copyright (C) 2023-2025 Source2ZE
+ * Copyright (C) 2023-2026 Source2ZE
  * =============================================================================
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -31,4 +31,5 @@ public:
 
 	SCHEMA_FIELD(Vector, m_vecPushDirEntitySpace)
 	SCHEMA_FIELD(bool, m_bTriggerOnStartTouch)
+	SCHEMA_FIELD(float, m_flSpeed)
 };

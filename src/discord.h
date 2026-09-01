@@ -1,7 +1,7 @@
 /**
  * =============================================================================
  * CS2Fixes
- * Copyright (C) 2023-2025 Source2ZE
+ * Copyright (C) 2023-2026 Source2ZE
  * =============================================================================
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -18,28 +18,27 @@
  */
 
 #include "httpmanager.h"
-#include "utlvector.h"
 
 class CDiscordBot
 {
 public:
-	CDiscordBot(const char* pszName, const char* pszWebhookUrl, const char* pszAvatarUrl, bool bOverrideName)
+	CDiscordBot(std::string strName, std::string strWebhookUrl, std::string strAvatarUrl, bool bOverrideName)
 	{
-		V_strcpy(m_pszName, pszName);
-		V_strcpy(m_pszWebhookUrl, pszWebhookUrl);
-		V_strcpy(m_pszAvatarUrl, pszAvatarUrl);
+		m_strName = strName;
+		m_strWebhookUrl = strWebhookUrl;
+		m_strAvatarUrl = strAvatarUrl;
 		m_bOverrideName = bOverrideName;
 	}
 
-	const char* GetName() { return (const char*)m_pszName; };
-	const char* GetWebhookUrl() { return m_pszWebhookUrl; };
-	const char* GetAvatarUrl() { return m_pszAvatarUrl; };
-	void PostMessage(const char* sMessage);
+	const char* GetName() { return m_strName.c_str(); };
+	const char* GetWebhookUrl() { return m_strWebhookUrl.c_str(); };
+	const char* GetAvatarUrl() { return m_strAvatarUrl.c_str(); };
+	void PostMessage(std::string strMessage);
 
 private:
-	char m_pszName[32];
-	char m_pszWebhookUrl[256];
-	char m_pszAvatarUrl[256];
+	std::string m_strName;
+	std::string m_strWebhookUrl;
+	std::string m_strAvatarUrl;
 	bool m_bOverrideName;
 };
 
@@ -51,11 +50,14 @@ public:
 		LoadDiscordBotsConfig();
 	}
 
-	void PostDiscordMessage(const char* sDiscordBotName, const char* sMessage);
+	void PostDiscordMessage(const char* pszDiscordBotName, const char* pszMessage);
 	bool LoadDiscordBotsConfig();
 
+	// TODO: Remove this once servers have been given a few months to update cs2fixes
+	bool ConvertDiscordBotsKVToJSON();
+
 private:
-	CUtlVector<CDiscordBot> m_vecDiscordBots;
+	std::vector<std::shared_ptr<CDiscordBot>> m_vecDiscordBots;
 };
 
 extern CDiscordBotManager* g_pDiscordBotManager;

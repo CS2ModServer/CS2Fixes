@@ -1,7 +1,7 @@
 /**
  * =============================================================================
  * CS2Fixes
- * Copyright (C) 2023-2025 Source2ZE
+ * Copyright (C) 2023-2026 Source2ZE
  * =============================================================================
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -18,9 +18,9 @@
  */
 
 #include "entities.h"
-
 #include "ctimer.h"
 #include "entity.h"
+
 #include "entity/cbaseplayercontroller.h"
 #include "entity/ccsplayercontroller.h"
 #include "entity/ccsplayerpawn.h"
@@ -34,7 +34,17 @@
 
 // #define ENTITY_HANDLER_ASSERTION
 
-extern CCSGameRules* g_pGameRules;
+static constexpr uint32_t ENTITY_MURMURHASH_SEED = 0x97984357;
+static constexpr uint32_t ENTITY_UNIQUE_INVALID = ~0u;
+
+static uint32_t GetEntityUnique(CBaseEntity* pEntity)
+{
+	const auto& sUniqueHammerID = pEntity->m_sUniqueHammerID();
+	if (sUniqueHammerID.IsEmpty())
+		return ENTITY_UNIQUE_INVALID;
+
+	return MurmurHash2LowerCase(sUniqueHammerID.Get(), ENTITY_MURMURHASH_SEED);
+}
 
 static bool StripPlayer(CCSPlayerPawn* pPawn)
 {
@@ -85,7 +95,7 @@ static void DelayInput(CBaseEntity* pCaller, const char* input, const char* para
 {
 	const auto eh = pCaller->GetHandle();
 
-	new CTimer(0.f, false, false, [eh, input, param]() {
+	CTimer::Create(0.f, TIMERFLAG_MAP | TIMERFLAG_ROUND, [eh, input, param]() {
 		if (const auto entity = reinterpret_cast<CBaseEntity*>(eh.Get()))
 			entity->AcceptInput(input, param, nullptr, entity);
 
@@ -99,7 +109,7 @@ static void DelayInput(CBaseEntity* pCaller, CBaseEntity* pActivator, const char
 	const auto eh = pCaller->GetHandle();
 	const auto ph = pActivator->GetHandle();
 
-	new CTimer(0.f, false, false, [eh, ph, input, param]() {
+	CTimer::Create(0.f, TIMERFLAG_MAP | TIMERFLAG_ROUND, [eh, ph, input, param]() {
 		const auto player = reinterpret_cast<CBaseEntity*>(ph.Get());
 		if (const auto entity = reinterpret_cast<CBaseEntity*>(eh.Get()))
 			entity->AcceptInput(input, param, player, entity);
@@ -108,9 +118,54 @@ static void DelayInput(CBaseEntity* pCaller, CBaseEntity* pActivator, const char
 	});
 }
 
+namespace CTriggerGravityHandler
+{
+	static std::unordered_map<uint32_t, float> s_gravityMap;
+
+	void OnPrecache(CBaseEntity* pEntity, const CEntityKeyValues* kv)
+	{
+		const auto pGravity = kv->GetKeyValue("gravity");
+		const auto pHammerId = kv->GetKeyValue("hammerUniqueId");
+		if (!pGravity || !pHammerId)
+			return;
+
+		const auto flGravity = pGravity->GetFloat();
+		const auto hEntity = MurmurHash2LowerCase(pHammerId->GetString(), ENTITY_MURMURHASH_SEED);
+
+		s_gravityMap[hEntity] = flGravity;
+	}
+
+	bool GravityTouching(CBaseEntity* pEntity, CBaseEntity* pOther)
+	{
+		const auto hEntity = GetEntityUnique(pEntity);
+		if (hEntity == ENTITY_UNIQUE_INVALID)
+			return false;
+
+		const auto gravity = s_gravityMap.find(hEntity);
+		if (gravity == s_gravityMap.end())
+			return false;
+
+		if (pOther->IsPawn() && pOther->IsAlive())
+			pOther->SetGravityScale(gravity->second);
+
+		return true;
+	}
+
+	void OnEndTouch(CBaseEntity* pEntity, CBaseEntity* pOther)
+	{
+		if (pOther->IsPawn())
+			pOther->SetGravityScale(1);
+	}
+
+	static void Shutdown()
+	{
+		s_gravityMap.clear();
+	}
+} // namespace CTriggerGravityHandler
+
 namespace CGamePlayerEquipHandler
 {
-	static std::unordered_map<std::string, std::unordered_set<uint32_t>> s_PlayerEquipMap;
+	static std::unordered_map<uint32_t, std::unordered_set<uint32_t>> s_PlayerEquipMap;
 
 	void Use(CGamePlayerEquip* pEntity, InputData_t* pInput)
 	{
@@ -127,9 +182,9 @@ namespace CGamePlayerEquipHandler
 		{
 			StripPlayer(pPawn);
 		}
-		else if (flags & ::CGamePlayerEquip::SF_PLAYEREQUIP_ONLYSTRIPSAME)
+		else if (flags & CGamePlayerEquip::SF_PLAYEREQUIP_ONLYSTRIPSAME)
 		{
-			const auto& pair = s_PlayerEquipMap.find(pEntity->GetName());
+			const auto& pair = s_PlayerEquipMap.find(GetEntityUnique(pEntity));
 			if (pair != s_PlayerEquipMap.end() && !pair->second.empty())
 				StripPlayer(pPawn, pair->second);
 		}
@@ -148,7 +203,7 @@ namespace CGamePlayerEquipHandler
 		}
 		else if (flags & CGamePlayerEquip::SF_PLAYEREQUIP_ONLYSTRIPSAME)
 		{
-			const auto& pair = s_PlayerEquipMap.find(pEntity->GetName());
+			const auto& pair = s_PlayerEquipMap.find(GetEntityUnique(pEntity));
 			if (pair != s_PlayerEquipMap.end() && !pair->second.empty())
 			{
 				CCSPlayerPawn* pPawn = nullptr;
@@ -177,7 +232,7 @@ namespace CGamePlayerEquipHandler
 		}
 		else if (flags & CGamePlayerEquip::SF_PLAYEREQUIP_ONLYSTRIPSAME)
 		{
-			const auto& pair = s_PlayerEquipMap.find(pEntity->GetName());
+			const auto& pair = s_PlayerEquipMap.find(GetEntityUnique(pEntity));
 			if (pair != s_PlayerEquipMap.end() && !pair->second.empty())
 				StripPlayer(pPawn, pair->second);
 		}
@@ -199,8 +254,8 @@ namespace CGamePlayerEquipHandler
 
 	void OnPrecache(CGamePlayerEquip* pEntity, const CEntityKeyValues* kv)
 	{
-		const auto pName = pEntity->GetName();
-		if (!pName || !pName[0])
+		const auto pHammerId = kv->GetKeyValue("hammerUniqueId");
+		if (!pHammerId)
 			return;
 
 		auto list = std::unordered_set<uint32_t>();
@@ -219,10 +274,13 @@ namespace CGamePlayerEquipHandler
 		}
 
 		if (!list.empty())
-			s_PlayerEquipMap[std::string(pName)] = list;
+		{
+			const auto hEntity = MurmurHash2LowerCase(pHammerId->GetString(), ENTITY_MURMURHASH_SEED);
+			s_PlayerEquipMap[hEntity] = list;
+		}
 	}
 
-	void Shutdown()
+	static void Shutdown()
 	{
 		s_PlayerEquipMap.clear();
 	}
@@ -251,10 +309,10 @@ namespace CGameUIHandler
 
 	static std::unordered_map<uint32, CGameUIState> s_repository;
 
-	inline uint64 GetButtons(CPlayer_MovementServices* pMovement)
+	inline uint64 GetButtons(CPlayer_MovementServices* pMovement, int key = 0)
 	{
 		const auto buttonStates = pMovement->m_nButtons().m_pButtonStates();
-		const auto buttons = buttonStates[0];
+		const auto buttons = buttonStates[key];
 		return buttons;
 	}
 
@@ -266,8 +324,9 @@ namespace CGameUIHandler
 
 		const auto spawnFlags = pEntity->m_spawnflags();
 		const auto buttons = GetButtons(pMovement);
+		const auto scrolls = GetButtons(pMovement, 2);
 
-		if ((spawnFlags & CGameUI::SF_GAMEUI_JUMP_DEACTIVATE) != 0 && (buttons & IN_JUMP) != 0)
+		if (((spawnFlags & CGameUI::SF_GAMEUI_JUMP_DEACTIVATE) != 0) && ((buttons & IN_JUMP) != 0 || (scrolls & IN_JUMP) != 0))
 		{
 			DelayInput(pEntity, pPlayer, "Deactivate");
 			return BAD_BUTTONS;
@@ -386,7 +445,7 @@ namespace CGameUIHandler
 		s_repository[key] = CGameUIState(pPlayer, GetButtons(pMovement) & ~IN_USE);
 
 #ifdef ENTITY_HANDLER_ASSERTION
-		Message("Activate Entity %d<%u> -> %s\n", pEntity->entindex(), key, pPlayer->GetController()->GetPlayerName());
+		Message("Activate Entity %d<%u> -> %s\n", pEntity->entindex(), key, pPlayer->GetController()->GetPlayerName().c_str());
 #endif
 
 		return true;
@@ -414,7 +473,7 @@ namespace CGameUIHandler
 			DelayInput(pEntity, pPlayer, "InValue", "PlayerOff");
 
 #ifdef ENTITY_HANDLER_ASSERTION
-			Message("Deactivate Entity %d -> %s\n", pEntity->entindex(), pPlayer->GetController()->GetPlayerName());
+			Message("Deactivate Entity %d -> %s\n", pEntity->entindex(), pPlayer->GetController()->GetPlayerName().c_str());
 #endif
 		}
 		else
@@ -435,7 +494,7 @@ namespace CPointViewControlHandler
 {
 	struct ViewControl
 	{
-		CUtlVector<CHandle<CCSPlayerPawn>> m_players;
+		std::vector<CHandle<CCSPlayerPawn>> m_players;
 		std::string m_viewTarget;
 		std::string m_name;
 	};
@@ -523,7 +582,7 @@ namespace CPointViewControlHandler
 
 		if (pController->IsBot() || pController->m_bIsHLTV())
 		{
-			Warning("PointViewControl %s try enable for bot or HLTV: %s\n", it->second.m_name.c_str(), pController->GetPlayerName());
+			Warning("PointViewControl %s try enable for bot or HLTV: %s\n", it->second.m_name.c_str(), pController->GetPlayerName().c_str());
 			return false;
 		}
 
@@ -531,22 +590,24 @@ namespace CPointViewControlHandler
 
 		for (auto& [vk, vc] : s_repository)
 		{
-			if (const auto index = vc.m_players.Find(handle); index > -1)
+			const auto iterator = std::find(vc.m_players.begin(), vc.m_players.end(), handle);
+			if (iterator != vc.m_players.end())
 			{
 				if (vk == static_cast<uint>(key))
 				{
-					Warning("PointViewControl %s was enabled twice in a row! player: %s\n", vc.m_name.c_str(), pController->GetPlayerName());
+					Warning("PointViewControl %s was enabled twice in a row! player: %s\n", vc.m_name.c_str(), pController->GetPlayerName().c_str());
 					return false;
 				}
 
-				vc.m_players.Remove(index);
+				vc.m_players.erase(iterator);
 				UpdatePlayerState(pPawn, INVALID_HANDLE, false, RESET_FOV);
-				Warning("PointViewControl %s already enabled for %s\n", vc.m_name.c_str(), pController->GetPlayerName());
+				Warning("PointViewControl %s already enabled for %s\n", vc.m_name.c_str(), pController->GetPlayerName().c_str());
 				break;
 			}
 		}
 
-		return it->second.m_players.AddToTail(handle) >= 0;
+		it->second.m_players.push_back(handle);
+		return true;
 	}
 	bool OnDisable(CPointViewControl* pEntity, CBaseEntity* pActivator)
 	{
@@ -565,7 +626,7 @@ namespace CPointViewControlHandler
 
 		if (pController->IsBot() || pController->m_bIsHLTV())
 		{
-			Warning("PointViewControl %s try disable for bot or HLTV: %s\n", it->second.m_name.c_str(), pController->GetPlayerName());
+			Warning("PointViewControl %s try disable for bot or HLTV: %s\n", it->second.m_name.c_str(), pController->GetPlayerName().c_str());
 			return false;
 		}
 
@@ -573,7 +634,14 @@ namespace CPointViewControlHandler
 
 		UpdatePlayerState(pPawn, INVALID_HANDLE, false, RESET_FOV);
 
-		return it->second.m_players.FindAndRemove(handle);
+		auto& vecPlayers = it->second.m_players;
+		auto iterator = std::find(vecPlayers.begin(), vecPlayers.end(), handle);
+
+		if (iterator == vecPlayers.end())
+			return false;
+
+		vecPlayers.erase(iterator);
+		return true;
 	}
 	bool OnEnableAll(CPointViewControl* pEntity)
 	{
@@ -596,17 +664,19 @@ namespace CPointViewControlHandler
 
 			for (auto& [vk, vc] : s_repository)
 			{
-				if (const auto index = vc.m_players.Find(handle); index > -1)
+				auto iterator = std::find(vc.m_players.begin(), vc.m_players.end(), handle);
+
+				if (iterator != vc.m_players.end())
 				{
-					vc.m_players.Remove(index);
+					vc.m_players.erase(iterator);
 					if (vk == static_cast<uint>(key))
 						continue;
 					UpdatePlayerState(pPawn, INVALID_HANDLE, false, RESET_FOV);
-					Warning("PointViewControl %s already enabled for %s\n", vc.m_name.c_str(), pController->GetPlayerName());
+					Warning("PointViewControl %s already enabled for %s\n", vc.m_name.c_str(), pController->GetPlayerName().c_str());
 				}
 			}
 
-			it->second.m_players.AddToTail(handle);
+			it->second.m_players.push_back(handle);
 		}
 
 		return true;
@@ -618,15 +688,11 @@ namespace CPointViewControlHandler
 		if (it == s_repository.end())
 			return false;
 
-		FOR_EACH_VEC(it->second.m_players, i)
-		{
-			const auto& handle = it->second.m_players.Element(i);
-
-			if (const auto player = handle.Get())
+		for (auto hPawn : it->second.m_players)
+			if (CCSPlayerPawn* player = hPawn.Get())
 				UpdatePlayerState(player, INVALID_HANDLE, false, RESET_FOV);
-		}
 
-		it->second.m_players.Purge();
+		it->second.m_players.clear();
 
 		return true;
 	}
@@ -639,13 +705,9 @@ namespace CPointViewControlHandler
 			const auto entity = CHandle<CPointViewControl>(it->first).Get();
 			if (!entity)
 			{
-				FOR_EACH_VEC(it->second.m_players, i)
-				{
-					const auto& handle = it->second.m_players.Element(i);
-
-					if (const auto player = handle.Get())
+				for (auto hPawn : it->second.m_players)
+					if (CCSPlayerPawn* player = hPawn.Get())
 						UpdatePlayerState(player, INVALID_HANDLE, false, RESET_FOV);
-				}
 
 				it = s_repository.erase(it);
 			}
@@ -666,53 +728,47 @@ namespace CPointViewControlHandler
 				continue;
 			}
 
-			if (vc.m_players.Count() == 0)
+			if (vc.m_players.empty())
 				continue;
 
 			const auto pTarget = entity->GetTargetCameraEntity();
 			if (!pTarget)
 			{
-				FOR_EACH_VEC(vc.m_players, i)
-				{
-					const auto& handle = vc.m_players.Element(i);
-
-					if (const auto player = handle.Get())
+				for (auto hPawn : vc.m_players)
+					if (CCSPlayerPawn* player = hPawn.Get())
 						UpdatePlayerState(player, INVALID_HANDLE, false, RESET_FOV);
-				}
-				vc.m_players.Purge();
+				vc.m_players.clear();
 				continue;
 			}
 
-			FOR_EACH_VEC(vc.m_players, i)
+			for (auto iterator = vc.m_players.begin(); iterator != vc.m_players.end();)
 			{
-				const auto& handle = vc.m_players.Element(i);
-				const auto player = handle.Get();
+				auto hPawn = *iterator;
+				CCSPlayerPawn* player = hPawn.Get();
 				if (!player)
 				{
-					vc.m_players.Remove(i--);
+					iterator = vc.m_players.erase(iterator);
 					continue;
 				}
 				if (!player->IsAlive())
 				{
 					UpdatePlayerState(player, INVALID_HANDLE, false, RESET_FOV);
-					vc.m_players.Remove(i--);
+					iterator = vc.m_players.erase(iterator);
 					continue;
 				}
 
 				UpdatePlayerState(player, pTarget->GetHandle(), entity->HasFrozen(), entity->HasFOV() ? entity->GetFOV() : INVALID_FOV, entity->HasDisarm());
+				iterator++;
 			}
 		}
 	}
 	bool IsViewControl(CCSPlayerPawn* pPawn)
 	{
-		const auto handle = pPawn->GetHandle().ToInt();
 		for (const auto& [vk, vc] : s_repository)
 		{
-			FOR_EACH_VEC(vc.m_players, i)
-			{
-				if (vc.m_players.Element(i).ToInt() == handle)
+			for (auto hPawn : vc.m_players)
+				if (hPawn == pPawn->GetHandle())
 					return true;
-			}
 		}
 		return false;
 	}
@@ -720,14 +776,10 @@ namespace CPointViewControlHandler
 	{
 		for (auto& [vk, vc] : s_repository)
 		{
-			FOR_EACH_VEC(vc.m_players, i)
-			{
-				const auto& handle = vc.m_players.Element(i);
-
-				if (const auto player = handle.Get())
+			for (auto hPawn : vc.m_players)
+				if (CCSPlayerPawn* player = hPawn.Get())
 					UpdatePlayerState(player, INVALID_HANDLE, false, RESET_FOV);
-			}
-			vc.m_players.Purge();
+			vc.m_players.clear();
 		}
 		s_repository.clear();
 	}
@@ -760,5 +812,6 @@ void EntityHandler_OnEntitySpawned(CBaseEntity* pEntity)
 
 void EntityHandler_OnLevelInit()
 {
+	CTriggerGravityHandler::Shutdown();
 	CGamePlayerEquipHandler::Shutdown();
 }

@@ -1,7 +1,7 @@
 /**
  * =============================================================================
  * CS2Fixes
- * Copyright (C) 2023-2025 Source2ZE
+ * Copyright (C) 2023-2026 Source2ZE
  * =============================================================================
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -20,8 +20,6 @@
 #pragma once
 #include "entitysystem.h"
 
-extern CGameEntitySystem* g_pEntitySystem;
-
 class CEntityListener : public IEntityListener
 {
 	void OnEntitySpawned(CEntityInstance* pEntity) override;
@@ -29,3 +27,5 @@ class CEntityListener : public IEntityListener
 	void OnEntityDeleted(CEntityInstance* pEntity) override;
 	void OnEntityParentChanged(CEntityInstance* pEntity, CEntityInstance* pNewParent) override;
 };
+
+extern CEntityListener* g_pEntityListener;

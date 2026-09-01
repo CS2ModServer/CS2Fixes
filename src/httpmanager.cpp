@@ -1,7 +1,7 @@
 /**
  * =============================================================================
  * CS2Fixes
- * Copyright (C) 2023-2025 Source2ZE
+ * Copyright (C) 2023-2026 Source2ZE
  * Original code from D2Lobby2
  * Copyright (C) 2023 Nicholas Hastings
  * =============================================================================
@@ -29,8 +29,6 @@
 #include "common.h"
 #include "vendor/nlohmann/json.hpp"
 #include <string>
-
-extern ISteamHTTP* g_http;
 
 HTTPManager g_HTTPManager;
 
@@ -73,10 +71,10 @@ void HTTPManager::TrackedRequest::OnHTTPRequestCompleted(HTTPRequestCompleted_t*
 	else
 	{
 		uint32 size;
-		g_http->GetHTTPResponseBodySize(arg->m_hRequest, &size);
+		GetSteamHTTP()->GetHTTPResponseBodySize(arg->m_hRequest, &size);
 
 		uint8* response = new uint8[size + 1];
-		g_http->GetHTTPResponseBodyData(arg->m_hRequest, response, size);
+		GetSteamHTTP()->GetHTTPResponseBodyData(arg->m_hRequest, response, size);
 		response[size] = 0; // Add null terminator
 
 		json jsonResponse;
@@ -97,83 +95,78 @@ void HTTPManager::TrackedRequest::OnHTTPRequestCompleted(HTTPRequestCompleted_t*
 			// Allow error callback even if invalid json, since error code can provide useful info
 			m_callbackError(arg->m_hRequest, arg->m_eStatusCode, json());
 		}
-		else if (!jsonResponse.is_discarded())
+		else if (!jsonResponse.is_discarded() && m_callbackCompleted)
 			m_callbackCompleted(arg->m_hRequest, jsonResponse);
 
 		delete[] response;
 	}
 
-	if (g_http)
-		g_http->ReleaseHTTPRequest(arg->m_hRequest);
+	if (GetSteamHTTP())
+		GetSteamHTTP()->ReleaseHTTPRequest(arg->m_hRequest);
 
 	delete this;
 }
 
-void HTTPManager::Get(const char* pszUrl, CompletedCallback callbackCompleted,
+void HTTPManager::Get(std::string strUrl, CompletedCallback callbackCompleted,
 					  ErrorCallback callbackError, std::vector<HTTPHeader>* headers)
 {
-	GenerateRequest(k_EHTTPMethodGET, pszUrl, "", callbackCompleted, callbackError, headers);
+	GenerateRequest(k_EHTTPMethodGET, strUrl, "", callbackCompleted, callbackError, headers);
 }
 
-void HTTPManager::Post(const char* pszUrl, const char* pszText, CompletedCallback callbackCompleted,
+void HTTPManager::Post(std::string strUrl, std::string strText, CompletedCallback callbackCompleted,
 					   ErrorCallback callbackError, std::vector<HTTPHeader>* headers)
 {
-	GenerateRequest(k_EHTTPMethodPOST, pszUrl, pszText, callbackCompleted, callbackError, headers);
+	GenerateRequest(k_EHTTPMethodPOST, strUrl, strText, callbackCompleted, callbackError, headers);
 }
 
-void HTTPManager::Put(const char* pszUrl, const char* pszText, CompletedCallback callbackCompleted,
+void HTTPManager::Put(std::string strUrl, std::string strText, CompletedCallback callbackCompleted,
 					  ErrorCallback callbackError, std::vector<HTTPHeader>* headers)
 {
-	GenerateRequest(k_EHTTPMethodPUT, pszUrl, pszText, callbackCompleted, callbackError, headers);
+	GenerateRequest(k_EHTTPMethodPUT, strUrl, strText, callbackCompleted, callbackError, headers);
 }
 
-void HTTPManager::Patch(const char* pszUrl, const char* pszText, CompletedCallback callbackCompleted,
+void HTTPManager::Patch(std::string strUrl, std::string strText, CompletedCallback callbackCompleted,
 						ErrorCallback callbackError, std::vector<HTTPHeader>* headers)
 {
-	GenerateRequest(k_EHTTPMethodPATCH, pszUrl, pszText, callbackCompleted, callbackError, headers);
+	GenerateRequest(k_EHTTPMethodPATCH, strUrl, strText, callbackCompleted, callbackError, headers);
 }
 
-void HTTPManager::Delete(const char* pszUrl, const char* pszText, CompletedCallback callbackCompleted,
+void HTTPManager::Delete(std::string strUrl, std::string strText, CompletedCallback callbackCompleted,
 						 ErrorCallback callbackError, std::vector<HTTPHeader>* headers)
 {
-	GenerateRequest(k_EHTTPMethodDELETE, pszUrl, pszText, callbackCompleted, callbackError, headers);
+	GenerateRequest(k_EHTTPMethodDELETE, strUrl, strText, callbackCompleted, callbackError, headers);
 }
 
-void HTTPManager::GenerateRequest(EHTTPMethod method, const char* pszUrl, const char* pszText,
+void HTTPManager::GenerateRequest(EHTTPMethod method, std::string strUrl, std::string strText,
 								  CompletedCallback callbackCompleted, ErrorCallback callbackError,
 								  std::vector<HTTPHeader>* headers)
 {
-	if (!g_http)
+	if (!GetSteamHTTP())
 	{
-		Panic("A web request was attempted before g_http was instantiated, returning early.\n");
+		Panic("A web request was attempted on null ISteamHTTP, returning early.\n");
 		return;
 	}
 
-	// Message("Sending HTTP:\n%s\n", pszText);
-	auto hReq = g_http->CreateHTTPRequest(method, pszUrl);
-	int size = strlen(pszText);
-	// Message("HTTP request: %p\n", hReq);
+#ifdef _DEBUG
+	Message("Sending HTTP:\n%s\n", strText.c_str());
+#endif
+
+	HTTPRequestHandle hReq = GetSteamHTTP()->CreateHTTPRequest(method, strUrl.c_str());
 
 	bool shouldHaveBody = method == k_EHTTPMethodPOST
 						  || method == k_EHTTPMethodPATCH
 						  || method == k_EHTTPMethodPUT
 						  || method == k_EHTTPMethodDELETE;
 
-	if (shouldHaveBody && !g_http->SetHTTPRequestRawPostBody(hReq, "application/json", (uint8*)pszText, size))
-	{
-		// Message("Failed to SetHTTPRequestRawPostBody\n");
+	if (shouldHaveBody && !GetSteamHTTP()->SetHTTPRequestRawPostBody(hReq, "application/json", (uint8*)(strText.c_str()), strText.length()))
 		return;
-	}
-
-	// Prevent HTTP error 411 (probably not necessary?)
-	// g_http->SetHTTPRequestHeaderValue(hReq, "Content-Length", std::to_string(size).c_str());
 
 	if (headers != nullptr)
 		for (HTTPHeader header : *headers)
-			g_http->SetHTTPRequestHeaderValue(hReq, header.GetName(), header.GetValue());
+			GetSteamHTTP()->SetHTTPRequestHeaderValue(hReq, header.GetName(), header.GetValue());
 
 	SteamAPICall_t hCall;
-	g_http->SendHTTPRequest(hReq, &hCall);
+	GetSteamHTTP()->SendHTTPRequest(hReq, &hCall);
 
-	new TrackedRequest(hReq, hCall, pszUrl, pszText, callbackCompleted, callbackError);
+	new TrackedRequest(hReq, hCall, strUrl, strText, callbackCompleted, callbackError);
 }

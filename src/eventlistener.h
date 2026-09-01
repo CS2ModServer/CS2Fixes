@@ -1,7 +1,7 @@
 /**
  * =============================================================================
  * CS2Fixes
- * Copyright (C) 2023-2025 Source2ZE
+ * Copyright (C) 2023-2026 Source2ZE
  * =============================================================================
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -21,13 +21,13 @@
 #include "common.h"
 #include "igameevents.h"
 #include "utlstring.h"
-#include "utlvector.h"
-
-typedef void (*FnEventListenerCallback)(IGameEvent* event);
 
 class CGameEventListener;
 
-extern CUtlVector<CGameEventListener*> g_vecEventListeners;
+extern std::vector<CGameEventListener*> g_vecEventListeners;
+extern CConVar<int> g_cvarFreeArmor;
+
+typedef void (*FnEventListenerCallback)(IGameEvent* event);
 
 class CGameEventListener : public IGameEventListener2
 {
@@ -35,7 +35,7 @@ public:
 	CGameEventListener(FnEventListenerCallback callback, const char* pszEventName) :
 		m_Callback(callback), m_pszEventName(pszEventName)
 	{
-		g_vecEventListeners.AddToTail(this);
+		g_vecEventListeners.push_back(this);
 	}
 
 	~CGameEventListener() override

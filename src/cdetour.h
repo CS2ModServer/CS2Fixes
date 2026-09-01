@@ -1,7 +1,7 @@
 /**
  * =============================================================================
  * CS2Fixes
- * Copyright (C) 2023-2025 Source2ZE
+ * Copyright (C) 2023-2026 Source2ZE
  * =============================================================================
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -35,6 +35,8 @@ public:
 	virtual void EnableDetour() = 0;
 	virtual void DisableDetour() = 0;
 };
+
+extern CUtlVector<CDetourBase*> g_vecDetours;
 
 template <typename T>
 class CDetour : public CDetourBase
@@ -71,8 +73,6 @@ private:
 	funchook_t* m_hook;
 	bool m_bInstalled;
 };
-
-extern CUtlVector<CDetourBase*> g_vecDetours;
 
 template <typename T>
 CDetour<T>::CDetour(T* pfnDetour, const char* pszName) :

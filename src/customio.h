@@ -1,7 +1,7 @@
 /**
  * =============================================================================
  * CS2Fixes
- * Copyright (C) 2023-2025 Source2ZE
+ * Copyright (C) 2023-2026 Source2ZE
  * =============================================================================
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -19,11 +19,16 @@
 
 #pragma once
 
+#include "convar.h"
+#include "utlstring.h"
+
 class CEntityIdentity;
 class CEntityInstance;
 class CBaseEntity;
 class CCSPlayerPawn;
 enum DamageTypes_t : unsigned int;
+
+extern CConVar<CUtlString> g_cvarBurnParticle;
 
 bool CustomIO_HandleInput(CEntityInstance* pEntityInstance,
 						  const char* pParams,

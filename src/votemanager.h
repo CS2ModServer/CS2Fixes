@@ -2,7 +2,7 @@
 /**
  * =============================================================================
  * CS2Fixes
- * Copyright (C) 2023-2025 Source2ZE
+ * Copyright (C) 2023-2026 Source2ZE
  * =============================================================================
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -21,6 +21,8 @@
 #pragma once
 
 #include "panoramavote.h"
+
+extern CConVar<bool> g_cvarVoteManagerEnable;
 
 enum class ERTVState
 {
@@ -52,8 +54,6 @@ enum EExtendVoteMode
 	EXTENDVOTE_AUTO,	  // Extend votes can be triggered by !ve or when map timelimit reaches a given value
 };
 
-extern CConVar<bool> g_cvarVoteManagerEnable;
-
 class CVoteManager
 {
 public:
@@ -67,7 +67,7 @@ public:
 	void VoteExtendHandler(YesNoVoteAction action, int param1, int param2);
 	bool VoteExtendEndCallback(YesNoVoteInfo info);
 	void StartExtendVote(int iCaller);
-	void OnRoundEnd();
+	void OnIntermission();
 	bool CheckRTVStatus();
 
 	ERTVState GetRTVState() { return m_RTVState; }

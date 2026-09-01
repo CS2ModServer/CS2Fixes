@@ -25,3 +25,4 @@ bld/
 /data/infractions.txt
 dump
 Adventure
+/*.patch

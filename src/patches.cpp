@@ -1,7 +1,7 @@
 /**
  * =============================================================================
  * CS2Fixes
- * Copyright (C) 2023-2025 Source2ZE
+ * Copyright (C) 2023-2026 Source2ZE
  * =============================================================================
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -25,27 +25,18 @@
 #include "entity/ccsplayerpawn.h"
 #include "icvar.h"
 #include "irecipientfilter.h"
-#include "mempatch.h"
 
 #include "tier0/memdbgon.h"
-
-extern CGameConfig* g_GameConfig;
 
 CMemPatch g_CommonPatches[] =
 	{
 		CMemPatch("ServerMovementUnlock", "ServerMovementUnlock"),
+		CMemPatch("BotNavIgnore", "BotNavIgnore"),
 		CMemPatch("CheckJumpButtonWater", "FixWaterFloorJump"),
-		CMemPatch("WaterLevelGravity", "WaterLevelGravity"),
-		CMemPatch("CPhysBox_Use", "CPhysBox_Use"),
-		CMemPatch("BotNavIgnore", "BotNavIgnore"),
-#ifndef _WIN32
-		// Linux checks for the nav mesh in each bot_add command, so we patch 3 times
-		CMemPatch("BotNavIgnore", "BotNavIgnore"),
-		CMemPatch("BotNavIgnore", "BotNavIgnore"),
-#endif
+		CMemPatch("SetSchemaHammerUniqueId", "SetSchemaHammerUniqueId"),
 };
 
-CConVar<bool> cs2f_movement_unlocker_enable("cs2f_movement_unlocker_enable", FCVAR_NONE, "Whether to enable movement unlocker", false,
+CConVar<bool> cs2f_movement_unlocker_enable("cs2f_movement_unlocker_enable", FCVAR_NONE, "Whether to enable movement unlocker, clients will not predict", false,
 											[](CConVar<bool>* cvar, CSplitScreenSlot slot, const bool* new_val, const bool* old_val) {
 												// Movement unlocker is always the first patch
 												if (*new_val)
@@ -58,8 +49,8 @@ bool InitPatches(CGameConfig* g_GameConfig)
 {
 	bool success = true;
 
-	// Skip first patch (movement unlocker), it gets patched in convar callback
-	for (int i = 1; i < sizeof(g_CommonPatches) / sizeof(*g_CommonPatches); i++)
+	// Skip first two patches (movement unlocker & bot nav ignore), they are patched elsewhere
+	for (int i = 2; i < sizeof(g_CommonPatches) / sizeof(*g_CommonPatches); i++)
 		if (!g_CommonPatches[i].PerformPatch(g_GameConfig))
 			success = false;
 

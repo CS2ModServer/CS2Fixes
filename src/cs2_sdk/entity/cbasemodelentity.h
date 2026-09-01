@@ -1,7 +1,7 @@
 /**
  * =============================================================================
  * CS2Fixes
- * Copyright (C) 2023-2025 Source2ZE
+ * Copyright (C) 2023-2026 Source2ZE
  * =============================================================================
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -34,7 +34,10 @@ public:
 	SCHEMA_FIELD(float, m_flDissolveStartTime)
 	SCHEMA_FIELD(Vector, m_vecViewOffset)
 
-	void SetModel(const char* szModel);
+	void SetModel(const char* pszModel)
+	{
+		addresses::CBaseModelEntity_SetModel(this, pszModel);
+	}
 
 	void SetCollisionGroup(StandardCollisionGroups_t nCollisionGroup)
 	{
