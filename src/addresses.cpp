@@ -72,6 +72,7 @@ bool addresses::Initialize(CGameConfig* g_GameConfig)
 	RESOLVE_SIG(g_GameConfig, "CCSPlayer_WeaponServices_EquipWeapon", addresses::CCSPlayer_WeaponServices_EquipWeapon);
 	RESOLVE_SIG(g_GameConfig, "GetSpawnGroups", addresses::GetSpawnGroups);
 	RESOLVE_SIG(g_GameConfig, "CBasePlayerPawn_SnapViewAngles", addresses::CBasePlayerPawn_SnapViewAngles);
+	RESOLVE_SIG(g_GameConfig, "CCSPlayer_WeaponServices_EquipWeapon", addresses::CCSPlayer_WeaponServices_EquipWeapon);
 
 	return InitializeBanMap(g_GameConfig);
 }

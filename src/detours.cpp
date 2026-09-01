@@ -42,7 +42,6 @@
 #include "entity/services.h"
 #include "entwatch.h"
 #include "gameconfig.h"
-#include "igameevents.h"
 #include "irecipientfilter.h"
 #include "map_votes.h"
 #include "mapmigrations.h"
@@ -53,7 +52,6 @@
 #include "tier0/vprof.h"
 #include "votemanager.h"
 #include "zombiereborn.h"
-#include "buttonwatch.h"
 
 #include "tier0/memdbgon.h"
 
@@ -829,7 +827,7 @@ void FASTCALL Detour_GameSystem_Think_CheckSteamBan()
 	if (!g_cvarFixGameBans.Get())
 		return;
 
-	CUtlMap<uint32, CGcBanInformation_t, uint32>* pMap = addresses::sm_mapGcBanInformation;
+	auto pMap = addresses::sm_mapGcBanInformation;
 	unsigned int count = pMap->Count();
 
 	// After player has been kicked, remove any ban entries, to prevent spreading to all new joining players

@@ -11,7 +11,7 @@ namespace Source2Py
 
 	void PyAPI::ConPrint(std::string message) {
 		message.append("\n");
-		META_CONPRINT(message.c_str());
+		META_CONPRINT(message.c_str()); 
 	}
 
 	void PyAPI::ClientConPrint(int playerSlot, std::string message) {

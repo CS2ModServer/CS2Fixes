@@ -31,6 +31,8 @@
 #include "utlvector.h"
 #include <playerslot.h>
 
+#include "adventuremod.h"
+
 extern CConVar<bool> g_cvarFlashLightTransmitOthers;
 extern CConVar<CUtlString> g_cvarFlashLightAttachment;
 
@@ -149,6 +151,8 @@ private:
 	};
 };
 
+class ADVPlayer;
+
 class ZEPlayer
 {
 public:
@@ -198,6 +202,7 @@ public:
 		m_flEntwatchHudX = -7.5f;
 		m_flEntwatchHudY = -2.0f;
 		m_flEntwatchHudSize = 60.0f;
+		m_ADVPlayer = ADVPlayer(m_slot.Get());
 		m_bTopDefender = false;
 		m_flLastVoiceTime = -15.0f;
 		m_flBeaconEnabledTime = -2.0f;
@@ -399,6 +404,9 @@ private:
 	float m_flEntwatchHudX;
 	float m_flEntwatchHudY;
 	float m_flEntwatchHudSize;
+	
+public:
+	ADVPlayer m_ADVPlayer;
 	bool m_bTopDefender;
 	float m_flLastVoiceTime;
 	float m_flBeaconEnabledTime;

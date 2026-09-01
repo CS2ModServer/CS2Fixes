@@ -1,4 +1,4 @@
-/**
+﻿/**
  * =============================================================================
  * CS2Fixes
  * Copyright (C) 2023-2026 Source2ZE
@@ -19,6 +19,7 @@
 
 #pragma once
 #include "ehandle.h"
+#include "gametrace.h"
 #include <platform.h>
 
 enum DamageTypes_t : uint32_t

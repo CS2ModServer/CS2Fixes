@@ -114,7 +114,6 @@ void CUserPreferencesSystem::OnPutPreferences(int iSlot)
 	bool bNoShake = (bool)GetPreferenceInt(iSlot, NO_SHAKE_PREF_KEY_NAME, 0);
 	int iButtonWatchMode = GetPreferenceInt(iSlot, BUTTON_WATCH_PREF_KEY_NAME, 0);
 	int iZSounds = GetPreferenceInt(iSlot, ZSOUNDS_PREF_KEY_NAME, (int)EZSoundsType::ON);
-	int iButtonWatchMode = GetPreferenceInt(iSlot, BUTTON_WATCH_PREF_KEY_NAME, 0);
 
 	// EntWatch
 	int iEntwatchMode = GetPreferenceInt(iSlot, EW_PREF_HUD_MODE, 0);

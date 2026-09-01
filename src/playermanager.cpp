@@ -39,6 +39,8 @@
 #include "zombiereborn.h"
 #include <../cs2fixes.h>
 
+#include "adventuremod.h"
+
 #include "tier0/memdbgon.h"
 
 CPlayerManager* g_playerManager = nullptr;
@@ -766,12 +768,16 @@ void CPlayerManager::OnBotConnected(CPlayerSlot slot)
 
 bool CPlayerManager::OnClientConnected(CPlayerSlot slot, uint64 xuid, const char* pszNetworkID)
 {
-
+	//ZEPlayer
 	Assert(m_vecPlayers[slot.Get()] == nullptr);
 
 	//Message("%d connected\n", slot.Get());
 
 	ZEPlayer* pPlayer = new ZEPlayer(slot);
+
+	//ADVPlayer
+	pPlayer->m_ADVPlayer.UpdatePlayerItems();
+	
 	pPlayer->SetUnauthenticatedSteamId(new CSteamID(xuid));
 
 	std::string ip(pszNetworkID);
@@ -791,7 +797,7 @@ bool CPlayerManager::OnClientConnected(CPlayerSlot slot, uint64 xuid, const char
 	CCSPlayerController* pc = CCSPlayerController::FromSlot(slot);
 	const char* name = "unknown";
 	if (pc)
-		name = pc->GetPlayerName();
+		name = pc->GetPlayerName().c_str();
 
 	for (auto& plugin : g_CS2Fixes.m_Plugins)
 		plugin.PyClientConnected(
@@ -815,6 +821,8 @@ bool CPlayerManager::OnClientConnected(CPlayerSlot slot, uint64 xuid, const char
 		pPlayer->OnAuthenticated();
 
 	pPlayer->SetConnected();
+
+	//ZEPlayer
 	m_vecPlayers[slot.Get()] = pPlayer;
 
 	ResetPlayerFlags(slot.Get());

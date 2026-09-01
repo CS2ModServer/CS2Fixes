@@ -224,9 +224,6 @@ GAME_EVENT_F(player_hurt) //new
 	for (auto& plugin : g_CS2Fixes.m_Plugins)
 		plugin.PyPlayerHurt(pEvent);
 
-	//if (g_bEnableZR)
-	//	ZR_OnPlayerHurt(pEvent);
-
 	//if (!g_bEnableTopDefender)
 	//		return;
 
@@ -253,8 +250,8 @@ GAME_EVENT_F(player_hurt) //new
 
 GAME_EVENT_F(old_player_hurt)
 {
-	if (g_bEnableZR)
-		ZR_OnPlayerHurt(pEvent);
+	if (g_cvarEnableTopDefender.Get())
+		TD_OnPlayerHurt(pEvent);
 
 	if (!g_cvarEnableTopDefender.Get())
 		return;
@@ -275,12 +272,86 @@ GAME_EVENT_F(old_player_hurt)
 	pPlayer->SetTotalHits(pPlayer->GetTotalHits() + 1);
 }
 
+GAME_EVENT_F(bomb_planted)
+{
+	/*
+		"bomb_planted":dict({
+            "userid":"slot",
+            "userid_pawn":"strict_ehandle",
+            "site":"short",
+            }),
+	*/
+	CPlayerSlot slot = pEvent->GetPlayerSlot("userid");
+	int site = pEvent->GetInt("site");
+
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyBombPlanted(pEvent, slot.Get(), site);
+}
+
+GAME_EVENT_F(bomb_defused)
+{
+	/*
+	    "bomb_defused":dict({
+            "userid":"slot",
+            "userid_pawn":"strict_ehandle",
+            "site":"short",
+            }),
+	*/
+	CPlayerSlot slot = pEvent->GetPlayerSlot("userid");
+	int site = pEvent->GetInt("site");
+
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyBombDefused(pEvent, slot.Get(), site);
+}
+
+GAME_EVENT_F(bomb_exploded)
+{
+	/*
+		"bomb_exploded":dict({
+			"userid":"slot",
+			"userid_pawn":"strict_ehandle",
+			"site":"short",
+			}),
+	*/
+	CPlayerSlot slot = pEvent->GetPlayerSlot("userid");
+	int site = pEvent->GetInt("site");
+
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyBombExploded(pEvent, slot.Get(), site);
+}
+
 GAME_EVENT_F(player_death)
 {
-	for (auto& plugin : g_CS2Fixes.m_Plugins)
-		plugin.PyPlayerDeath(pEvent);
-	if (g_cvarEnableZR.Get())
-		ZR_OnPlayerDeath(pEvent);
+	/*
+		"player_death":dict
+		({
+			"userid":"playercontroller",
+			"userid_pawn":"strict_ehandle",
+			"attacker":"playercontroller",
+			"attacker_pawn":"strict_ehandle",
+			"assister":"playercontroller",
+			"assister_pawn":"strict_ehandle",
+			"assistedflash":"bool",
+			"weapon":"string",
+			"weapon_itemid":"string",
+			"weapon_fauxitemid":"string",
+			"weapon_originalowner_xuid":"string",
+			"headshot":"bool",
+			"dominated":"short",
+			"revenge":"short",
+			"wipe":"short",
+			"penetrated":"short",
+			"noreplay":"bool",
+			"noscope":"bool",
+			"thrusmoke":"bool",
+			"attackerblind":"bool",
+			"distance":"float",
+			"dmg_health":"short",
+			"dmg_armor":"byte",
+			"hitgroup":"byte",
+			"attackerinair":"bool",
+		}),
+	*/
 
 	//if (g_bEnableZR)
 	//	ZR_OnPlayerDeath(pEvent);
@@ -293,12 +364,47 @@ GAME_EVENT_F(player_death)
 	//if (!g_bEnableTopDefender)
 	//	return;
 
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyPlayerDeath(pEvent);
+
 	CCSPlayerController* pAttacker = (CCSPlayerController*)pEvent->GetPlayerController("attacker");
 	CCSPlayerController* pVictim = (CCSPlayerController*)pEvent->GetPlayerController("userid");
 
+	bool noattacker = false;
+	if (!pAttacker)
+	{
+		Message("noattacker=true");
+		noattacker = true;
+	}
+
+	bool novictim = false;
+	if (!pVictim)
+	{
+		Message("novictim=true");
+		novictim = true;
+	}
+	
+	bool teamkill = false;
+	if (pAttacker->m_iTeamNum == pVictim->m_iTeamNum)
+		teamkill = true;
+
+	bool suicide = false;
+	if (pAttacker == pVictim)
+		suicide = true;
+
 	// Ignore Ts/zombie kills and ignore CT teamkilling or suicide
-	if (!pAttacker || !pVictim || pAttacker->m_iTeamNum != CS_TEAM_CT || pAttacker->m_iTeamNum == pVictim->m_iTeamNum)
+	if (	
+			noattacker  ||
+			novictim    ||
+			teamkill    || 
+			suicide     ||
+			pAttacker->m_iTeamNum != CS_TEAM_CT || 
+			pAttacker->m_iTeamNum == pVictim->m_iTeamNum
+			)
+	{
 		return;
+	}
+
 
 	ZEPlayer* pPlayer = pAttacker->GetZEPlayer();
 
@@ -310,7 +416,6 @@ GAME_EVENT_F(player_death)
 		TD_OnPlayerDeath(pEvent);
 }
 
-CConVar<bool> g_cvarFullAllTalk("cs2f_full_alltalk", FCVAR_NONE, "Whether to enforce sv_full_alltalk 1", false);
 GAME_EVENT_F(player_jump)
 {
     /*	"player_jump":dict({
@@ -353,8 +458,7 @@ GAME_EVENT_F(player_airborn)
 		plugin.PyPlayerAirborn(index);
 }
 
-bool g_bFullAllTalk = false;
-FAKE_BOOL_CVAR(cs2f_full_alltalk, "Whether to enforce sv_full_alltalk 1", g_bFullAllTalk, false, false);
+CConVar<bool> g_cvarFullAllTalk("cs2f_full_alltalk", 0, "Whether to enforce sv_full_alltalk 1", false);
 
 GAME_EVENT_F(round_start)
 {
@@ -433,6 +537,11 @@ GAME_EVENT_F(cs_win_panel_match)
 
 	if (!g_pMapVoteSystem->IsVoteOngoing())
 		g_pMapVoteSystem->StartVote();
+}
+
+GAME_EVENT_F(player_score)
+{
+	Message("player_score fired, from where i don't know.\n");
 }
 
 GAME_EVENT_F(player_connect)

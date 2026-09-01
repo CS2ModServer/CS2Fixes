@@ -33,6 +33,8 @@ extern bool g_bAwsChangingTeam;
 #define AMMO_OFFSET_MOLOTOV 16
 #define AMMO_OFFSET_DECOY 17
 
+extern bool g_bAwsChangingTeam;
+
 struct CSPerRoundStats_t
 {
 public:
@@ -221,17 +223,14 @@ class CPlayer_ItemServices : public CPlayerPawnComponent
 
 public:
 	DECLARE_SCHEMA_CLASS(CPlayer_ItemServices);
-};
-	SCHEMA_FIELD(CSMatchStats_t, m_matchStats);
 	SCHEMA_FIELD(bool, m_bHasDefuser);
 	SCHEMA_FIELD(bool, m_bHasHelmet);
 	SCHEMA_FIELD(bool, m_bHasHeavyArmor);
+};
+
 class CCSPlayer_ItemServices : public CPlayer_ItemServices
 {
 	virtual ~CCSPlayer_ItemServices() = 0;
-
-public:
-	DECLARE_SCHEMA_CLASS(CCSPlayer_ItemServices);
 
 public:
 	DECLARE_SCHEMA_CLASS(CCSPlayer_ItemServices);

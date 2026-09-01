@@ -69,9 +69,6 @@ public:
 			   ErrorCallback callbackError = nullptr, std::vector<HTTPHeader>* headers = nullptr);
 	void Delete(std::string strUrl, std::string strText, CompletedCallback callbackCompleted,
 				ErrorCallback callbackError = nullptr, std::vector<HTTPHeader>* headers = nullptr);
-	void PUT(const char* pszUrl, const char* pszText, CompletedCallback callback, std::vector<HTTPHeader>* headers = nullptr);
-	void PATCH(const char* pszUrl, const char* pszText, CompletedCallback callback, std::vector<HTTPHeader>* headers = nullptr);
-	void DELETE(const char* pszUrl, const char* pszText, CompletedCallback callback, std::vector<HTTPHeader>* headers = nullptr);
 	bool HasAnyPendingRequests() const { return m_PendingRequests.size() > 0; }
 
 private:

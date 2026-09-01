@@ -28,10 +28,11 @@
 #include "public/ics2fixes.h"
 #include "steam/isteamhttp.h"
 #include <ISmmPlugin.h>
-#include <iplayerinfo.h>
+//#include <iplayerinfo.h>
 #include <iserver.h>
 #include <sh_vector.h>
 
+#include <string>
 #include <vector>
 #include <filesystem>
 namespace fs = std::filesystem;
@@ -140,13 +141,15 @@ public:
 	// Get this plugin's directory path
 	fs::path GetPluginBaseDirectory() { return s_Source2PyDirectory; }
 	bool LoadPythonPlugins();
+	void ReloadPythonPlugins();
+	
+	void MenuSelection(int selection); //they interacted with a menu item
 
 private:
 	const fs::path s_Source2PyDirectory = "../../csgo/addons/CS2Fixes/PyPlugins/";
 
 public:
 	std::vector<Source2Py::PyPlugin> m_Plugins;
-	
 	
 };
 

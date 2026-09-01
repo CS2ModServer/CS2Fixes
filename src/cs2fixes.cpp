@@ -31,7 +31,6 @@
 #include "entities.h"
 #include "entity/ccsplayercontroller.h"
 #include "entity/services.h"
-#include "entity/services.h"
 #include "entitylistener.h"
 #include "entitysystem.h"
 #include "entwatch.h"
@@ -66,10 +65,12 @@
 //#include "Source2Py.h"
 #include "PyRuntime.h"
 //#include "PyInclude.h" //included in PyRuntime.h
-
+#include <vector>
+#include <string>
 #include <fstream>
 
 #include "tier0/memdbgon.h"
+
 
 class GameSessionConfiguration_t
 {};
@@ -136,6 +137,43 @@ CGameEntitySystem* GameEntitySystem()
 {
 	static int offset = g_GameConfig->GetOffset("GameEntitySystem");
 	return *reinterpret_cast<CGameEntitySystem**>((uintptr_t)(g_pGameResourceServiceServer) + offset);
+}
+
+void CS2Fixes::ReloadPythonPlugins()
+{
+	Message("Restarting Python Plugins...\n");
+	//kill py plugins
+	m_Plugins.clear();
+
+	//kill py runtime
+	Source2Py::PyRuntime::Close();
+
+	//save current path and change to needed pypath
+	fs::path exePath = fs::current_path();
+	fs::current_path(GetPluginBaseDirectory());
+
+	//start py runtime
+	Source2Py::PyRuntime::Init();
+
+	//start py plugins
+	if (!LoadPythonPlugins())
+		Source2Py::PyRuntime::Close();
+
+	// and set the cwd back where the game expects it
+	fs::current_path(exePath);
+
+	return;
+}
+
+//CON_COMMAND_CHAT_FLAGS(cs2f_restart_py, "Drop and reload python plugins.", ADMFLAG_ROOT)
+// reload python plugins
+//CON_COMMAND_F(cs2f_restart_py, "Technique bound to ability1", FCVAR_NONE)
+CON_COMMAND_F(cs2f_restart_py, "Drop and reload python plugins.", ADMFLAG_ROOT)
+{
+
+	Message("You typed !cs2f_restart_py in chat.\n");
+	g_CS2Fixes.ReloadPythonPlugins();
+	return;
 }
 
 bool CS2Fixes::LoadPythonPlugins()
@@ -282,6 +320,7 @@ bool CS2Fixes::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, bool
 
 		// and set the cwd back where the game expects it
 	fs::current_path(exePath);
+
 	}
 
 	const auto pCGamePlayerEquipVTable = modules::server->FindVirtualTable("CGamePlayerEquip");
@@ -568,8 +607,6 @@ bool CS2Fixes::Unload(char* error, size_t maxlen)
 	if (g_pEntitySystem && g_pEntityListener)
 	{
 		g_pEntitySystem->RemoveListenerEntity(g_pEntityListener);
-	{
-		g_pEntitySystem->RemoveListenerEntity(g_pEntityListener);
 		delete g_pEntityListener;
 	}
 
@@ -819,6 +856,18 @@ void CS2Fixes::Hook_PostEvent(CSplitScreenSlot nSlot, bool bLocalOnly, int nClie
 
 		if (g_cvarEnableZR.Get())
 			ZR_PostEventAbstract_SosStartSoundEvent(clients, msg);
+	
+	// test changing an outer number. //works for whats needed
+	if (false)
+	{
+		int outernum=0;
+		std::function<void(int)> _testint(
+			[&outernum](int number) 
+			{
+				Message("AllPluginsLoaded() templatefunc - START\n");
+				outernum=number;
+				Message("AllPluginsLoaded() templatefunc - END\n");
+			});
 
 		if (g_cvarEnableStopSound.Get())
 		{
@@ -886,6 +935,7 @@ void CS2Fixes::Hook_PostEvent(CSplitScreenSlot nSlot, bool bLocalOnly, int nClie
 		// Unfortunately, this new system seems extremely unoptimized for 64 players, and was causing severe performance issues & vector overflow client crashes
 		if (g_cvarBlockParticleMsgs.Get())
 			*(uint64*)clients = 0;
+	}
 	}
 }
 
@@ -1296,11 +1346,7 @@ void CS2Fixes::Hook_DropWeaponPost(CBasePlayerWeapon* pWeapon, Vector* pVecTarge
 
 int CS2Fixes::Hook_LoadEventsFromFile(const char* filename, bool bSearchAll)
 {
-	ExecuteOnce
-	(
-		g_gameEventManager = META_IFACEPTR(IGameEventManager2);
-		RegisterEventListeners();
-	)
+	ExecuteOnce(g_gameEventManager = META_IFACEPTR(IGameEventManager2));
 
 	RETURN_META_VALUE(MRES_IGNORED, 0);
 }

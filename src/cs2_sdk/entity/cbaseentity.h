@@ -224,9 +224,20 @@ public:
 	}
 
 	// Emit a sound event
-	void EmitSound(const char* pszSound, int nPitch = 100, float flVolume = 1.0, float flDelay = 0.0)
+	void EmitSound(
+		const char* pszSound, 
+		int nPitch = 100, 
+		float flVolume = 1.0, 
+		float flDelay = 0.0
+		)
 	{
-		addresses::CBaseEntity_EmitSoundParams(this, pszSound, nPitch, flVolume, flDelay);
+		addresses::CBaseEntity_EmitSoundParams(
+			this, 
+			pszSound, 
+			nPitch, 
+			flVolume, 
+			flDelay
+			);
 	}
 
 	StartSoundEventInfo EmitSoundFilter(IRecipientFilter& filter, const char* pszSound, float flVolume = 1.0, float flPitch = 1.0)
@@ -235,6 +246,9 @@ public:
 		params.m_pSoundName = pszSound;
 		params.m_flVolume = flVolume;
 		params.m_nPitch = flPitch;
+
+		//lets not mess with this, just keep as a reminder of whats possible
+		//params.m_SoundLevel = soundlevel_t::SNDLVL_35dB;
 
 		return addresses::CBaseEntity_EmitSoundFilter(filter, entindex(), params);
 	}

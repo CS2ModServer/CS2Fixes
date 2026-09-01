@@ -61,7 +61,6 @@ CConVar<bool> g_cvarEnableLeader(
 	[](CConVar<bool>* cvar, CSplitScreenSlot slot, const bool* new_val, const bool* old_val) {
 		if ((new_val && *new_val) || !GetGlobals())
 			return;
-FAKE_INT_CVAR(cs2f_leader_extra_score, "Extra score to give a leader to affect their position on the scoreboard", g_iLeaderExtraScore, 20000, false)
 
 		// Remove all active leaders if disabling convar
 		for (int i = 0; i < GetGlobals()->maxClients; i++)

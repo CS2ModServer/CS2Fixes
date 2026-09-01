@@ -77,10 +77,6 @@ public:
 		}
 	}
 
-		for (CBasePlayerWeapon* pWeapon : vecWeaponsToDrop)
-			m_pWeaponServices()->DropWeapon(pWeapon);
-	}
-
 	void CommitSuicide(bool bExplode, bool bForce)
 	{
 		// CommitSuicide doesn't go through OnTakeDamage_Alive

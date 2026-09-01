@@ -34,8 +34,25 @@ namespace Source2Py {
 		void PyClientUltimate(int playerSlot);
 		
 		void PyPlayerHurt(IGameEvent* event);
+
+		//event, killerslot, killersteam,    victimslot, victimsteam,    assistorslot, assistorsteam, suicide
+		void PyPlayerDeathNew(
+			IGameEvent* event, 
+			CPlayerSlot	killerSlot,
+			uint64_t	killerSteam, 
+			CPlayerSlot victimSlot,
+			uint64_t	victimSteam, 
+			CPlayerSlot assisterSlot,
+			uint64_t	assisterSteam, 
+			bool		suicide
+			);
 		void PyPlayerDeath(IGameEvent* event);
+
 		
+		void PyBombPlanted(IGameEvent* event, int slot, int site);
+		void PyBombDefused(IGameEvent* event, int slot, int site);
+		void PyBombExploded(IGameEvent* event, int slot, int site);
+
 		void PyPlayerJump(int playerSlot);
 		void PyPlayerAirborn(int playerSlot);
 		void PyPlayerLand(int playerSlot);
@@ -44,10 +61,13 @@ namespace Source2Py {
 		void PyPlayerSpawn_post(int playerSlot);
 		void PyPlayerSpawned(int playerSlot);
 
+		//void PyMENU(auto& f);
 
 		bool IsValid() const { return m_Valid; }
 
 		operator bool() { return m_Valid; }
+
+		py::object GetSelf() {return m_PluginObject; }
 
 	private:
 		py::object m_PluginObject;

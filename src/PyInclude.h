@@ -2,6 +2,7 @@
 
 #include <pybind11/embed.h>
 #include <pybind11/operators.h>
+#include <pybind11/functional.h>
 
 
 namespace py = pybind11;

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * =============================================================================
  * CS2Fixes
  * Copyright (C) 2023-2026 Source2ZE
@@ -107,6 +107,7 @@ void ZR_Precache(IEntityResourceManifest* pResourceManifest)
 	pResourceManifest->AddResource(g_cvarHumanWinOverlayParticle.Get().String());
 	pResourceManifest->AddResource(g_cvarZombieWinOverlayParticle.Get().String());
 
+	Message("Precached the stuff TRISTEN TRISTEN\n");
 	pResourceManifest->AddResource("soundevents/soundevents_zr.vsndevts");
 }
 
@@ -241,7 +242,7 @@ void ZRClass::Override(ordered_json jsonKeys, std::string szClassname)
 }
 
 ZRHumanClass::ZRHumanClass(ordered_json jsonKeys, std::string szClassname) :
-	ZRClass(jsonKeys, szClassname, CS_TEAM_CT){};
+	ZRClass(jsonKeys, szClassname, CS_TEAM_CT) {};
 
 ZRZombieClass::ZRZombieClass(ordered_json jsonKeys, std::string szClassname) :
 	ZRClass(jsonKeys, szClassname, CS_TEAM_T),
@@ -994,7 +995,10 @@ void ZR_OnPlayerSpawn(CCSPlayerController* pController)
 
 void ZR_ApplyKnockback(CCSPlayerPawn* pHuman, CCSPlayerPawn* pVictim, float flDamage, const char* szWeapon, int hitgroup, float classknockback)
 {
-	std::shared_ptr<ZRWeapon> pWeapon = g_pZRWeaponConfig->FindWeapon(szWeapon);
+	if (V_strlen(szWeapon) <= 7)
+		return;
+
+	std::shared_ptr<ZRWeapon> pWeapon = g_pZRWeaponConfig->FindWeapon(szWeapon + 7);
 	std::shared_ptr<ZRHitgroup> pHitgroup = g_pZRHitgroupConfig->FindHitgroupIndex(hitgroup);
 	// player shouldn't be able to pick up that weapon in the first place, but just in case
 	if (!pWeapon)
@@ -1518,12 +1522,6 @@ bool ZR_Detour_CEntityIdentity_AcceptInput(CEntityIdentity* pThis, CUtlSymbolLar
 			// This would allow maps to mess with timeleft, so we're actually just going to block it entirely
 			case CSRoundEndReason::GameStart:
 				return false;
-	const char* pszWeaponClassname = pPlayerWeapon->GetWeaponClassname();
-	if (pPawn->m_iTeamNum() == CS_TEAM_T && !CCSPlayer_ItemServices::IsAwsProcessing() && V_strncmp(pszWeaponClassname, "weapon_knife", 12) && V_strncmp(pszWeaponClassname, "weapon_c4", 9))
-		return false;
-	if (pPawn->m_iTeamNum() == CS_TEAM_CT && V_strlen(pszWeaponClassname) > 7 && !g_pZRWeaponConfig->FindWeapon(pszWeaponClassname + 7))
-		return false;
-	// doesn't guarantee the player will pick the weapon up, it just allows the original function to run
 			case CSRoundEndReason::Draw:
 			default:
 				ZR_FinishRound(CS_TEAM_NONE);
