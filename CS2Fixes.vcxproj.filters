@@ -179,12 +179,12 @@
     <ClCompile Include="src\entwatch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <!-- <ClCompile Include="src\cvarwhitelist.cpp"> -->
-      <!-- <Filter>Source Files</Filter> -->
-    <!-- </ClCompile> -->
-<!--    <ClCompile Include="src\cfgparser.cpp"> -->
-<!--      <Filter>Source Files</Filter> -->
-<!--    </ClCompile> -->
+    <ClCompile Include="src\cvarwhitelist.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cfgparser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="src\utils\weapon.cpp">
       <Filter>Source Files\utils</Filter>
     </ClCompile>
@@ -194,9 +194,9 @@
     <ClCompile Include="src\utils\utils.cpp">
       <Filter>Source Files\utils</Filter>
     </ClCompile>
-<!--    <ClCompile Include="src\utils\vscript_function.cpp"> -->
-<!--      <Filter>Source Files\utils</Filter> -->
-<!--    </ClCompile> -->
+    <ClCompile Include="src\utils\vscript_function.cpp">
+      <Filter>Source Files\utils</Filter>
+    </ClCompile>
     <ClCompile Include="src\cs2_sdk\entity\services.cpp">
       <Filter>Source Files\cs2_sdk\entity</Filter>
     </ClCompile>
@@ -226,9 +226,9 @@
     <ClInclude Include="src\utils\virtual.h">
       <Filter>Header Files\utils</Filter>
     </ClInclude>
-<!--    <ClInclude Include="src\utils\vscript_function.h"> -->
-<!--      <Filter>Header Files\utils</Filter> -->
-<!--    </ClInclude> -->
+    <ClInclude Include="src\utils\vscript_function.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
     <ClInclude Include="src\cs2_sdk\schema.h">
       <Filter>Header Files\cs2_sdk</Filter>
     </ClInclude>
@@ -409,12 +409,12 @@
     <ClInclude Include="src\entwatch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <!-- <ClInclude Include="src\cvarwhitelist.h"> -->
-      <!-- <Filter>Header Files</Filter> -->
-    <!-- </ClInclude> -->
-<!--    <ClInclude Include="src\cfgparser.h"> -->
-<!--      <Filter>Header Files</Filter> -->
-<!--    </ClInclude> -->
+    <ClInclude Include="src\cvarwhitelist.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cfgparser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="src\cs2_sdk\entity\cpointworldtext.h">
       <Filter>Header Files\cs2_sdk\entity</Filter>
     </ClInclude>

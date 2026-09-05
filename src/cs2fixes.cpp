@@ -22,10 +22,13 @@
 
 #include "adminsystem.h"
 #include "appframework/IAppSystem.h"
+#include "cchecktransmitinfo.h"
+#include "cfgparser.h"
 #include "commands.h"
 #include "common.h"
 #include "cs_gameevents.pb.h"
 #include "ctimer.h"
+#include "cvarwhitelist.h"
 #include "detours.h"
 #include "discord.h"
 #include "entities.h"
@@ -381,6 +384,9 @@ bool CS2Fixes::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, bool
 	if (!addresses::Initialize(g_GameConfig))
 		bRequiredInitLoaded = false;
 
+	if (!addresses::InitializeVScriptFunctions())
+		bRequiredInitLoaded = false;
+
 	if (!InitPatches(g_GameConfig))
 		bRequiredInitLoaded = false;
 
@@ -551,6 +557,8 @@ bool CS2Fixes::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, bool
 	g_pIdleSystem = new CIdleSystem();
 	g_pPanoramaVoteHandler = new CPanoramaVoteHandler();
 	g_pEWHandler = new CEWHandler();
+	g_pConvarWhitelist = new CConVarWhitelist();
+	g_pCfgParser = new CCfgParser();
 	g_pMapMigrations = new CMapMigrations();
 
 	RegisterWeaponCommands();
@@ -574,10 +582,7 @@ bool CS2Fixes::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, bool
 	});
 
 	// run our cfg
-	// remember for later, exec looks in ~/csgo/cfg/ for stuff.
-	// ~/csgo/cfg/cs2fixes/cs2fixes.cfg    <-- move to here
-	// ~/csgo/addons/cs2fixes/cfg/cs2fixes/cs2fixes.cfg     <-- from here
-	g_pEngineServer2->ServerCommand("exec CS2Fixes/cs2fixes");
+	g_pCfgParser->ParseCfg("cs2fixes/cs2fixes");
 
 	srand(time(0));
 
@@ -709,6 +714,12 @@ bool CS2Fixes::Unload(char* error, size_t maxlen)
 		delete g_pEWHandler;
 	}
 
+	if (g_pConvarWhitelist)
+		delete g_pConvarWhitelist;
+
+	if (g_pCfgParser)
+		delete g_pCfgParser;
+
 	if (g_pMapMigrations)
 		delete g_pMapMigrations;
 
@@ -727,15 +738,24 @@ void CS2Fixes::Hook_DispatchConCommand(ConCommandRef cmdHandle, const CCommandCo
 	if (!g_cvarEnableCommands.Get())
 		RETURN_META(MRES_IGNORED);
 
-	bool bSay = !V_strcmp(args.Arg(0), "say");
-	bool bTeamSay = !V_strcmp(args.Arg(0), "say_team");
+	bool bSay = !V_stricmp(args.Arg(0), "say");
+	bool bTeamSay = !V_stricmp(args.Arg(0), "say_team");
 
 	if (iCommandPlayerSlot != -1 && (bSay || bTeamSay))
 	{
-		auto pController = CCSPlayerController::FromSlot(iCommandPlayerSlot);
-		bool bGagged = pController && pController->GetZEPlayer()->IsGagged();
-		bool bFlooding = pController && pController->GetZEPlayer()->IsFlooding();
-		bool bIsAdmin = pController && pController->GetZEPlayer()->IsAdminFlagSet(ADMFLAG_GENERIC);
+		CCSPlayerController* pController = CCSPlayerController::FromSlot(iCommandPlayerSlot);
+		ZEPlayer* pPlayer = pController ? pController->GetZEPlayer() : nullptr;
+
+		// Block chat messages from players not fully ingame, can be interpreted as console messages
+		if (!pPlayer || !pPlayer->IsInGame())
+		{
+			Message("Blocked chat message from user ID %i not fully in game\n", g_pEngineServer2->GetPlayerUserId(iCommandPlayerSlot).Get());
+			RETURN_META(MRES_SUPERCEDE);
+		}
+
+		bool bGagged = pPlayer->IsGagged();
+		bool bFlooding = pPlayer->IsFlooding();
+		bool bIsAdmin = pPlayer->IsAdminFlagSet(ADMFLAG_GENERIC);
 		bool bAdminChat = bTeamSay && *args[1] == '@';
 		bool bSilent = *args[1] == '/' || bAdminChat;
 		bool bCommand = *args[1] == '!' || *args[1] == '/';
@@ -759,6 +779,10 @@ void CS2Fixes::Hook_DispatchConCommand(ConCommandRef cmdHandle, const CCommandCo
 		{
 			SH_CALL(g_pCVar, &ICvar::DispatchConCommand)
 			(cmdHandle, ctx, args);
+
+			// Reset idle time if message is sent to chat
+			if (g_cvarIdleKickTime.Get() > 0.0f)
+				pPlayer->UpdateLastInputTime();
 		}
 		else if (bFlooding)
 		{
@@ -1124,12 +1148,20 @@ void CS2Fixes::Hook_ClientCommand(CPlayerSlot slot, const CCommand& args)
 	Message("Hook_ClientCommand(%d, \"%s\")\n", slot, args.GetCommandString());
 #endif
 
+	ZEPlayer* pPlayer = g_playerManager->GetPlayer(slot);
+
 	if (g_cvarIdleKickTime.Get() > 0.0f)
 	{
-		ZEPlayer* pPlayer = g_playerManager->GetPlayer(slot);
-
-		if (pPlayer)
-			pPlayer->UpdateLastInputTime();
+		CCSPlayerController* pController = CCSPlayerController::FromSlot(slot);
+		if (pPlayer && pController)
+		{
+			// Only spectators doing spectator commands reset idle timer
+			if (pController->m_iTeamNum() == CS_TEAM_SPECTATOR && 
+				(!V_stricmp(args[0], "spec_mode") || 
+				!V_stricmp(args[0], "spec_prev") || 
+				!V_stricmp(args[0], "spec_next")))
+				pPlayer->UpdateLastInputTime();
+	}
 	}
 
 	if (g_cvarVoteManagerEnable.Get() && V_stricmp(args[0], "endmatch_votenextmap") == 0 && args.ArgC() == 2)
@@ -1140,7 +1172,7 @@ void CS2Fixes::Hook_ClientCommand(CPlayerSlot slot, const CCommand& args)
 			RETURN_META(MRES_SUPERCEDE);
 	}
 
-	if (g_cvarEnableZR.Get() && slot != -1 && !V_strncmp(args.Arg(0), "jointeam", 8))
+	if (g_cvarEnableZR.Get() && slot != -1 && !V_strnicmp(args.Arg(0), "jointeam", 8))
 	{
 		ZR_Hook_ClientCommand_JoinTeam(slot, args);
 		RETURN_META(MRES_SUPERCEDE);
@@ -1280,19 +1312,13 @@ void CS2Fixes::Hook_CheckTransmit(CCheckTransmitInfo** ppInfoList, int infoCount
 
 	for (int i = 0; i < infoCount; i++)
 	{
-		auto& pInfo = ppInfoList[i];
-
-		// the offset happens to have a player index here,
-		// though this is probably part of the client class that contains the CCheckTransmitInfo
-		static int offset = g_GameConfig->GetOffset("CheckTransmitPlayerSlot");
-		int iPlayerSlot = (int)*((uint8*)pInfo + offset);
-
-		CCSPlayerController* pSelfController = CCSPlayerController::FromSlot(iPlayerSlot);
+		auto& pInfo = (CCheckTransmitInfoExtended*&)(ppInfoList[i]);
+		CCSPlayerController* pSelfController = CCSPlayerController::FromSlot(pInfo->m_nPlayerSlot);
 
 		if (!pSelfController || !pSelfController->IsConnected())
 			continue;
 
-		auto pSelfZEPlayer = g_playerManager->GetPlayer(iPlayerSlot);
+		auto pSelfZEPlayer = g_playerManager->GetPlayer(pInfo->m_nPlayerSlot);
 
 		if (!pSelfZEPlayer)
 			continue;
@@ -1301,7 +1327,7 @@ void CS2Fixes::Hook_CheckTransmit(CCheckTransmitInfo** ppInfoList, int infoCount
 		{
 			CCSPlayerController* pController = CCSPlayerController::FromSlot(j);
 			// Always transmit to themselves
-			if (!pController || pController->m_bIsHLTV || j == iPlayerSlot)
+			if (!pController || pController->m_bIsHLTV || j == pInfo->m_nPlayerSlot.Get())
 				continue;
 
 			// Don't transmit other players' flashlights
@@ -1333,21 +1359,9 @@ void CS2Fixes::Hook_CheckTransmit(CCheckTransmitInfo** ppInfoList, int infoCount
 			if (pSelfZEPlayer->ShouldBlockTransmit(j) && pOtherZEPlayer && !pOtherZEPlayer->IsLeader() && g_pEWHandler->FindItemInstanceByOwner(j, false, 0) == -1)
 			{
 				pInfo->m_pTransmitEntity->Clear(pPawn->entindex());
-
-				if (g_cvarHideWeapons.Get())
-				{
-					auto pVecWeapons = pPawn->m_pWeaponServices->m_hMyWeapons();
-
-					FOR_EACH_VEC(*pVecWeapons, i)
-					{
-						auto pWeapon = (*pVecWeapons)[i].Get();
-
-						if (pWeapon)
-							pInfo->m_pTransmitEntity->Clear(pWeapon->entindex());
-		}
-				}
-			}
-		}
+				pInfo->m_pTransmitNonPlayers->Set(pPawn->entindex());
+						}
+					}
 
 		// Don't transmit glow model to it's owner
 		CBaseModelEntity* pGlowModel = pSelfZEPlayer->GetGlowModel();
@@ -1359,8 +1373,22 @@ void CS2Fixes::Hook_CheckTransmit(CCheckTransmitInfo** ppInfoList, int infoCount
 
 void CS2Fixes::Hook_ApplyGameSettings(KeyValues* pKV)
 {
-	g_pMapVoteSystem->ApplyGameSettings(pKV);
-	g_pMapMigrations->ApplyGameSettings(pKV);
+	const char* pszMapName;
+	uint64 iWorkshopId;
+
+	if (pKV->FindKey("launchoptions") && pKV->FindKey("launchoptions")->FindKey("levelname"))
+		pszMapName = pKV->FindKey("launchoptions")->GetString("levelname");
+	else
+		pszMapName = "";
+
+	if (pKV->FindKey("launchoptions") && pKV->FindKey("launchoptions")->FindKey("customgamemode"))
+		iWorkshopId = pKV->FindKey("launchoptions")->GetUint64("customgamemode");
+	else
+		iWorkshopId = 0;
+
+	g_pCfgParser->ApplyGameSettings(pszMapName);
+	g_pMapVoteSystem->ApplyGameSettings(pszMapName, iWorkshopId);
+	g_pMapMigrations->ApplyGameSettings(iWorkshopId);
 }
 
 void CS2Fixes::Hook_CreateWorkshopMapGroup(const char* name, const CUtlStringList& mapList)
@@ -1563,7 +1591,7 @@ bool CS2Fixes::Hook_ProcessVoiceData(const CCLCMsg_VoiceData_t& msg)
 {
 	CServerSideClient* client = META_IFACEPTR(CServerSideClient);
 
-	if (!client || !GetGlobals())
+	if (!client)
 		RETURN_META_VALUE(MRES_IGNORED, true);
 
 	ZEPlayer* pPlayer = g_playerManager->GetPlayer(client->GetPlayerSlot());
@@ -1571,6 +1599,10 @@ bool CS2Fixes::Hook_ProcessVoiceData(const CCLCMsg_VoiceData_t& msg)
 	if (!pPlayer)
 		RETURN_META_VALUE(MRES_IGNORED, true);
 
+	if (pPlayer->IsMuted())
+		RETURN_META_VALUE(MRES_SUPERCEDE, true);
+
+	if (GetGlobals())
 	pPlayer->SetLastVoiceTime(GetGlobals()->curtime);
 
 	RETURN_META_VALUE(MRES_IGNORED, true);
@@ -1644,16 +1676,6 @@ void CS2Fixes::OnLevelInit(char const* pMapName,
 						   bool background)
 {
 	Message("OnLevelInit(%s)\n", pMapName);
-
-	// run our cfg
-	//remember for later, this ~/game/csgo/cfg/cs2fixes/cs2fixes.cfg being executed.
-	//you'll need to move it from ~/addons/cs2fixes/cfg/cs2fixes/cs2fixes.cfg if you want it found.
-	g_pEngineServer2->ServerCommand("exec cs2fixes/cs2fixes");
-
-	// Run map cfg (if present)
-	char cmd[MAX_PATH];
-	V_snprintf(cmd, sizeof(cmd), "exec cs2fixes/maps/%s", pMapName);
-	g_pEngineServer2->ServerCommand(cmd);
 
 	// Only patch BotNavIgnore while a map is loaded, else adding bots will crash
 	if (V_strcmp(pMapName, "error"))

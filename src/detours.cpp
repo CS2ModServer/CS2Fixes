@@ -22,15 +22,18 @@
 #include "usercmd.pb.h"
 
 #include "addresses.h"
+#include "bspflags.h"
 #include "buttonwatch.h"
 #include "cdetour.h"
 #include "commands.h"
 #include "common.h"
 #include "ctimer.h"
 #include "customio.h"
+#include "cvarwhitelist.h"
 #include "detours.h"
 #include "entities.h"
 #include "entity/cbasemodelentity.h"
+#include "entity/cbeam.h"
 #include "entity/ccsplayercontroller.h"
 #include "entity/ccsplayerpawn.h"
 #include "entity/ccsweaponbase.h"
@@ -42,6 +45,7 @@
 #include "entity/services.h"
 #include "entwatch.h"
 #include "gameconfig.h"
+#include "igameevents.h"
 #include "irecipientfilter.h"
 #include "map_votes.h"
 #include "mapmigrations.h"
@@ -59,7 +63,6 @@ CUtlVector<CDetourBase*> g_vecDetours;
 
 DECLARE_DETOUR(UTIL_SayTextFilter, Detour_UTIL_SayTextFilter);
 DECLARE_DETOUR(UTIL_SayText2Filter, Detour_UTIL_SayText2Filter);
-DECLARE_DETOUR(IsHearingClient, Detour_IsHearingClient);
 DECLARE_DETOUR(TriggerPush_Touch, Detour_TriggerPush_Touch);
 DECLARE_DETOUR(CBaseEntity_TakeDamageOld, Detour_CBaseEntity_TakeDamageOld);
 DECLARE_DETOUR(CCSPlayer_WeaponServices_CanUse, Detour_CCSPlayer_WeaponServices_CanUse);
@@ -88,6 +91,9 @@ DECLARE_DETOUR(CCSPlayer_ItemServices_CanAcquire, Detour_CCSPlayer_ItemServices_
 DECLARE_DETOUR(CS_Script_SetModel, Detour_CS_Script_SetModel);
 DECLARE_DETOUR(CBaseModelEntity_SetModel, Detour_CBaseModelEntity_SetModel);
 DECLARE_DETOUR(CCSGameRules_GoToIntermission, Detour_CCSGameRules_GoToIntermission);
+DECLARE_DETOUR(SetBeamOrigin, Detour_SetBeamOrigin);
+DECLARE_DETOUR(SetBeamEndPos, Detour_SetBeamEndPos);
+DECLARE_DETOUR(IsCommandWhitelisted, Detour_IsCommandWhitelisted);
 
 CConVar<bool> g_cvarBlockMolotovSelfDmg("cs2f_block_molotov_self_dmg", FCVAR_NONE, "Whether to block self-damage from molotovs", false);
 CConVar<bool> g_cvarBlockAllDamage("cs2f_block_all_dmg", FCVAR_NONE, "Whether to block all damage to players", false);
@@ -247,15 +253,6 @@ void FASTCALL Detour_TriggerPush_Touch(CTriggerPush* pPush, CBaseEntity* pOther)
 
 	flags |= (1 << 23); // TODO: is FL_BASEVELOCITY really gone?
 	pOther->m_fFlags(flags);
-}
-
-bool FASTCALL Detour_IsHearingClient(void* serverClient, int index)
-{
-	ZEPlayer* player = g_playerManager->GetPlayer(index);
-	if (player && player->IsMuted())
-		return false;
-
-	return IsHearingClient(serverClient, index);
 }
 
 void SayChatMessageWithTimer(IRecipientFilter& filter, const char* pText, CCSPlayerController* pPlayer, uint64 eMessageType)
@@ -875,6 +872,34 @@ void FASTCALL Detour_CCSGameRules_GoToIntermission(CCSGameRules* pThis, bool bAb
 		g_pVoteManager->OnIntermission();
 
 	return CCSGameRules_GoToIntermission(pThis, bAbortedMatch);
+}
+
+void FASTCALL Detour_SetBeamOrigin(CBeam* pThis, const Vector* pVecPosition)
+{
+	// Game code still works for parented beams/lasers
+	if (pThis->m_CBodyComponent()->m_pSceneNode()->m_pParent())
+		SetBeamOrigin(pThis, pVecPosition);
+
+	// If no parent, then game code would hit infinite loop, just reimplement this simple path ourselves
+	pThis->SetAbsOrigin(*pVecPosition);
+}
+
+void FASTCALL Detour_SetBeamEndPos(CBeam* pThis, const Vector* pVecPosition)
+{
+	// Game code still works for parented beams/lasers
+	if (pThis->m_CBodyComponent()->m_pSceneNode()->m_pParent())
+		SetBeamEndPos(pThis, pVecPosition);
+
+	// If no parent, then game code would hit infinite loop, just reimplement this simple path ourselves
+	pThis->m_vecEndPos = *(VectorWS*)(pVecPosition);
+}
+
+bool FASTCALL Detour_IsCommandWhitelisted(void* pAddonManager, const char* pszCommandName)
+{
+	if (!g_cvarConVarWhitelistEnable.Get() || !g_pConvarWhitelist->IsConfigLoaded())
+		return IsCommandWhitelisted(pAddonManager, pszCommandName);
+
+	return g_pConvarWhitelist->IsWhitelisted(pszCommandName);
 }
 
 bool InitDetours(CGameConfig* gameConfig)

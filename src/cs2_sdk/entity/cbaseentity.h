@@ -1,4 +1,4 @@
-/**
+﻿/**
  * =============================================================================
  * CS2Fixes
  * Copyright (C) 2023-2026 Source2ZE
@@ -165,7 +165,7 @@ public:
 
 	void SetName(const char* pName)
 	{
-		addresses::CEntityIdentity_SetEntityName(m_pEntity, pName);
+		addresses::ScriptSetEntityName(this, pName);
 	}
 
 	void TakeDamage(CTakeDamageInfo& info)
@@ -196,14 +196,12 @@ public:
 
 	bool IsPawn()
 	{
-		static int offset = g_GameConfig->GetOffset("IsPlayerPawn");
-		return CALL_VIRTUAL(bool, offset, this);
+		return addresses::IsPlayerPawn(this);
 	}
 
 	bool IsController()
 	{
-		static int offset = g_GameConfig->GetOffset("IsPlayerController");
-		return CALL_VIRTUAL(bool, offset, this);
+		return addresses::IsPlayerController(this);
 	}
 
 	void AcceptInput(const char* pInputName, variant_t value = variant_t(""), CEntityInstance* pActivator = nullptr, CEntityInstance* pCaller = nullptr)
@@ -231,13 +229,7 @@ public:
 		float flDelay = 0.0
 		)
 	{
-		addresses::CBaseEntity_EmitSoundParams(
-			this, 
-			pszSound, 
-			nPitch, 
-			flVolume, 
-			flDelay
-			);
+		addresses::ScriptEmitSoundParams(this, pszSound, nPitch, flVolume, flDelay);
 	}
 
 	SndOpEventGuid_t EmitSoundFilter(
