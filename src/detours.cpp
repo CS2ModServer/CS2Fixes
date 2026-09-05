@@ -45,6 +45,7 @@
 #include "entity/services.h"
 #include "entwatch.h"
 #include "gameconfig.h"
+#include "igameevents.h"
 #include "irecipientfilter.h"
 #include "map_votes.h"
 #include "mapmigrations.h"

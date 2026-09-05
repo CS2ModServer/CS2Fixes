@@ -5,11 +5,13 @@
     <LocalDebuggerCommandArguments>-dedicated</LocalDebuggerCommandArguments>
     <LocalDebuggerWorkingDirectory>E:/CS2Server\cs2\game\bin\win64</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerCommandArgumentsHistory>-dedicated|</LocalDebuggerCommandArgumentsHistory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerCommand>E:/CS2Server\cs2\game\bin\win64\cs2.exe</LocalDebuggerCommand>
     <LocalDebuggerCommandArguments>-insecure -language english -window -dedicated -usercon +game_type 0 +game_mode 1 +map de_dust2 -maxplayers_override 64</LocalDebuggerCommandArguments>
     <LocalDebuggerWorkingDirectory>E:/CS2Server\cs2\game\bin\win64</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerCommandArgumentsHistory>-insecure -language english -window -dedicated -usercon +game_type 0 +game_mode 1 +map de_dust2 -maxplayers_override 64|</LocalDebuggerCommandArgumentsHistory>
   </PropertyGroup>
 </Project>
