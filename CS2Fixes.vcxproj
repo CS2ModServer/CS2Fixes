@@ -201,6 +201,7 @@
     <ClCompile Include="src\customio.cpp" />
     <ClCompile Include="src\cvars.cpp" />
     <ClCompile Include="src\detours.cpp" />
+    <ClCompile Include="src\virtual_hooks.cpp" />
     <ClCompile Include="src\discord.cpp" />
     <ClCompile Include="src\entities.cpp" />
     <ClCompile Include="src\entwatch.cpp" />
@@ -232,6 +233,7 @@
     <ClCompile Include="src\utils\utils.cpp" />
     <ClCompile Include="src\utils\vscript_function.cpp" />
     <ClCompile Include="src\cs2_sdk\entity\services.cpp" />
+    <ClCompile Include="src\cs2_sdk\entity\customhudlayout.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\buttonwatch.h" />
@@ -265,6 +267,7 @@
     <ClInclude Include="src\cs2_sdk\entity\cteam.h" />
     <ClInclude Include="src\cs2_sdk\entity\ctriggerpush.h" />
     <ClInclude Include="src\cs2_sdk\entity\ctriggerteleport.h" />
+    <ClInclude Include="src\cs2_sdk\entity\customhudlayout.h" />
     <ClInclude Include="src\cs2_sdk\entity\cvotecontroller.h" />
     <ClInclude Include="src\cs2_sdk\entity\globaltypes.h" />
     <ClInclude Include="src\cs2_sdk\entity\lights.h" />
@@ -274,10 +277,10 @@
     <ClInclude Include="src\cs2_sdk\schema.h" />
     <ClInclude Include="src\cs2_sdk\entityio.h" />
     <ClInclude Include="src\cs2_sdk\cchecktransmitinfo.h" />
-    <ClInclude Include="src\cdetour.h" />
     <ClInclude Include="src\ctimer.h" />
     <ClInclude Include="src\customio.h" />
     <ClInclude Include="src\detours.h" />
+    <ClInclude Include="src\virtual_hooks.h" />
     <ClInclude Include="src\discord.h" />
     <ClInclude Include="src\entities.h" />
     <ClInclude Include="src\entwatch.h" />
@@ -314,6 +317,7 @@
     <ClInclude Include="src\utils\version_gen_placeholder.h" />
     <ClInclude Include="src\utils\hud_manager.h" />
     <ClInclude Include="src\utils\utils.h" />
+    <ClInclude Include="src\utils\sighook.h" />
     <ClInclude Include="src\utils\weapon.h" />
     <!--- CS2ModServer - Headers -->
     <ClInclude Include="src\cs2_sdk\cchecktransmitinfo.h" />
