@@ -82,11 +82,16 @@ namespace Source2Py {
 		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnClientConnected", playerSlot, name, xuid, networkID, address, fakePlayer);
 	}
 
-	void PyPlugin::PyFireGameEvent(IGameEvent* event)
+	void PyPlugin::PyFireGameEventBlind(IGameEvent* event)
 	{
-		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnGameEvent", event);
+		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnGameEventBlind", event);
 	}
 	
+	void PyPlugin::PyFireGameEventNamed(IGameEvent* event, const char* event_name)
+	{
+		PyRuntime::ExecuteObjectMethod(m_PluginObject, event_name, event);
+	}
+
 	void PyPlugin::PyPlayerHurt(IGameEvent* event)
 	{
 		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnPlayerHurt", event);

@@ -207,6 +207,9 @@ public:
 		m_bTopDefender = false;
 		m_flLastVoiceTime = -15.0f;
 		m_flBeaconEnabledTime = -2.0f;
+		m_iLastGround = 0;
+		m_iLastAirborn = 0;
+		m_iLastJump = 0;
 	}
 
 	~ZEPlayer()
@@ -409,8 +412,11 @@ private:
 	bool m_bTopDefender;
 	float m_flLastVoiceTime;
 	float m_flBeaconEnabledTime;
-	
+
 public:
+	int m_iLastGround = 0;
+	int m_iLastAirborn = 0;
+	int m_iLastJump = 0;
 	ADVPlayer m_ADVPlayer;
 };
 

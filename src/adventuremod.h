@@ -10,6 +10,7 @@
 #include <platform.h>
 #include <map>
 #include "PyInclude.h"
+#include "../vendor/pybind11/include/pybind11/pytypes.h"
 //#include "adventuremenu.h"
 
 #define MAXITEMS 50
@@ -52,7 +53,8 @@ public:
 	CBaseEntity*			GetPawn();
 	int GetHealth();
 	void AddHealth(int amount);
-	const char* GetName();
+	//const char* GetName();
+	py::str GetName();
 	bool IsValid();
 	bool IsOnGround();
 	bool IsOnLadder();

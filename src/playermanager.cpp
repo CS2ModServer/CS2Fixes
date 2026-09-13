@@ -875,10 +875,10 @@ void CPlayerManager::OnClientPutInServer(CPlayerSlot slot)
 	if (pClient && pClient->m_vecLoadedSpawnGroups.Count() != vecActualSpawnGroups.Count())
 		pClient->m_vecLoadedSpawnGroups = vecActualSpawnGroups;
 	// test a thing
-	if (true)
+	if (false)
 	{
 		CCSPlayerController* ccs = CCSPlayerController::FromSlot(slot);
-		const char* name = ccs->GetPlayerName();
+		const char* name = ccs->GetPlayerName().c_str();
 
 		Message("[CS2Fixes] Currently Connected players and their inventory.\n");
 		Message("[CS2Fixes] %s is slot %d.\n", name, slot.Get());

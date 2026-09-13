@@ -149,23 +149,8 @@ private:
 
 public:
 	std::vector<Source2Py::PyPlugin> m_Plugins;
-	
-
-
-public:
-	// Get this plugin's directory path
-	fs::path GetPluginBaseDirectory() { return s_Source2PyDirectory; }
-	bool LoadPythonPlugins();
-	void ReloadPythonPlugins();
 	virtual std::vector<std::string> GetPlayerItems(CPlayerSlot slot);
 	virtual py::list _maptest_GetPlayerClasses(CPlayerSlot slot);
-
-private:
-	const fs::path s_Source2PyDirectory = "../../csgo/addons/CS2Fixes/PyPlugins/";
-
-public:
-	std::vector<Source2Py::PyPlugin> m_Plugins;
-	void* OnMetamodQuery(const char* iface, int *ret) override;
 };
 
 extern CS2Fixes g_CS2Fixes;

@@ -14,6 +14,8 @@ for sdk_target in MMSPlugin.sdk_targets:
     os.path.join(builder.sourcePath, 'public'),
     os.path.join(builder.sourcePath, 'sdk', 'thirdparty', 'protobuf-3.21.8', 'src'),
     os.path.join(builder.sourcePath, 'vendor', 'funchook', 'include'),
+    os.path.join('C:\\Python312\\include'),
+    os.path.join(builder.sourcePath, 'vendor', 'pybind11', 'include'),
   ]
 
   target_folder = 'Debug' if builder.options.debug else 'Release'
@@ -28,6 +30,7 @@ for sdk_target in MMSPlugin.sdk_targets:
   elif binary.compiler.target.platform == 'windows':
     binary.compiler.postlink += [
       os.path.join('psapi.lib'),
+      os.path.join('C:\\Python312\\libs', 'python312.lib'),
       os.path.join(builder.sourcePath, 'vendor', 'funchook', 'lib', target_folder, 'funchook.lib'),
       os.path.join(builder.sourcePath, 'vendor', 'funchook', 'lib', target_folder, 'distorm.lib'),
       os.path.join(builder.sourcePath, 'sdk', 'lib' ,'public', 'win64', '2015', 'libprotobuf.lib'),
@@ -52,8 +55,6 @@ for sdk_target in MMSPlugin.sdk_targets:
     'src/utils/utils.cpp',
     'src/utils/vscript_function.cpp',
     'src/cs2_sdk/entity/services.cpp',
-    'src/cs2_sdk/entity/ccsplayerpawn.cpp',
-    'src/cs2_sdk/entity/cbasemodelentity.cpp',
     'src/cs2_sdk/schema.cpp',
     'src/ctimer.cpp',
     'src/panoramavote.cpp',
@@ -76,6 +77,11 @@ for sdk_target in MMSPlugin.sdk_targets:
     'src/cvarwhitelist.cpp',
     'src/cfgparser.cpp',
     'src/mapmigrations.cpp',
+    'src/adventuremod.cpp',
+    'src/adventuremenu.cpp',
+    'src/PyAPI.cpp',
+    'src/PyPlugin.cpp',
+    'src/PyRuntime.cpp',
     'sdk/entity2/entitysystem.cpp',
     'sdk/entity2/entityidentity.cpp',
     'sdk/entity2/entitykeyvalues.cpp',

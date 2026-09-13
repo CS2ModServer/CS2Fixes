@@ -12,7 +12,8 @@ class CPlayerSlot;
 #include <igameevents.h>
 extern IGameEventManager2* g_gameEventManager;
 #include "eventlistener.h"
-extern CUtlVector<CGameEventListener*> g_vecEventListeners;
+//extern CUtlVector<CGameEventListener*> g_vecEventListeners;
+extern std::vector<CGameEventListener*> g_vecEventListeners;
 
 
 #include <pybind11/functional.h>
@@ -285,21 +286,53 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 		py::class_<IGameEvent>(m, "GameEvent")
 			// return const char*
 			.def("GetName", &IGameEvent::GetName, "GetName() -> const char*")
-			.def("GetString", &IGameEvent::GetString, "GetString(const GameEventKeySymbol_t, const char* defaultValue = \"\") -> const char*")
+			//.def("GetString", &IGameEvent::GetString, "GetString(const GameEventKeySymbol_t, const char* defaultValue = \"\") -> const char*")
+			.def("GetString", 
+				[](IGameEvent& self, std::string key, std::string defaultValue) -> py::str 
+				{ 
+					return py::str(self.GetString(GameEventKeySymbol_t(key.c_str()), defaultValue.c_str())); 
+				}, 
+				py::arg("key"), py::arg("defaultValue") = "unknown"
+				)
 
 			// return int
 			.def("GetID", &IGameEvent::GetID, "GetID() -> int")
-			.def("GetInt", &IGameEvent::GetInt, "GetInt(const GameEventKeySymbol_t, int defaultValue = 0) -> int")
+			//.def("GetInt",    &IGameEvent::GetInt, "GetInt(const GameEventKeySymbol_t, bool defaultValue = 0) -> int")
+			.def("GetInt",
+				 [](IGameEvent& self, std::string key, int defaultValue) -> int
+				 {
+					return self.GetInt(GameEventKeySymbol_t(key.c_str()), defaultValue);
+				 },
+				 py::arg("key"), py::arg("defaultValue") = 0
+				 )
+
 
 			// return bool
-			.def("GetBool",    &IGameEvent::GetBool,    "GetBool(const GameEventKeySymbol_t, bool defaultValue = false) -> bool")
-			.def("HasKey", &IGameEvent::HasKey, "HasKey(const GameEventKeySymbol_t) -> bool")
-			.def("IsEmpty", &IGameEvent::IsEmpty, "GetEmpty(const GameEventKeySymbol_t) -> bool")
+			//.def("GetBool",    &IGameEvent::GetBool, "GetBool(const GameEventKeySymbol_t, bool defaultValue = false) -> bool")
+			.def("GetBool", 
+				[](IGameEvent& self, std::string key, bool defaultValue) -> bool 
+				{ return self.GetBool(GameEventKeySymbol_t(key.c_str()), defaultValue); }, 
+				py::arg("key"), py::arg("defaultValue") = false
+				)
+			//.def("HasKey", &IGameEvent::HasKey, "HasKey(const GameEventKeySymbol_t) -> bool")
+			.def("HasKey", 
+				[](IGameEvent& self, std::string key) -> bool 
+				{ return self.HasKey(GameEventKeySymbol_t(key.c_str())); }
+				)
+			//.def("IsEmpty", &IGameEvent::IsEmpty, "GetEmpty(const GameEventKeySymbol_t) -> bool")
+			.def("IsEmpty", [](IGameEvent& self, std::string key) -> bool 
+				{ return self.IsEmpty(GameEventKeySymbol_t(key.c_str())); }
+				)
 			.def("IsLocal",    &IGameEvent::IsLocal,    "GetLocal() -> bool")
 			.def("IsReliable", &IGameEvent::IsReliable, "GetReliable() -> bool")
 
 			// return float
-			.def("GetFloat", &IGameEvent::GetFloat, "GetFloat(const GameEventKeySymbol_t, defaultValue = 0.0f) -> float")
+			//.def("GetFloat", &IGameEvent::GetFloat, "GetFloat(const GameEventKeySymbol_t, defaultValue = 0.0f) -> float")
+			.def("GetFloat", 
+				[](IGameEvent& self, std::string key, float defaultValue) -> float 
+				{ return self.GetFloat(GameEventKeySymbol_t(key.c_str()), defaultValue); }, 
+				py::arg("key"), py::arg("defaultValue") = 0.0f
+				)
 
 			// return KeyValues3*
 			.def("GetDataKeys", &IGameEvent::GetDataKeys, "GetDataKeys() -> KeyValues3*")

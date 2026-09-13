@@ -62,9 +62,9 @@ class TestPlayerInputs:
                 IN_SPRINT =     1 << 16
                 alog(str(bstates & IN_SPRINT) + " IN_SPRINT")
 
-                IN_SCORE = 0x200000000
+                IN_SCORE =      1 << 33
                 alog(str(bstates & IN_SCORE) + " IN_SCORE")
-                IN_LOOK_AT_WEAPON = 0x800000000
+                IN_LOOK_AT_WEAPON = 35
                 alog(str(bstates & IN_LOOK_AT_WEAPON) + " IN_LOOK_AT_WEAPON")
 
         except Exception as e:

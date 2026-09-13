@@ -22,6 +22,10 @@
 #include "igameevents.h"
 #include "utlstring.h"
 
+#include "cs2fixes.h"
+#include "PyRuntime.h"
+extern CS2Fixes g_CS2Fixes;
+
 class CGameEventListener;
 
 extern std::vector<CGameEventListener*> g_vecEventListeners;
@@ -46,7 +50,16 @@ public:
 	// KeyValue memory will be freed by manager if not needed anymore
 	void FireGameEvent(IGameEvent* event) override
 	{
+		std::string PyE;
+		PyE = "pre_" + std::string(m_pszEventName);
+		for (auto& plugin : g_CS2Fixes.m_Plugins)
+			plugin.PyFireGameEventNamed(event, PyE.c_str());
+
 		m_Callback(event);
+
+		PyE = "post_" + std::string(m_pszEventName);
+		for (auto& plugin : g_CS2Fixes.m_Plugins)
+			plugin.PyFireGameEventNamed(event, PyE.c_str());
 	}
 
 	const char* GetEventName() { return m_pszEventName; }

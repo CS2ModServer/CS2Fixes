@@ -1,10 +1,10 @@
 #include "adventuremod.h"
+#include "PyInclude.h"
 
 #include "entity/ccsplayercontroller.h"
 #include "entity/ccsplayerpawn.h"
 #include "playerslot.h"
 #include "common.h"
-
 
 #include "commands.h"
 #include "cs2fixes.h"
@@ -28,13 +28,24 @@ void ADVPlayer::AddHealth(int amount)
 	}
 }
 
-const char* ADVPlayer::GetName()
+//const char* ADVPlayer::GetName()
+//{
+//	CCSPlayerController* pc = GetPC();
+//
+//	if (!pc)
+//		return nullptr;
+//
+//	const char* name = pc->GetPlayerName().c_str();
+//	return name;
+//}
+py::str ADVPlayer::GetName()
 {
 	CCSPlayerController* pc = GetPC();
 	if (!pc)
 		return nullptr;
 
-	return pc->GetPlayerName();
+	py::str name = py::str(pc->GetPlayerName().c_str());
+	return name;
 }
 
 bool ADVPlayer::IsValid()
@@ -180,6 +191,9 @@ int ADVPlayer::GetLastInventoryChange()
 }
 bool ADVPlayer::UpdatePlayerItems()
 {
+	//don't use for now
+	return false;
+
 	_items_last_update = GetGlobals()->tickcount;
 	// outside
 	std::string outerstdstring = "default";

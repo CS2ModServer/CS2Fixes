@@ -145,89 +145,6 @@ CGameEntitySystem* GameEntitySystem()
 	return *reinterpret_cast<CGameEntitySystem**>((uintptr_t)(g_pGameResourceServiceServer) + offset);
 }
 
-void CS2Fixes::ReloadPythonPlugins()
-{
-	Message("Restarting Python Plugins...\n");
-	//kill py plugins
-	m_Plugins.clear();
-
-	//kill py runtime
-	Source2Py::PyRuntime::Close();
-
-	//save current path and change to needed pypath
-	fs::path exePath = fs::current_path();
-	fs::current_path(GetPluginBaseDirectory());
-
-	//start py runtime
-	Source2Py::PyRuntime::Init();
-
-	//start py plugins
-	if (!LoadPythonPlugins())
-		Source2Py::PyRuntime::Close();
-
-	// and set the cwd back where the game expects it
-	fs::current_path(exePath);
-
-	return;
-}
-
-//CON_COMMAND_CHAT_FLAGS(cs2f_restart_py, "Drop and reload python plugins.", ADMFLAG_ROOT)
-// reload python plugins
-//CON_COMMAND_F(cs2f_restart_py, "Technique bound to ability1", FCVAR_NONE)
-CON_COMMAND_F(cs2f_restart_py, "Drop and reload python plugins.", ADMFLAG_ROOT)
-{
-
-	Message("You typed !cs2f_restart_py in chat.\n");
-	g_CS2Fixes.ReloadPythonPlugins();
-	return;
-}
-
-bool CS2Fixes::LoadPythonPlugins()
-{
-	fs::path pypluginsFilepath = "pyplugins.ini";
-
-	if (!fs::exists(pypluginsFilepath))
-	{
-		Message("Failed to load pyplugins.ini!\n");
-		// Log::Error("Failed to load pyplugins.ini!");
-		return false;
-	}
-
-	// Read from pyplugins.ini
-	std::ifstream pypluginsFile(pypluginsFilepath);
-
-	if (pypluginsFile.fail())
-	{
-		Message("Failed to open pyplugins.ini!\n\0");
-		// Log::Error("Failed to open pyplugins.ini!");
-		return false;
-	}
-
-	std::string line;
-	while (std::getline(pypluginsFile, line))
-	{
-		// ignore comments
-		if (line[0] == '#' || line[0] == ';' || line.empty())
-			continue;
-
-		Source2Py::PyPlugin plugin(line);
-		if (plugin)
-		{
-			Message("Loaded %s %s\n", line.c_str(), "from pyplugins.ini");
-			// Log::Write("Loaded " + line + " from pyplugins.ini");
-				
-			m_Plugins.push_back(plugin);
-			m_Plugins.back().Load();
-		}
-	}
-
-	Message("Loaded %s %s\n", std::to_string(m_Plugins.size()), "Python plugin(s)");
-	// Log::Write("Loaded " + std::to_string(m_Plugins.size()) + " Python plugin(s)");
-
-	return true;
-}
-
-
 // Will return null between map end & new map startup, null check if necessary!
 INetworkGameServer* GetNetworkGameServer()
 {
@@ -966,101 +883,10 @@ void CS2Fixes::Hook_PostEvent(CSplitScreenSlot nSlot, bool bLocalOnly, int nClie
 
 		if (g_cvarEnableZR.Get())
 			ZR_PostEventAbstract_SosStartSoundEvent(clients, msg);
-	}
-}
 
-void CS2Fixes::AllPluginsLoaded()
-{
-	/* This is where we'd do stuff that relies on the mod or other plugins
-	 * being initialized (for example, cvars added and events registered).
-	 */
-	
-	// test changing an outer number. //works for whats needed
-	if (false)
-	{
-		int outernum=0;
-		std::function<void(int)> _testint(
-			[&outernum](int number) 
-			{
-				Message("AllPluginsLoaded() templatefunc - START\n");
-				outernum=number;
-				Message("AllPluginsLoaded() templatefunc - END\n");
-			});
-
-		Message("AllPluginsLoaded() outernum before: %d\n", outernum);
-		for (auto& plugin : g_CS2Fixes.m_Plugins)
+		if (g_cvarEnableStopSound.Get())
 		{
-			py::object object = plugin.GetSelf();
-			Source2Py::PyRuntime::ExecuteObjectMethod(object, "_testint", _testint);
-		}
-		Message("AllPluginsLoaded() outernum  after: %d\n\n\n", outernum);
-	}
-
-	// test changing an outer const char*. //didn't
-	if (false) {
-		const char* outerconstcharstar = "default";
-		std::function<void(const char*)> _testconstcharstar(
-			[&outerconstcharstar](const char* innerconstcharstar)
-			{
-				Message("templatefunc - START\n");
-				outerconstcharstar = innerconstcharstar;
-				Message("templatefunc - END\n");
-			});
-
-		Message("outerconstcharstar before: %s\n", outerconstcharstar);
-		for (auto& plugin : g_CS2Fixes.m_Plugins)
-		{
-			py::object object = plugin.GetSelf();
-			Source2Py::PyRuntime::ExecuteObjectMethod(object, "_testconstcharstar", _testconstcharstar);
-		}
-		Message("outerconstcharstar  after: %s\n\n\n", outerconstcharstar);
-	}
-
-	// test changing an outer py::str //didn't
-	if (false) {
-		py::str outerpystr = "default";
-		std::function<void(py::str)> _testpystr(
-			[&outerpystr](py::str innerpystr) {
-				Message("templatefunc - START\n");
-				outerpystr = innerpystr;
-				Message("templatefunc - END\n");
-			});
-
-		Message("outerpystr before: %s\n", outerpystr);
-		for (auto& plugin : g_CS2Fixes.m_Plugins)
-		{
-			py::object object = plugin.GetSelf();
-			Source2Py::PyRuntime::ExecuteObjectMethod(object, "_testpystr", _testpystr);
-		}
-		Message("outerpystr  after: %s\n\n\n", outerpystr);		
-	}
-
-	// test changing an outer std::string //also works
-	if (false) 
-	{
-		//outside
-		std::string outerstdstring = "default";
-
-		//special callable
-		std::function<bool(py::str&)> _teststdstring(
-			[&outerstdstring](py::str& innerstdstring) {
-				Message("cs2fixes templatefunc - START\n");
-				outerstdstring = innerstdstring;
-				Message("cs2fixes templatefunc - END\n");
-				return true;
-			});
-
-		//tell python plugins to use special callable
-		for (auto& plugin : g_CS2Fixes.m_Plugins)
-		{
-			Message("cs2fixes outerstdstring before: %s\n", outerstdstring);
-			py::object object = plugin.GetSelf();
-			Source2Py::PyRuntime::ExecuteObjectMethod(object, "_teststdstring", _teststdstring);
-			Message("cs2fixes outerstdstring  after: %s\n\n\n", outerstdstring);
-		}
-	}
-
-}
+			static std::set<uint32> soundEventHashes;
 
 			ExecuteOnce(
 				soundEventHashes.insert(GetSoundEventHash("Weapon_sg556.ZoomIn"));
@@ -1091,7 +917,7 @@ void CS2Fixes::AllPluginsLoaded()
 			int playerSlot = -1;
 
 			if (!pSourceEntity)
-		return;
+				return;
 
 			if (pSourceEntity->IsPawn() && ((CCSPlayerPawn*)pSourceEntity)->GetController())
 			{
@@ -1125,16 +951,100 @@ void CS2Fixes::AllPluginsLoaded()
 		if (g_cvarBlockParticleMsgs.Get())
 			*(uint64*)clients = 0;
 	}
-	}
 }
-
 void CS2Fixes::AllPluginsLoaded()
 {
 	/* This is where we'd do stuff that relies on the mod or other plugins
 	 * being initialized (for example, cvars added and events registered).
 	 */
+	// test changing an outer number. //works for whats needed
+	if (false)
+	{
+		int outernum = 0;
+		std::function<void(int)> _testint(
+			[&outernum](int number) {
+				Message("AllPluginsLoaded() templatefunc - START\n");
+				outernum = number;
+				Message("AllPluginsLoaded() templatefunc - END\n");
+			});
 
+		Message("AllPluginsLoaded() outernum before: %d\n", outernum);
+		for (auto& plugin : g_CS2Fixes.m_Plugins)
+		{
+			py::object object = plugin.GetSelf();
+			Source2Py::PyRuntime::ExecuteObjectMethod(object, "_testint", _testint);
+		}
+		Message("AllPluginsLoaded() outernum  after: %d\n\n\n", outernum);
+	}
+
+	// test changing an outer const char*. //didn't
+	if (false)
+	{
+		const char* outerconstcharstar = "default";
+		std::function<void(const char*)> _testconstcharstar(
+			[&outerconstcharstar](const char* innerconstcharstar) {
+				Message("templatefunc - START\n");
+				outerconstcharstar = innerconstcharstar;
+				Message("templatefunc - END\n");
+			});
+
+		Message("outerconstcharstar before: %s\n", outerconstcharstar);
+		for (auto& plugin : g_CS2Fixes.m_Plugins)
+		{
+			py::object object = plugin.GetSelf();
+			Source2Py::PyRuntime::ExecuteObjectMethod(object, "_testconstcharstar", _testconstcharstar);
+		}
+		Message("outerconstcharstar  after: %s\n\n\n", outerconstcharstar);
+	}
+
+	// test changing an outer py::str //didn't
+	if (false)
+	{
+		py::str outerpystr = "default";
+		std::function<void(py::str)> _testpystr(
+			[&outerpystr](py::str innerpystr) {
+				Message("templatefunc - START\n");
+				outerpystr = innerpystr;
+				Message("templatefunc - END\n");
+			});
+
+		Message("outerpystr before: %s\n", outerpystr);
+		for (auto& plugin : g_CS2Fixes.m_Plugins)
+		{
+			py::object object = plugin.GetSelf();
+			Source2Py::PyRuntime::ExecuteObjectMethod(object, "_testpystr", _testpystr);
+		}
+		Message("outerpystr  after: %s\n\n\n", outerpystr);
+	}
+
+	// test changing an outer std::string //also works
+	if (false)
+	{
+		// outside
+		std::string outerstdstring = "default";
+
+		// special callable
+		std::function<bool(py::str&)> _teststdstring(
+			[&outerstdstring](py::str& innerstdstring) {
+				Message("cs2fixes templatefunc - START\n");
+				outerstdstring = innerstdstring;
+				Message("cs2fixes templatefunc - END\n");
+				return true;
+			});
+
+		// tell python plugins to use special callable
+		for (auto& plugin : g_CS2Fixes.m_Plugins)
+		{
+			Message("cs2fixes outerstdstring before: %s\n", outerstdstring);
+			py::object object = plugin.GetSelf();
+			Source2Py::PyRuntime::ExecuteObjectMethod(object, "_teststdstring", _teststdstring);
+			Message("cs2fixes outerstdstring  after: %s\n\n\n", outerstdstring);
+		}
+	}
 	Message("AllPluginsLoaded\n");
+	Message("We will listen for the following events.\n");
+	for (auto& ev : g_vecEventListeners)
+		Message("%s\n", ev->GetEventName());
 }
 
 void CS2Fixes::Hook_ClientActive(CPlayerSlot slot, bool bLoadGame, const char* pszName, uint64 xuid)
@@ -1179,7 +1089,8 @@ void CS2Fixes::Hook_ClientCommand(CPlayerSlot slot, const CCommand& args)
 	}
 
 	for (auto& plugin : g_CS2Fixes.m_Plugins)
-		plugin.PyClientCommand(slot.Get(), args.GetCommandString());
+		plugin.PyClientCommand(slot.Get(), args.ArgS());
+	//plugin.PyClientCommand(slot.Get(), args.GetCommandString());
 }
 
 void CS2Fixes::Hook_ClientSettingsChanged(CPlayerSlot slot)
@@ -1294,12 +1205,14 @@ void CS2Fixes::Hook_GameFramePost(bool simulating, bool bFirstTick, bool bLastTi
 
 	RunTimers();
 	EntityHandler_OnGameFramePost(simulating, GetGlobals()->tickcount);
-	for (auto& plugin : g_CS2Fixes.m_Plugins)
-		plugin.PyGameFrame(
-			simulating,
-			bFirstTick,
-			bLastTick
-			);
+
+	if (false) //don't
+		for (auto& plugin : g_CS2Fixes.m_Plugins)
+			plugin.PyGameFrame(
+				simulating,
+				bFirstTick,
+				bLastTick
+				);
 }
 
 void CS2Fixes::Hook_CheckTransmit(CCheckTransmitInfo** ppInfoList, int infoCount, CBitVec<16384>& unionTransmitEdicts,
@@ -1716,50 +1629,6 @@ bool CS2Fixes::Pause(char* error, size_t maxlen)
 bool CS2Fixes::Unpause(char* error, size_t maxlen)
 {
 	return true;
-}
-
-const char* CS2Fixes::GetLicense()
-{
-	return "GPL v3 License";
-}
-
-const char* CS2Fixes::GetVersion()
-{
-#ifndef CS2FIXES_VERSION
-	#define CS2FIXES_VERSION "1.7-dev"
-#endif
-
-	return CS2FIXES_VERSION; // defined by the build script
-}
-
-const char* CS2Fixes::GetDate()
-{
-	return __DATE__;
-}
-
-const char* CS2Fixes::GetLogTag()
-{
-	return "CS2Fixes";
-}
-
-const char* CS2Fixes::GetAuthor()
-{
-	return "xen, Poggu, and the Source2ZE community";
-}
-
-const char* CS2Fixes::GetDescription()
-{
-	return "A bunch of experiments thrown together into one big mess of a plugin.";
-}
-
-const char* CS2Fixes::GetName()
-{
-	return "CS2Fixes";
-}
-
-const char* CS2Fixes::GetURL()
-{
-	return "https://github.com/Source2ZE/CS2Fixes";
 }
 
 std::vector<std::string> CS2Fixes::GetPlayerItems(CPlayerSlot slot)

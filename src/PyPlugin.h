@@ -24,7 +24,8 @@ namespace Source2Py {
 		void PyClientConnected(int playerSlot, const char* name, uint64_t xuid, const char* networkID, const char* address, bool fakePlayer);
 		void PyClientPutInServer(int playerSlot, char const* name, int type, uint64_t xuid);
 		void PyClientSettingsChanged(int playerSlot);
-		void PyFireGameEvent(IGameEvent* event);
+		void PyFireGameEventBlind(IGameEvent* event);
+		void PyFireGameEventNamed(IGameEvent* event, const char* event_name);
 		void PyGameFrame(bool simulating, bool firstTick, bool lastTick);
 		void PyPlayerActivate(int playerSlot);
 		

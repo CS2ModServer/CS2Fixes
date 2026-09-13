@@ -238,7 +238,7 @@ public:
 			);
 	}
 
-	SndOpEventGuid_t EmitSoundFilter(
+	StartSoundEventInfo EmitSoundFilter(
 		IRecipientFilter& filter, 
 		const char* pszSound, 
 		float flVolume = 1.0, 
