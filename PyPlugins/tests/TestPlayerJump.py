@@ -36,13 +36,11 @@ class TestPlayerJump:
             "userid":"playercontroller",
             }), '''
         try:
+            slot = event.GetInt("userid", -1)
             player = ADVPlayer(slot)
             if (player.IsValid()):
                 name = player.GetName()
-                if (name):
-                    alog(name + " player_jump!")
-                else:
-                    alog("player.GetName() returned nullptr (player_jump!)")
+                alog(name + " player_jump!")
         except Exception as e:
             alog(e)
             alog(traceback.format_exc())
@@ -50,7 +48,22 @@ class TestPlayerJump:
     def post_player_jump(self,
         event
         ):
-        ''' "player_jump":dict({
+        ''' pre_ and post_ share the same dict that would go to the standard event
+            "player_jump":dict({
+            "userid":"playercontroller",
+            }), '''
+        pass
+    def player_airborn(self,
+        event
+        ):
+        ''' "player_airborn":dict({
+            "userid":"playercontroller",
+            }), '''
+        pass
+    def player_land(self,
+        event
+        ):
+        ''' "player_land":dict({
             "userid":"playercontroller",
             }), '''
         pass
