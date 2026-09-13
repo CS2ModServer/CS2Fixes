@@ -21,6 +21,7 @@
 #include "cs2_sdk/entityio.h"
 #include "khook.hpp"
 #include <utlsymbollarge.h>
+#include "cs2_sdk/entityio.h"
 
 class CCheckTransmitInfo;
 class IRecipientFilter;

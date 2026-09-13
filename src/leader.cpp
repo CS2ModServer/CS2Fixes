@@ -53,6 +53,7 @@ static int g_iMarkerCount = 0;
 static bool g_bPingWithLeader = true;
 
 static void RemoveLeader(CCSPlayerController* ccsPly);
+static int g_iLeaderExtraScore = 20000;
 
 // CONVARS
 CConVar<bool> g_cvarEnableLeader(

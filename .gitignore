@@ -17,3 +17,12 @@ bld/
 .vscode
 /dockerbuild
 .idea/*
+/CS2Fixes.VC.db
+*.log
+*.pyc
+/configs/maplist.cfg
+/configs/admins.cfg
+/data/infractions.txt
+dump
+Adventure
+/*.patch
