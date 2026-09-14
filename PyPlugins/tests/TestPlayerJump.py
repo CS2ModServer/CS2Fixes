@@ -16,9 +16,6 @@ def alog(message: str, callername: bool = True):
 
 alog("START")
 class TestPlayerJump:
-    players_in_air = dict()
-    last_grounded = dict()
-
     def OnPluginLoad(self):
         alog("loaded!")
         pass

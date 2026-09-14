@@ -246,7 +246,7 @@ GAME_EVENT_F(player_spawn) // FireGameEvent
 GAME_EVENT_F(player_hurt)  //FireGameEvent
 {
 	for (auto& plugin : g_CS2Fixes.m_Plugins)
-		plugin.PyPlayerHurt(pEvent);
+		plugin.PyFireGameEventNamed(pEvent, "player_hurt");
 
 	//if (!g_bEnableTopDefender)
 	//		return;

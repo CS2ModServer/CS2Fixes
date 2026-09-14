@@ -20,7 +20,7 @@ class TestExceptionTracebackPlugin:
         Source2Py.ServerPrint("[PY] TestExceptionTracebackPlugin successfully loaded.")
         try:
             alog("try:", True)
-            #raise ValueError('test')  #it worked but i'm too tired to figure out how to call pybind11::PyErr_Clear() in cpp
+            raise ValueError('test')  #it worked but i'm too tired to figure out how to call pybind11::PyErr_Clear() in cpp
         except ValueError as ve:
             alog("except:", True)
             alog(traceback.format_exc(), True)

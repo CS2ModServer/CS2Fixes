@@ -358,7 +358,14 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 			.def("GetPawnEntityIndex", &IGameEvent::GetPawnEntityIndex)
 
 			// return CPlayerSlot
-			.def("GetPlayerSlot", &IGameEvent::GetPlayerSlot)
+			//virtual CPlayerSlot GetPlayerSlot( const GameEventKeySymbol_t &keySymbol ) = 0;
+			.def("GetPlayerSlotClass", &IGameEvent::GetPlayerSlot)
+			.def("GetPlayerSlot", 
+				[](IGameEvent& self, std::string key, int defaultValue) -> int 
+				{ return self.GetInt(GameEventKeySymbol_t(key.c_str()), defaultValue); }, 
+				py::arg("key"), py::arg("defaultValue") = 0
+				)
+
 
 			// return CEntityInstance*
 			.def("GetEntity", &IGameEvent::GetEntity)
