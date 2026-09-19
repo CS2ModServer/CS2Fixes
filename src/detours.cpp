@@ -30,7 +30,6 @@
 #include "customio.h"
 #include "cvarwhitelist.h"
 #include "detours.h"
-#include "utils/sighook.h"
 #include "entities.h"
 #include "entity/cbasemodelentity.h"
 #include "entity/cbeam.h"
@@ -47,6 +46,7 @@
 #include "gameconfig.h"
 #include "igameevents.h"
 #include "irecipientfilter.h"
+#include "khook_helpers.h"
 #include "map_votes.h"
 #include "mapmigrations.h"
 #include "module.h"
@@ -59,49 +59,51 @@
 
 #include "tier0/memdbgon.h"
 
-SIG_HOOK_FUNCTION(UTIL_SayTextFilter, Detour_UTIL_SayTextFilter, nullptr);
-SIG_HOOK_FUNCTION(UTIL_SayText2Filter, Detour_UTIL_SayText2Filter, nullptr);
-SIG_HOOK_MEMBER(TriggerPush_Touch, Detour_TriggerPush_Touch, nullptr);
-SIG_HOOK_MEMBER(CBaseEntity_TakeDamageOld, Detour_CBaseEntity_TakeDamageOld, Detour_CBaseEntity_TakeDamageOld_Post);
-SIG_HOOK_MEMBER(CCSPlayer_WeaponServices_CanUse, Detour_CCSPlayer_WeaponServices_CanUse, nullptr);
-SIG_HOOK_MEMBER(CCSPlayer_WeaponServices_EquipWeapon, Detour_CCSPlayer_WeaponServices_EquipWeapon, nullptr);
-SIG_HOOK_MEMBER(CEntityIdentity_AcceptInput, Detour_CEntityIdentity_AcceptInput, nullptr);
-SIG_HOOK_MEMBER(CNavMesh_GetNearestNavArea, Detour_CNavMesh_GetNearestNavArea, nullptr);
-SIG_HOOK_MEMBER(ProcessMovement, Detour_ProcessMovement, Detour_ProcessMovement_Post);
-SIG_HOOK_MEMBER(ProcessUsercmds, Detour_ProcessUsercmds, nullptr);
-SIG_HOOK_MEMBER(CGamePlayerEquip_InputTriggerForAllPlayers, Detour_CGamePlayerEquip_InputTriggerForAllPlayers, nullptr);
-SIG_HOOK_MEMBER(CGamePlayerEquip_InputTriggerForActivatedPlayer, Detour_CGamePlayerEquip_InputTriggerForActivatedPlayer, nullptr);
-SIG_HOOK_MEMBER(CTriggerGravity_GravityTouch, Detour_CTriggerGravity_GravityTouch, nullptr);
-SIG_HOOK_FUNCTION(GetFreeClient, Detour_GetFreeClient, nullptr);
+KHOOK_FUNCTION(UTIL_SayTextFilter, Detour_UTIL_SayTextFilter, nullptr);
+KHOOK_FUNCTION(UTIL_SayText2Filter, Detour_UTIL_SayText2Filter, nullptr);
+KHOOK_MEMBER(TriggerPush_Touch, Detour_TriggerPush_Touch, nullptr);
+KHOOK_MEMBER(CBaseEntity_TakeDamageOld, Detour_CBaseEntity_TakeDamageOld, Detour_CBaseEntity_TakeDamageOld_Post);
+KHOOK_MEMBER(CCSPlayer_WeaponServices_CanUse, Detour_CCSPlayer_WeaponServices_CanUse, nullptr);
+KHOOK_MEMBER(CCSPlayer_WeaponServices_EquipWeapon, Detour_CCSPlayer_WeaponServices_EquipWeapon, nullptr);
+KHOOK_MEMBER(CEntityIdentity_AcceptInput, Detour_CEntityIdentity_AcceptInput, nullptr);
+KHOOK_MEMBER(CNavMesh_GetNearestNavArea, Detour_CNavMesh_GetNearestNavArea, nullptr);
+KHOOK_MEMBER(ProcessMovement, Detour_ProcessMovement, Detour_ProcessMovement_Post);
+KHOOK_MEMBER(ProcessUsercmds, Detour_ProcessUsercmds, nullptr);
+KHOOK_MEMBER(CGamePlayerEquip_InputTriggerForAllPlayers, Detour_CGamePlayerEquip_InputTriggerForAllPlayers, nullptr);
+KHOOK_MEMBER(CGamePlayerEquip_InputTriggerForActivatedPlayer, Detour_CGamePlayerEquip_InputTriggerForActivatedPlayer, nullptr);
+KHOOK_MEMBER(CTriggerGravity_GravityTouch, Detour_CTriggerGravity_GravityTouch, nullptr);
+KHOOK_FUNCTION(GetFreeClient, Detour_GetFreeClient, nullptr);
 #ifdef __linux__
 // Inlined by MSVC as of 2025-07-28 CS2 update
 // TODO: Find some alternative that supports Windows
-SIG_HOOK_MEMBER(CCSPlayerPawn_GetMaxSpeed, Detour_CCSPlayerPawn_GetMaxSpeed, nullptr);
+KHOOK_MEMBER(CCSPlayerPawn_GetMaxSpeed, Detour_CCSPlayerPawn_GetMaxSpeed, nullptr);
 #endif
-SIG_HOOK_MEMBER(FindUseEntity, Detour_FindUseEntity, Detour_FindUseEntity_Post);
-SIG_HOOK_FUNCTION(TraceFunc, Detour_TraceFunc, nullptr);
-SIG_HOOK_FUNCTION(TraceShape, Detour_TraceShape, nullptr);
-SIG_HOOK_MEMBER(CBasePlayerPawn_GetEyePosition, Detour_CBasePlayerPawn_GetEyePosition, nullptr);
-SIG_HOOK_MEMBER(CBasePlayerPawn_GetEyeAngles, Detour_CBasePlayerPawn_GetEyeAngles, nullptr);
-SIG_HOOK_MEMBER(CBaseFilter_InputTestActivator, Detour_CBaseFilter_InputTestActivator, nullptr);
-SIG_HOOK_FUNCTION(GameSystem_Think_CheckSteamBan, Detour_GameSystem_Think_CheckSteamBan, Detour_GameSystem_Think_CheckSteamBan_Post);
-SIG_HOOK_MEMBER(CCSPlayer_ItemServices_CanAcquire, Detour_CCSPlayer_ItemServices_CanAcquire, nullptr);
-SIG_HOOK_FUNCTION(CS_Script_SetModel, Detour_CS_Script_SetModel, Detour_CS_Script_SetModel_Post);
-SIG_HOOK_MEMBER(CBaseModelEntity_SetModel, Detour_CBaseModelEntity_SetModel, nullptr);
-SIG_HOOK_MEMBER(CCSGameRules_GoToIntermission, Detour_CCSGameRules_GoToIntermission, nullptr);
-SIG_HOOK_MEMBER(SetBeamOrigin, Detour_SetBeamOrigin, nullptr);
-SIG_HOOK_MEMBER(SetBeamEndPos, Detour_SetBeamEndPos, nullptr);
-SIG_HOOK_FUNCTION(IsCommandWhitelisted, Detour_IsCommandWhitelisted, nullptr);
+KHOOK_MEMBER(FindUseEntity, Detour_FindUseEntity, Detour_FindUseEntity_Post);
+KHOOK_FUNCTION(TraceFunc, Detour_TraceFunc, nullptr);
+KHOOK_FUNCTION(TraceShape, Detour_TraceShape, nullptr);
+KHOOK_MEMBER(CEntityIOOutput_FireOutputInternal, Detour_CEntityIOOutput_FireOutputInternal, nullptr);
+KHOOK_MEMBER(CBasePlayerPawn_GetEyePosition, Detour_CBasePlayerPawn_GetEyePosition, nullptr);
+KHOOK_MEMBER(CBasePlayerPawn_GetEyeAngles, Detour_CBasePlayerPawn_GetEyeAngles, nullptr);
+KHOOK_MEMBER(CBaseFilter_InputTestActivator, Detour_CBaseFilter_InputTestActivator, nullptr);
+KHOOK_FUNCTION(GameSystem_Think_CheckSteamBan, Detour_GameSystem_Think_CheckSteamBan, Detour_GameSystem_Think_CheckSteamBan_Post);
+KHOOK_MEMBER(CCSPlayer_ItemServices_CanAcquire, Detour_CCSPlayer_ItemServices_CanAcquire, nullptr);
+KHOOK_FUNCTION(CS_Script_SetModel, Detour_CS_Script_SetModel, Detour_CS_Script_SetModel_Post);
+KHOOK_MEMBER(CBaseModelEntity_SetModel, Detour_CBaseModelEntity_SetModel, nullptr);
+KHOOK_MEMBER(CCSGameRules_GoToIntermission, Detour_CCSGameRules_GoToIntermission, nullptr);
+KHOOK_MEMBER(SetBeamOrigin, Detour_SetBeamOrigin, nullptr);
+KHOOK_MEMBER(SetBeamEndPos, Detour_SetBeamEndPos, nullptr);
+KHOOK_FUNCTION(IsCommandWhitelisted, Detour_IsCommandWhitelisted, nullptr);
+KHOOK_MEMBER(CWorldRendererMgr_CreateWorld_Internal, nullptr, Detour_CWorldRendererMgr_CreateWorld_Internal_Post);
 
-std::vector<CSigHookBase*>& GetSigHookList()
+std::vector<CKHookBase*>& GetKHookList()
 {
-	static std::vector<CSigHookBase*> s_vecSigHooks;
+	static std::vector<CKHookBase*> s_vecSigHooks;
 	return s_vecSigHooks;
 }
 
-void InitSigHooks()
+void InitKHooks()
 {
-	for (auto hook : GetSigHookList())
+	for (auto hook : GetKHookList())
 		hook->Configure();
 }
 
@@ -762,13 +764,13 @@ KHook::Return<float> Detour_CCSPlayerPawn_GetMaxSpeed(CCSPlayerPawn* pPawn)
 CConVar<bool> g_cvarPreventUsingPlayers("cs2f_prevent_using_players", FCVAR_NONE, "Whether to prevent +use from hitting players (0=can use players, 1=cannot use players)", false);
 bool g_bFindingUseEntity = false;
 
-KHook::Return<int64> Detour_FindUseEntity(CCSPlayer_UseServices* pThis, float a2)
+KHook::Return<CBaseEntity*> Detour_FindUseEntity(CCSPlayer_UseServices* pThis, float unk2, int64_t unk3)
 {
 	g_bFindingUseEntity = true;
 	return {KHook::Action::Ignore};
 }
 
-KHook::Return<int64> Detour_FindUseEntity_Post(CCSPlayer_UseServices* pThis, float a2)
+KHook::Return<CBaseEntity*> Detour_FindUseEntity_Post(CCSPlayer_UseServices* pThis, float unk2, int64_t unk3)
 {
 	g_bFindingUseEntity = false;
 	return {KHook::Action::Ignore};
@@ -796,7 +798,7 @@ KHook::Return<bool> Detour_TraceShape(int64* a1, int64 a2, int64 a3, int64 a4, C
 	return {KHook::Action::Ignore};
 }
 
-KHook::Return<void> Detour_CEntityIOOutput_FireOutputInternal(const CEntityIOOutput* pThis, CEntityInstance* pActivator, CEntityInstance* pCaller, const CVariant* value, float flDelay, void* a6, void* a7)
+KHook::Return<void> Detour_CEntityIOOutput_FireOutputInternal(CEntityIOOutput* pThis, CEntityInstance* pActivator, CEntityInstance* pCaller, const CVariant* value, float flDelay, void* a6, void* a7)
 {
 	if (g_cvarEnableButtonWatch.Get())
 		ButtonWatch(pThis, pActivator, pCaller, value, flDelay);
@@ -976,4 +978,25 @@ KHook::Return<bool> Detour_IsCommandWhitelisted(void* pAddonManager, const char*
 		return {KHook::Action::Ignore};
 
 	return {KHook::Action::Supersede, g_pConvarWhitelist->IsWhitelisted(pszCommandName)};
+}
+
+KHook::Return<CSingleWorldRep*> Detour_CWorldRendererMgr_CreateWorld_Internal_Post(IWorldRendererMgr* pThis, CSingleWorldRep* singleWorld)
+{
+	// The world can fail to be created and the function will return nullptr.
+	if (!KHook::GetOriginalReturn<CSingleWorldRep*>())
+		return {KHook::Action::Ignore};
+
+	auto pWorld = singleWorld->m_pCWorld;
+	auto vecLumpData = (CUtlVector<void*>*)((uint8_t*)pWorld + 0x1E0);
+
+	FOR_EACH_VEC(*vecLumpData, i)
+	{
+		auto& lump = (*vecLumpData)[i];
+		auto lumpData = *(LumpData**)lump;
+		auto vecEntityKeyValues = (CUtlVector<CEntityKeyValues*>*)((uint8_t*)lumpData + 0x1220);
+
+		g_pMapMigrations->RunMigrations(vecEntityKeyValues);
+	}
+
+	return {KHook::Action::Ignore};
 }

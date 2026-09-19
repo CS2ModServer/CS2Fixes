@@ -20,6 +20,7 @@
 #pragma once
 #include "cs2_sdk/entityio.h"
 #include "khook.hpp"
+#include "map.h"
 #include <utlsymbollarge.h>
 #include "cs2_sdk/entityio.h"
 
@@ -98,11 +99,11 @@ KHook::Return<void> Detour_CGamePlayerEquip_InputTriggerForActivatedPlayer(CGame
 KHook::Return<void> Detour_CTriggerGravity_GravityTouch(CTriggerGravity* pEntity, CBaseEntity* pOther);
 KHook::Return<CServerSideClient*> Detour_GetFreeClient(int64_t unk1, const __m128i* unk2, unsigned int unk3, int64_t unk4, char unk5, void* unk6);
 KHook::Return<float> Detour_CCSPlayerPawn_GetMaxSpeed(CCSPlayerPawn*);
-KHook::Return<int64> Detour_FindUseEntity(CCSPlayer_UseServices* pThis, float a2);
-KHook::Return<int64> Detour_FindUseEntity_Post(CCSPlayer_UseServices* pThis, float a2);
+KHook::Return<CBaseEntity*> Detour_FindUseEntity(CCSPlayer_UseServices* pThis, float unk2, int64_t unk3);
+KHook::Return<CBaseEntity*> Detour_FindUseEntity_Post(CCSPlayer_UseServices* pThis, float unk2, int64_t unk3);
 KHook::Return<bool> Detour_TraceFunc(int64*, int*, float*, uint64);
 KHook::Return<bool> Detour_TraceShape(int64*, int64, int64, int64, CTraceFilter*, int64);
-KHook::Return<void> Detour_CEntityIOOutput_FireOutputInternal(const CEntityIOOutput* pThis, CEntityInstance* pActivator, CEntityInstance* pCaller, const CVariant* value, float flDelay, void*, void*);
+KHook::Return<void> Detour_CEntityIOOutput_FireOutputInternal(CEntityIOOutput* pThis, CEntityInstance* pActivator, CEntityInstance* pCaller, const CVariant* value, float flDelay, void*, void*);
 #ifdef PLATFORM_WINDOWS
 KHook::Return<Vector*> Detour_CBasePlayerPawn_GetEyePosition(CBasePlayerPawn*, Vector*);
 KHook::Return<QAngle*> Detour_CBasePlayerPawn_GetEyeAngles(CBasePlayerPawn*, QAngle*);
@@ -121,3 +122,4 @@ KHook::Return<void> Detour_CCSGameRules_GoToIntermission(CCSGameRules* pThis, bo
 KHook::Return<void> Detour_SetBeamOrigin(CBeam* pThis, const Vector* pVecWorldPosition);
 KHook::Return<void> Detour_SetBeamEndPos(CBeam* pThis, const Vector* pVecWorldPosition);
 KHook::Return<bool> Detour_IsCommandWhitelisted(void* pAddonManager, const char* pszCommandName);
+KHook::Return<CSingleWorldRep*> Detour_CWorldRendererMgr_CreateWorld_Internal_Post(IWorldRendererMgr* pThis, CSingleWorldRep* pSingleWorld);

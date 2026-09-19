@@ -27,6 +27,7 @@
 #include "cs_gameevents.pb.h"
 #include "cstrike15_usermessages.pb.h"
 #include "ctimer.h"
+#include "engine/IEngineService.h"
 #include "entities.h"
 #include "entity/ccsplayercontroller.h"
 #include "entity/customhudlayout.h"
@@ -40,6 +41,7 @@
 #include "icvar.h"
 #include "idlemanager.h"
 #include "iserver.h"
+#include "khook_helpers.h"
 #include "leader.h"
 #include "map_votes.h"
 #include "mapmigrations.h"
@@ -58,25 +60,26 @@
 class GameSessionConfiguration_t
 {};
 
-KHook::Virtual<IServerGameDLL, void, bool, bool, bool> gameFrameHook(&IServerGameDLL::GameFrame, nullptr, Hook_GameFrame_Post);
-KHook::Virtual<IServerGameDLL, void> gameServerSteamAPIActivatedHook(&IServerGameDLL::GameServerSteamAPIActivated, Hook_GameServerSteamAPIActivated, nullptr);
-KHook::Virtual<IServerGameDLL, void, KeyValues*> applyGameSettingsHook(&IServerGameDLL::ApplyGameSettings, Hook_ApplyGameSettings, nullptr);
-KHook::Virtual<IServerGameClients, void, CPlayerSlot, bool, const char*, uint64> clientActiveHook(&IServerGameClients::ClientActive, nullptr, Hook_ClientActive_Post);
-KHook::Virtual<IServerGameClients, void, CPlayerSlot, ENetworkDisconnectionReason, const char*, uint64, const char*> clientDisconnectHook(&IServerGameClients::ClientDisconnect, nullptr, Hook_ClientDisconnect_Post);
-KHook::Virtual<IServerGameClients, void, CPlayerSlot, const char*, int, uint64> clientPutInServerHook(&IServerGameClients::ClientPutInServer, nullptr, Hook_ClientPutInServer_Post);
-KHook::Virtual<IServerGameClients, void, CPlayerSlot> clientSettingsChangedHook(&IServerGameClients::ClientSettingsChanged, Hook_ClientSettingsChanged, nullptr);
-KHook::Virtual<IServerGameClients, void, CPlayerSlot, const char*, uint64, const char*, const char*, bool> onClientConnectedHook(&IServerGameClients::OnClientConnected, Hook_OnClientConnected, nullptr);
-KHook::Virtual<IServerGameClients, bool, CPlayerSlot, const char*, uint64, const char*, bool, CBufferString*> clientConnectHook(&IServerGameClients::ClientConnect, Hook_ClientConnect, nullptr);
-KHook::Virtual<IServerGameClients, void, CPlayerSlot, const CCommand&> clientCommandHook(&IServerGameClients::ClientCommand, Hook_ClientCommand, nullptr);
-KHook::Virtual<IServerGameClients, void, CPlayerSlot, int, uint32, const void*> clientSvcUserMessageHook(&IServerGameClients::ClientSvcUserMessage, Hook_ClientSvcUserMessage, nullptr);
-KHook::Virtual<IGameEventSystem, void, CSplitScreenSlot, bool, int, const uint64*, INetworkMessageInternal*, const CNetMessage*, unsigned long, NetChannelBufType_t> postEventAbstractHook(&IGameEventSystem::PostEventAbstract, Hook_PostEventAbstract, nullptr);
-KHook::Virtual<INetworkServerService, void, const GameSessionConfiguration_t&, ISource2WorldSession*, const char*> startupServerHook(&INetworkServerService::StartupServer, nullptr, Hook_StartupServer_Post);
-KHook::Virtual<ISource2GameEntities, void, CCheckTransmitInfo**, int, CBitVec<16384>&, CBitVec<16384>&, const Entity2Networkable_t**, const uint16*, int> checkTransmitHook(&ISource2GameEntities::CheckTransmit, nullptr, Hook_CheckTransmit_Post);
-KHook::Virtual<ICvar, void, ConCommandRef, const CCommandContext&, const CCommand&> dispatchConCommandHook(&ICvar::DispatchConCommand, Hook_DispatchConCommand, nullptr);
+KHOOK_VIRTUAL(GameFrame, &IServerGameDLL::GameFrame, g_pSource2Server, nullptr, Hook_GameFrame_Post);
+KHOOK_VIRTUAL(GameServerSteamAPIActivated, &IServerGameDLL::GameServerSteamAPIActivated, g_pSource2Server, Hook_GameServerSteamAPIActivated, nullptr);
+KHOOK_VIRTUAL(ApplyGameSettings, &IServerGameDLL::ApplyGameSettings, g_pSource2Server, Hook_ApplyGameSettings, nullptr);
+KHOOK_VIRTUAL(ClientActive, &IServerGameClients::ClientActive, g_pSource2GameClients, nullptr, Hook_ClientActive_Post);
+KHOOK_VIRTUAL(ClientDisconnect, &IServerGameClients::ClientDisconnect, g_pSource2GameClients, nullptr, Hook_ClientDisconnect_Post);
+KHOOK_VIRTUAL(ClientPutInServer, &IServerGameClients::ClientPutInServer, g_pSource2GameClients, nullptr, Hook_ClientPutInServer_Post);
+KHOOK_VIRTUAL(ClientSettingsChanged, &IServerGameClients::ClientSettingsChanged, g_pSource2GameClients, Hook_ClientSettingsChanged, nullptr);
+KHOOK_VIRTUAL(OnClientConnected, &IServerGameClients::OnClientConnected, g_pSource2GameClients, Hook_OnClientConnected, nullptr);
+KHOOK_VIRTUAL(ClientConnect, &IServerGameClients::ClientConnect, g_pSource2GameClients, Hook_ClientConnect, nullptr);
+KHOOK_VIRTUAL(ClientCommand, &IServerGameClients::ClientCommand, g_pSource2GameClients, Hook_ClientCommand, nullptr);
+KHOOK_VIRTUAL(ClientSvcUserMessage, &IServerGameClients::ClientSvcUserMessage, g_pSource2GameClients, Hook_ClientSvcUserMessage, nullptr);
+KHOOK_VIRTUAL(PostEventAbstract, &IGameEventSystem::PostEventAbstract, g_gameEventSystem, Hook_PostEventAbstract, nullptr);
+KHOOK_VIRTUAL(StartupServer, &INetworkServerService::StartupServer, g_pNetworkServerService, nullptr, Hook_StartupServer_Post);
+KHOOK_VIRTUAL(CheckTransmit, &ISource2GameEntities::CheckTransmit, g_pSource2GameEntities, nullptr, Hook_CheckTransmit_Post);
+KHOOK_VIRTUAL(DispatchConCommand, &ICvar::DispatchConCommand, g_pCVar, Hook_DispatchConCommand, nullptr);
+KHOOK_VIRTUAL(SwitchToLoop, &IEngineServiceMgr::SwitchToLoop, g_pEngineServiceMgr, Hook_SwitchToLoop, nullptr);
+
 KHook::Virtual<IGameTypes, void, const char*, const CUtlStringList&> createWorkshopMapGroupHook(0U, Hook_CreateWorkshopMapGroup, nullptr);
 KHook::Virtual<IGameEventManager2, int, const char*, bool> loadEventsFromFileHook(&IGameEventManager2::LoadEventsFromFile, Hook_LoadEventsFromFile, nullptr);
 KHook::Virtual<IGameEventManager2, bool, IGameEvent*, bool> fireEventHook(&IGameEventManager2::FireEvent, Hook_FireEvent, nullptr);
-KHook::Virtual<CEntitySystem, void, int, const EntitySpawnInfo_t*> spawnHook(&CEntitySystem::Spawn, Hook_Spawn, nullptr);
 KHook::Virtual<CServerSideClient, bool, const CCLCMsg_VoiceData_t&> processVoiceDataHook(&CServerSideClient::ProcessVoiceData, Hook_ProcessVoiceData, nullptr);
 KHook::Virtual<INetworkGameServer, void, IGameSpawnGroupMgr*> setGameSpawnGroupMgrHook(&INetworkGameServer::SetGameSpawnGroupMgr, Hook_SetGameSpawnGroupMgr, nullptr);
 KHook::Virtual<CVPhys2World, void, CUtlVector<TouchLinked_t>*, bool> getTouchingListHook(0U, nullptr, Hook_GetTouchingList_Post);
@@ -90,7 +93,6 @@ KHook::Virtual<CCSPlayerPawn, bool, CTakeDamageResult*> onTakeDamageAliveHook(0U
 KHook::Virtual<CCSPlayerPawn, void, const Vector*, const QAngle*, const Vector*> playerPawnTeleportHook(0U, Hook_CCSPlayerPawn_Teleport, Hook_CCSPlayerPawn_Teleport_Post);
 
 IGameEventManager2* g_pCGameEventManagerVTable = nullptr;
-CEntitySystem* g_pCEntitySystemVTable = nullptr;
 CVPhys2World* g_pCVPhys2WorldVTable = nullptr;
 CCSPlayer_MovementServices* g_pCCSPlayer_MovementServicesVTable = nullptr;
 CCSPlayer_WeaponServices* g_pCCSPlayer_WeaponServicesVTable = nullptr;
@@ -139,27 +141,10 @@ void SetupGlobalVirtualHook(KHook::Virtual<CLASS, RETURN, ARGS...>& hook, CLASS*
 
 void InitVirtualHooks()
 {
-	gameFrameHook.Add(g_pSource2Server);
-	gameServerSteamAPIActivatedHook.Add(g_pSource2Server);
-	applyGameSettingsHook.Add(g_pSource2Server);
-	clientActiveHook.Add(g_pSource2GameClients);
-	clientDisconnectHook.Add(g_pSource2GameClients);
-	clientPutInServerHook.Add(g_pSource2GameClients);
-	clientSettingsChangedHook.Add(g_pSource2GameClients);
-	onClientConnectedHook.Add(g_pSource2GameClients);
-	clientConnectHook.Add(g_pSource2GameClients);
-	clientCommandHook.Add(g_pSource2GameClients);
-	clientSvcUserMessageHook.Add(g_pSource2GameClients);
-	postEventAbstractHook.Add(g_gameEventSystem);
-	startupServerHook.Add(g_pNetworkServerService);
-	checkTransmitHook.Add(g_pSource2GameEntities);
-	dispatchConCommandHook.Add(g_pCVar);
-
 	SetupVirtualHook(createWorkshopMapGroupHook, "IGameTypes_CreateWorkshopMapGroup", g_pGameTypes);
 
 	SetupGlobalVirtualHook(loadEventsFromFileHook, g_pCGameEventManagerVTable, modules::server, "CGameEventManager");
 	SetupGlobalVirtualHook(fireEventHook, g_pCGameEventManagerVTable, modules::server, "CGameEventManager");
-	SetupGlobalVirtualHook(spawnHook, g_pCEntitySystemVTable, modules::server, "CGameEntitySystem");
 	SetupGlobalVirtualHook(processVoiceDataHook, g_pCServerSideClientVTable, modules::engine, "CServerSideClient");
 	SetupGlobalVirtualHook(getTouchingListHook, g_pCVPhys2WorldVTable, modules::vphysics2, "CVPhys2World", "CVPhys2World::GetTouchingList");
 	SetupGlobalVirtualHook(checkMovingGroundHook, g_pCCSPlayer_MovementServicesVTable, modules::server, "CCSPlayer_MovementServices", "CCSPlayer_MovementServices::CheckMovingGround");
@@ -174,24 +159,8 @@ void InitVirtualHooks()
 
 void RemoveVirtualHooks()
 {
-	gameFrameHook.Remove(g_pSource2Server);
-	gameServerSteamAPIActivatedHook.Remove(g_pSource2Server);
-	applyGameSettingsHook.Remove(g_pSource2Server);
-	clientActiveHook.Remove(g_pSource2GameClients);
-	clientDisconnectHook.Remove(g_pSource2GameClients);
-	clientPutInServerHook.Remove(g_pSource2GameClients);
-	clientSettingsChangedHook.Remove(g_pSource2GameClients);
-	onClientConnectedHook.Remove(g_pSource2GameClients);
-	clientConnectHook.Remove(g_pSource2GameClients);
-	clientCommandHook.Remove(g_pSource2GameClients);
-	clientSvcUserMessageHook.Remove(g_pSource2GameClients);
-	postEventAbstractHook.Remove(g_gameEventSystem);
-	startupServerHook.Remove(g_pNetworkServerService);
-	checkTransmitHook.Remove(g_pSource2GameEntities);
-	dispatchConCommandHook.Remove(g_pCVar);
 	loadEventsFromFileHook.RemoveGlobal((IGameEventManager2*)&g_pCGameEventManagerVTable);
 	fireEventHook.RemoveGlobal((IGameEventManager2*)&g_pCGameEventManagerVTable);
-	spawnHook.RemoveGlobal((CEntitySystem*)&g_pCEntitySystemVTable);
 	processVoiceDataHook.RemoveGlobal((CServerSideClient*)&g_pCServerSideClientVTable);
 	setGameSpawnGroupMgrHook.Remove(GetNetworkGameServer());
 	createWorkshopMapGroupHook.Remove(g_pGameTypes);
@@ -293,6 +262,7 @@ KHook::Return<void> Hook_ClientDisconnect_Post(IServerGameClients* pThis, CPlaye
 	if (reason != NETWORK_DISCONNECT_LOOPSHUTDOWN && reason != NETWORK_DISCONNECT_SHUTDOWN)
 		g_pAdminSystem->AddDisconnectedPlayer(pszName, xuid, pPlayer ? pPlayer->GetIpAddress() : "");
 
+	CCSCustomHudLayout::OnClientDisconnect(slot.Get());
 	g_playerManager->OnClientDisconnect(slot);
 
 	return {KHook::Action::Ignore};
@@ -435,7 +405,7 @@ KHook::Return<void> Hook_PostEventAbstract(IGameEventSystem* pThis, CSplitScreen
 
 			uint64 clientMask = *(uint64*)clients & g_playerManager->GetSilenceSoundMask();
 
-			postEventAbstractHook.CallOriginal(pThis, nSlot, bLocalOnly, nClientCount, &clientMask, pEvent, msg, nSize, bufType);
+			hookPostEventAbstract->CallOriginal(pThis, nSlot, bLocalOnly, nClientCount, &clientMask, pEvent, msg, nSize, bufType);
 
 			msg->set_weapon_id(weapon_id);
 			msg->set_sound_type(sound_type);
@@ -702,7 +672,7 @@ KHook::Return<void> Hook_DispatchConCommand(ICvar* pThis, ConCommandRef cmdHandl
 
 		if (!bGagged && !bSilent && !bFlooding)
 		{
-			dispatchConCommandHook.CallOriginal(pThis, cmdHandle, ctx, args);
+			hookDispatchConCommand->CallOriginal(pThis, cmdHandle, ctx, args);
 
 			// Reset idle time if message is sent to chat
 			if (g_cvarIdleKickTime.Get() > 0.0f)
@@ -753,6 +723,17 @@ KHook::Return<void> Hook_DispatchConCommand(ICvar* pThis, ConCommandRef cmdHandl
 	return {KHook::Action::Ignore};
 }
 
+KHook::Return<void> Hook_SwitchToLoop(IEngineServiceMgr* pThis, const char* pszLoopModeName, KeyValues* pKV, uint32 nId, const char* pszAddonName, bool bUnk)
+{
+	if (pKV && !V_strcmp(pszLoopModeName, "levelload"))
+	{
+		g_pCfgParser->PreLevelLoad(pKV->GetString("levelname", ""));
+		g_pMapMigrations->PreLevelLoad(pKV->GetUint64("customgamemode", 0));
+	}
+
+	return {KHook::Action::Ignore};
+}
+
 KHook::Return<void> Hook_CreateWorkshopMapGroup(IGameTypes* pThis, const char* name, const CUtlStringList& mapList)
 {
 	if (g_cvarVoteManagerEnable.Get() && g_pMapVoteSystem->IsMapListLoaded())
@@ -771,19 +752,11 @@ KHook::Return<int> Hook_LoadEventsFromFile(IGameEventManager2* pThis, const char
 KHook::Return<bool> Hook_FireEvent(IGameEventManager2* pThis, IGameEvent* pEvent, bool bDontBroadcast)
 {
 	// Make player_connect obey cs2f_map_steamids_enable as well
-	if (!g_cvarEnableMapSteamIds.Get() && !V_stricmp(pEvent->GetName(), "player_connect"))
+	if (!g_cvarEnableMapSteamIds.Get() && pEvent && !V_stricmp(pEvent->GetName(), "player_connect"))
 	{
 		pEvent->SetString("networkid", "");
 		pEvent->SetUint64("xuid", 0);
 	}
-
-	return {KHook::Action::Ignore};
-}
-
-KHook::Return<void> Hook_Spawn(CEntitySystem* pThis, int nCount, const EntitySpawnInfo_t* pInfo)
-{
-	for (int i = 0; i < nCount; i++)
-		g_pMapMigrations->OnEntitySpawned_Pre(reinterpret_cast<CBaseEntity*>(pInfo[i].m_pEntity->m_pInstance), pInfo[i].m_pKeyValues);
 
 	return {KHook::Action::Ignore};
 }
