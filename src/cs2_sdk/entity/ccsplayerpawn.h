@@ -59,6 +59,10 @@ class CCSPlayerPawn : public CCSPlayerPawnBase
 public:
 	DECLARE_SCHEMA_CLASS(CCSPlayerPawn);
 
+	SCHEMA_FIELD(bool, m_bIsDefusing);
+	SCHEMA_FIELD(int, m_nWhichBombZone);
+	SCHEMA_FIELD(bool, m_bInBuyZone);
+	SCHEMA_FIELD(bool, m_bInBombZone);
 	SCHEMA_FIELD(float, m_flVelocityModifier)
 	SCHEMA_FIELD(CCSPlayer_ActionTrackingServices*, m_pActionTrackingServices)
 	SCHEMA_FIELD(QAngle, m_angEyeAngles)
@@ -67,4 +71,6 @@ public:
 	{
 		return reinterpret_cast<CCSPlayer_CameraServices*>(m_pCameraServices());
 	}
+
+	void FixPlayerModelAnimations();
 };

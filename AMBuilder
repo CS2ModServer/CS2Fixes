@@ -13,6 +13,8 @@ for sdk_target in MMSPlugin.sdk_targets:
     os.path.join(builder.sourcePath, 'src', 'utils'),
     os.path.join(builder.sourcePath, 'public'),
     os.path.join(builder.sourcePath, 'sdk', 'thirdparty', 'protobuf-3.21.8', 'src'),
+    os.path.join('C:\\Python312\\include'),
+    os.path.join(builder.sourcePath, 'vendor', 'pybind11', 'include'),
   ]
 
   if binary.compiler.target.platform == 'linux':
@@ -23,6 +25,7 @@ for sdk_target in MMSPlugin.sdk_targets:
   elif binary.compiler.target.platform == 'windows':
     binary.compiler.postlink += [
       os.path.join('psapi.lib'),
+      os.path.join('C:\\python312\\libs\\python312.lib'),
       os.path.join(builder.sourcePath, 'sdk', 'lib' ,'public', 'win64', '2015', 'libprotobuf.lib'),
       os.path.join(builder.sourcePath, 'sdk', 'lib', 'public', 'win64', 'steam_api64.lib')
     ]
@@ -69,6 +72,11 @@ for sdk_target in MMSPlugin.sdk_targets:
     'src/cvarwhitelist.cpp',
     'src/cfgparser.cpp',
     'src/mapmigrations.cpp',
+    'src/adventuremod.cpp',
+    'src/adventuremenu.cpp',
+    'src/PyAPI.cpp',
+    'src/PyPlugin.cpp',
+    'src/PyRuntime.cpp',
     'sdk/entity2/entitysystem.cpp',
     'sdk/entity2/entityidentity.cpp',
     'sdk/entity2/entitykeyvalues.cpp',

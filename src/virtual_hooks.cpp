@@ -360,6 +360,7 @@ KHook::Return<void> Hook_ClientSvcUserMessage(IServerGameClients* pThis, CPlayer
 	if (!pController)
 		return {KHook::Action::Ignore};
 
+	// TRISTEN CS_UM_CustomHudClicked undeclared identifier?
 	if (um_type == CS_UM_CustomHudClicked)
 	{
 		CCSUsrMsg_CustomHudClicked message;

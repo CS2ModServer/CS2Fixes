@@ -1,4 +1,4 @@
-/**
+﻿/**
  * =============================================================================
  * CS2Fixes
  * Copyright (C) 2023-2026 Source2ZE
@@ -32,6 +32,8 @@ extern bool g_bAwsChangingTeam;
 #define AMMO_OFFSET_SMOKEGRENADE 15
 #define AMMO_OFFSET_MOLOTOV 16
 #define AMMO_OFFSET_DECOY 17
+
+extern bool g_bAwsChangingTeam;
 
 struct CSPerRoundStats_t
 {
@@ -221,6 +223,9 @@ class CPlayer_ItemServices : public CPlayerPawnComponent
 
 public:
 	DECLARE_SCHEMA_CLASS(CPlayer_ItemServices);
+	SCHEMA_FIELD(bool, m_bHasDefuser);
+	SCHEMA_FIELD(bool, m_bHasHelmet);
+	SCHEMA_FIELD(bool, m_bHasHeavyArmor);
 };
 
 class CCSPlayer_ItemServices : public CPlayer_ItemServices
@@ -229,6 +234,10 @@ class CCSPlayer_ItemServices : public CPlayer_ItemServices
 
 public:
 	DECLARE_SCHEMA_CLASS(CCSPlayer_ItemServices);
+	SCHEMA_FIELD(CSMatchStats_t, m_matchStats);
+	SCHEMA_FIELD(bool, m_bHasDefuser);
+	SCHEMA_FIELD(bool, m_bHasHelmet);
+	SCHEMA_FIELD(bool, m_bHasHeavyArmor);
 
 private:
 	virtual CBasePlayerWeapon* _GiveNamedItem(const char* pchName) = 0;
