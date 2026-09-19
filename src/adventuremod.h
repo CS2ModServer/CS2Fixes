@@ -53,7 +53,8 @@ public:
 	CBaseEntity*			GetPawn();
 	int GetHealth();
 	void AddHealth(int amount);
-	//const char* GetName();
+	void SetHealth(int amount);
+	// const char* GetName();
 	py::str GetName();
 	bool IsValid();
 	bool IsOnGround();

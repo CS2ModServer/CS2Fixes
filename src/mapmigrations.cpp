@@ -52,7 +52,10 @@ void CMapMigrations::OnEntitySpawned_Pre(CBaseEntity* pEntity, const CEntityKeyV
 {
 	// Stupid workaround for CEntityKeyValues being inaccessible after entity spawn
 	// We need access to this in 2026-01-21 rendermode migrations when called from UpdateMapUpdateTime
-	if (pEntity->AsBaseModelEntity() && V_StringToInt32(pKeyValues->GetString("rendermode"), -1, NULL, NULL, PARSING_FLAG_SKIP_WARNING) == -1)
+	//std::string temp = pKeyValues->GetString("rendermode", "-1");
+	//std::string name = pEntity->GetClassname();
+	//Message("key=%s, value=%s\n",name.c_str(), temp.c_str());
+	if (pEntity->AsBaseModelEntity() && V_StringToInt32(pKeyValues->GetString("rendermode"), -1, NULL, NULL, PARSING_FLAG_SKIP_WARNING|PARSING_FLAG_SKIP_ASSERT) == -1)
 		m_vecModelEntitiesUsingRendermodeEnum.push_back(pEntity->GetHandle());
 }
 

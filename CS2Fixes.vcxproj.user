@@ -2,7 +2,7 @@
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LocalDebuggerCommand>E:/repo/CS2Server\cs2\game\bin\win64\cs2.exe</LocalDebuggerCommand>
-    <LocalDebuggerCommandArguments>-dedicated</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-insecure -window -dedicated -usercon +game_type 0 +game_mode 1 +map de_dust2</LocalDebuggerCommandArguments>
     <LocalDebuggerWorkingDirectory>E:/repo/CS2Server\cs2\game\bin\win64</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerCommandArgumentsHistory>-dedicated|</LocalDebuggerCommandArgumentsHistory>
@@ -12,6 +12,6 @@
     <LocalDebuggerCommandArguments>-insecure -window -dedicated -usercon +game_type 0 +game_mode 1 +map de_dust2</LocalDebuggerCommandArguments>
     <LocalDebuggerWorkingDirectory>E:/repo/CS2Server\cs2\game\bin\win64</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArgumentsHistory>-insecure -language english -window -dedicated -usercon +game_type 0 +game_mode 1 +map de_dust2 -maxplayers_override 64|-insecure -window -dedicated -usercon +game_type 0 +game_mode 1 +map de_dust2|</LocalDebuggerCommandArgumentsHistory>
+    <LocalDebuggerCommandArgumentsHistory>-insecure -language english -window -dedicated -usercon +game_type 0 +game_mode 1 +map de_dust2 -maxplayers_override 64|-insecure -window -dedicated -usercon +game_type 0 +game_mode 1|-insecure -window -dedicated -usercon +game_type 0 +game_mode 1 -map de_dust2|-insecure -window -dedicated -usercon +game_type 0 +game_mode 1 +map de_dust2|</LocalDebuggerCommandArgumentsHistory>
   </PropertyGroup>
 </Project>

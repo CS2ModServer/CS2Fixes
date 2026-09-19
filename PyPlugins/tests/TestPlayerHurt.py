@@ -1,6 +1,7 @@
 import Source2Py
 GameEvent = Source2Py.GameEvent
 from adventure.generic_damage import generic_damage
+from adventure.generic_health import generic_health
 
 import logging, inspect
 import traceback
@@ -48,18 +49,15 @@ class TestPlayerHurt:
         event: GameEvent
         ):
         try:
-            pre_damage = event.GetInt("damage_health")
             # 50% chance of +4 damage on hit.
             generic_damage.damage_bonus_flat(event, 0.50, 4)
-            # 20% chance of +25% damage on hit
-            generic_damage.damage_bonus_multiplier(event, 0.20, 1.25)
-            post_damage = event.GetInt("damage_health")
-            alog("Before bonus' the damage was {pre} and after it now is {post}".format(pre=pre_damage, post=post_damage))
+            # 20% chance of +150% or multiplying the damage by 250% damage on hit
+            generic_damage.damage_bonus_multiplier(event, 0.20, 2.5)
+            # heal 5 hp on hit if it wasn't self.
+            generic_health.attacker_life_gain_on_hit(event, 5)
+            # 15% chance to gain 40% of damage dealt as life
+            generic_health.attacker_life_steal_on_hit(event, 0.15, 0.40)
         except Exception as e:
             alog(e)
             alog(traceback.format_exc())
-
-        alog("END")
         pass
-
-

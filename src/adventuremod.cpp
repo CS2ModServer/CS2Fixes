@@ -28,16 +28,13 @@ void ADVPlayer::AddHealth(int amount)
 	}
 }
 
-//const char* ADVPlayer::GetName()
-//{
-//	CCSPlayerController* pc = GetPC();
-//
-//	if (!pc)
-//		return nullptr;
-//
-//	const char* name = pc->GetPlayerName().c_str();
-//	return name;
-//}
+void ADVPlayer::SetHealth(int amount)
+{
+	CBaseEntity* pawn = GetPawn();
+	if (pawn && pawn->IsAlive())
+		pawn->m_iHealth = amount;
+}
+
 py::str ADVPlayer::GetName()
 {
 	CCSPlayerController* pc = GetPC();
