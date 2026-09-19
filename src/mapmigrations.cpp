@@ -52,16 +52,6 @@ void CMapMigrations::ApplyGameSettings(uint64 iWorkshopId)
 	// If map update time wasn't available before map load, try to get the update time anyways, for later migrations
 	if (iWorkshopId != 0 && !m_mapUpdateTimes.contains(iWorkshopId))
 		CMapSystemWorkshopDetailsQuery::Create(iWorkshopId);
-  
-	//std::string temp = pKeyValues->GetString("rendermode", "-1");
-	//std::string name = pEntity->GetClassname();
-	//Message("key=%s, value=%s\n",name.c_str(), temp.c_str());
-  //de_dust2 point_worldtext has key=rendermode value kRenderNormal instead of an integer, many maps have it, throws a parse assert.
-
-  // Stupid workaround for CEntityKeyValues being inaccessible after entity spawn
-	// We need access to this in 2026-01-21 rendermode migrations when called from UpdateMapUpdateTime
-	if (pEntity->AsBaseModelEntity() && V_StringToInt32(pKeyValues->GetString("rendermode"), -1, NULL, NULL, PARSING_FLAG_SKIP_WARNING|PARSING_FLAG_SKIP_ASSERT) == -1) 
-		m_vecModelEntitiesUsingRendermodeEnum.push_back(pEntity->GetHandle());
 }
 
 void CMapMigrations::OnRoundPrestart()
@@ -93,7 +83,8 @@ void CMapMigrations::Migrations_Rendermode(CUtlVector<CEntityKeyValues*>* pVecEn
 		if (!pKeyValues->HasValue("rendermode"))
 			continue;
 
-		int renderMode = V_StringToInt32(pKeyValues->GetString("rendermode"), -1, NULL, NULL, PARSING_FLAG_SKIP_WARNING);
+		//several maps have a point_worldtext which has key=rendermode, value=kRenderNormal adding PARSING_FLAG_SKIP_ASSERT to ignore.
+		int renderMode = V_StringToInt32(pKeyValues->GetString("rendermode"), -1, NULL, NULL, PARSING_FLAG_SKIP_WARNING | PARSING_FLAG_SKIP_ASSERT);
 
 		// Enum-named render modes already migrate correctly
 		if (renderMode == -1)
