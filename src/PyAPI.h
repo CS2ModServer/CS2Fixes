@@ -26,6 +26,9 @@ namespace Source2Py {
 	class PyAPI {
 	public:
 
+		// Print message to client chat
+		static void PrintToChat(int playerSlot, std::string message);
+
 		// Print message to console
 		static void ConPrint(std::string message);
 

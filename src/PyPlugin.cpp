@@ -92,6 +92,16 @@ namespace Source2Py {
 		PyRuntime::ExecuteObjectMethod(m_PluginObject, event_name, event);
 	}
 
+	void PyPlugin::PyOnTakeDamageOld(py::dict dict)
+	{
+		PyRuntime::ExecuteObjectMethod(m_PluginObject, "player_take_damage", dict);
+	}
+
+	void PyPlugin::PyOnTakeDamageOld_post(py::dict dict)
+	{
+		PyRuntime::ExecuteObjectMethod(m_PluginObject, "player_take_damage_post", dict);
+	}
+
 	void PyPlugin::PyPlayerHurt(IGameEvent* event)
 	{
 		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnPlayerHurt", event);

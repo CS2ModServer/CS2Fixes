@@ -1,5 +1,6 @@
-import Source2Py
-GameEvent = Source2Py.GameEvent
+import Source2Py as s2
+GameEvent = s2.GameEvent
+ADVPlayer = s2.ADVPlayer
 from adventure.generic_damage import generic_damage
 from adventure.generic_health import generic_health
 
@@ -15,7 +16,7 @@ def alog(message: str, callername: bool = True):
     caller = str("")
     if (callername):
         caller = "[" + str(inspect.stack()[1].function) + "] "
-    Source2Py.ServerPrint("[TestPlayerHurt]" + caller + str(message))
+    s2.ServerPrint("[TestPlayerHurt]" + caller + str(message))
     log.info(msg=("[TestPlayerHurt]" + caller + str(message)))
     pass
 
@@ -36,28 +37,64 @@ class TestPlayerHurt:
     ''' note that python does not need typing in it's method declarations but here it is being used 
         as a reminder of the incoming type from CPP.
     '''
+
     def OnPluginLoad(self):
         alog("successfully loaded")
-        alog("pre_, post_, and normal player_hurt")
-        alog("After the CPP event starts, the python event")
-        alog("is called and completed, then the cpp event ")
-        alog("concludes.  Even though the CPP event fires")
-        alog("before PY the damage/ and IGameEvent pEvent")
-        alog("can be modified in Python.")
         pass 
     def player_hurt(self, 
         event: GameEvent
         ):
         try:
-            # 50% chance of +4 damage on hit.
-            generic_damage.damage_bonus_flat(event, 0.50, 4)
-            # 20% chance of +150% or multiplying the damage by 250% damage on hit
-            generic_damage.damage_bonus_multiplier(event, 0.20, 2.5)
-            # heal 5 hp on hit if it wasn't self.
-            generic_health.attacker_life_gain_on_hit(event, 5)
+            attacker = ADVPlayer(event.attacker)
+            victim = ADVPlayer(event.victim)
+            if (   attacker.team < 2
+                or attacker.team > 3
+                or   victim.team > 2
+                or   victim.team > 3
+                ):
+                return
+
+            # 20% chance of +4 damage on hit
+            if (generic_damage.damage_bonus_flat(event, 0.20, 4)):
+                return
+
+            # 20% chance of +150% or multiplying the damage by 150% damage on hit
+            if (generic_damage.damage_bonus_multiplier(event, 0.20, 1.5)):
+                return
+
+            # 15% chance to heal 15 hp on hit
+            if (generic_health.attacker_life_gain_on_hit(event, 0.15, 15)):
+                return
+
             # 15% chance to gain 40% of damage dealt as life
-            generic_health.attacker_life_steal_on_hit(event, 0.15, 0.40)
+            if (generic_health.attacker_life_steal_on_hit(event, 0.15, 0.40)):
+                return
+
+            pass
         except Exception as e:
             alog(e)
             alog(traceback.format_exc())
         pass
+    def player_take_damage(self, 
+        d: dict #not a game event but has a py::dict with info passed from a detour
+        ):
+        try:
+            if (d[  'victim_class'] != 'player' or
+                d['attacker_class'] != 'player'):
+                return
+            iVic = d['victim_id']
+            victim = ADVPlayer(iVic)
+            if (victim.IsValid() == False):
+                #alog("victim not valid")
+                return
+
+            life = victim.life
+            damage = int(d['damage'])
+            newlife = life-damage
+            #alog("life{l}-{d}={newl} {v}"
+            #    .format(v=victim.name, l=life, d=damage, newl=newlife))
+            #alog(d.items())
+            pass
+        except Exception as e:
+            alog(e)
+            alog(traceback.format_exc())

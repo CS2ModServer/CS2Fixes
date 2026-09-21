@@ -39,7 +39,7 @@ py::str ADVPlayer::GetName()
 {
 	CCSPlayerController* pc = GetPC();
 	if (!pc)
-		return nullptr;
+		return std::string("NULL");
 
 	py::str name = py::str(pc->GetPlayerName().c_str());
 	return name;
@@ -279,6 +279,9 @@ int ADVPlayer::GetTeam()
 	//CS_TEAM_T         2
 	//CS_TEAM_CT        3
 
-	CCSPlayerController* p = GetPC();
-	return p->m_iTeamNum;
+	CCSPlayerController* pc = GetPC();
+	if (pc)
+		return pc->m_iTeamNum;
+	else
+		return 0; //might have been bomb or some other thing not specifically on a team.
 }

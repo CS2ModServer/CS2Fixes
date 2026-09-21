@@ -141,7 +141,10 @@ KHook::Return<int64> Detour_CBaseEntity_TakeDamageOld(CBaseEntity* pThis, CTakeD
 	const char* pszInflictorClass = pInflictor ? pInflictor->GetClassname() : "";
 
 	// After Armory update, activator became attacker on block damage, which broke it..
-	if (g_cvarFixBlockDamage.Get() && pInfo->m_AttackerInfo.m_bIsPawn && pInfo->m_bitsDamageType ^ DMG_BULLET && pInfo->m_hAttacker != pThis->GetHandle())
+	if (g_cvarFixBlockDamage.Get() 
+		&& pInfo->m_AttackerInfo.m_bIsPawn 
+		&& pInfo->m_bitsDamageType ^ DMG_BULLET 
+		&& pInfo->m_hAttacker != pThis->GetHandle())
 	{
 		if (V_strcasecmp(pszInflictorClass, "func_movelinear") == 0
 			|| V_strcasecmp(pszInflictorClass, "func_mover") == 0
@@ -175,6 +178,45 @@ KHook::Return<int64> Detour_CBaseEntity_TakeDamageOld(CBaseEntity* pThis, CTakeD
 
 	// maybe call in flow
 	CTakeDamageResult damageResult(0);
+
+	//tristen start somewhere
+	py::dict d;
+	d["victim_class"] = pThis->GetClassname();
+	d["attacker_class"] = pInfo->m_hAttacker.Get() ? pInfo->m_hAttacker.Get()->GetClassname() : "NULL";
+	d["inflictor_class"] = pInfo->m_hInflictor.Get() ? pInfo->m_hInflictor.Get()->GetClassname() : "NULL";
+	d["ability_class"] = pInfo->m_hAbility.Get() ? pInfo->m_hAbility.Get()->GetClassname() : "NULL";
+
+	d["attacker_id"] = -1;
+	CHandle<CBaseEntity> hAttacker = pInfo->m_hAttacker;
+	CBaseEntity* pAttackerEnt = hAttacker.Get();
+	if (pAttackerEnt)
+	{
+		CCSPlayerPawn* pPlayerPawn = dynamic_cast<CCSPlayerPawn*>(pAttackerEnt);
+		if (pPlayerPawn)
+		{
+			CBasePlayerController* pController = pPlayerPawn->GetController();
+			if (pController)
+				d["attacker_id"] = pController->GetEntityIndex().Get() -1;
+		}
+	}
+
+	d["victim_id"] = -1;
+	if (pThis)
+	{
+		CCSPlayerPawn* pPlayerPawn = dynamic_cast<CCSPlayerPawn*>(pThis);
+		if (pPlayerPawn)
+		{
+			CBasePlayerController* pController = pPlayerPawn->GetController();
+			if (pController)
+				d["victim_id"] = pController->GetEntityIndex().Get() -1;
+		}
+	}
+
+	d["damage"] = pInfo->m_flDamage;
+	d["type"] = pInfo->m_bitsDamageType;
+
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyOnTakeDamageOld(d);
 
 	if (pResult == nullptr)
 	{

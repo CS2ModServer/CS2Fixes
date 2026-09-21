@@ -23,6 +23,7 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 	using namespace Source2Py;
 
 	m.def("ServerPrint", &PyAPI::ConPrint);
+	m.def("PrintToChat", &PyAPI::PrintToChat);
 	m.def("ClientPrint", &PyAPI::ClientConPrint);
 
 	m.def("ServerCommand", &PyAPI::ServerCommand);
@@ -33,7 +34,7 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 		[]() { return GetGlobals()->tickcount; });
 
 	//KeyValues3
-	{
+	/* {
 		py::enum_<KV3TypeEx_t>(m, "KV3TypeEx_t")
 			.value("KV3_TYPEEX_INVALID", KV3TypeEx_t::KV3_TYPEEX_INVALID)
 			.value("KV3_TYPEEX_NULL", KV3TypeEx_t::KV3_TYPEEX_NULL)
@@ -54,7 +55,8 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 				[](int cluster_elem, KV3TypeEx_t type, KV3SubType_t subtype) 
 				{ return KeyValues3(cluster_elem, type, subtype); }))
 			;
-	}
+	}*/
+
 
 	//GameEventKeySymbol_t
 	{
@@ -177,13 +179,17 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 	{
 		m.def("GetZEPlayerOld", &CPlayerManager::GetPlayer);
 
+		m.def("GetZEPlayer",
+			  [](int slot) -> ZEPlayer* {
+				  CPlayerSlot cpSlot = CPlayerSlot(slot);
+				  return (ZEPlayer*)g_playerManager->GetPlayer(cpSlot);
+			  });
 		py::class_<ZEPlayer>(m, "ZEPlayer")
 			.def("GetADVPlayerOld", 
 				[](ZEPlayer& self) {
 					return self.m_ADVPlayer;})
 			.def("GetADVPlayer", &ZEPlayer::GetADVPlayer)
 			;
-			
 	}
 
 	//ADVPlayer
@@ -194,14 +200,8 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 				  ZEPlayer* zp = g_playerManager->GetPlayer(cpSlot);
 				  return (ADVPlayer*)zp->GetADVPlayer();
 			});
-		m.def("GetZEPlayer",
-			  [](int slot) -> ZEPlayer* {
-				  CPlayerSlot cpSlot = CPlayerSlot(slot);
-				  return (ZEPlayer*)g_playerManager->GetPlayer(cpSlot);
-			  });
-		py::class_<ADVPlayer>(m, "ADVPlayer") // was ADVPlayer
-			//-1    = invalid
-			// 0..n = player of some kind
+
+		py::class_<ADVPlayer>(m, "ADVPlayer")
 			.def(py::init<int>())
 
 			.def_property_readonly("playercontroller", &ADVPlayer::GetPC)
@@ -210,11 +210,18 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 			.def("GetPawn", &ADVPlayer::GetPawn)
 			.def_property_readonly("name", &ADVPlayer::GetName)
 			.def("GetName", &ADVPlayer::GetName)
+			.def_property_readonly("slot", &ADVPlayer::GetSlot)
+			.def("GetSlot", &ADVPlayer::GetSlot)
 
 			.def_property("health",  &ADVPlayer::GetHealth, &ADVPlayer::SetHealth)
 			.def("GetHealth", &ADVPlayer::GetHealth)
 			.def("SetHealth", &ADVPlayer::SetHealth)
 			.def("AddHealth", &ADVPlayer::AddHealth)
+
+			.def_property("life", &ADVPlayer::GetHealth, &ADVPlayer::SetHealth)
+			.def("GetLife", &ADVPlayer::GetHealth)
+			.def("SetLife", &ADVPlayer::SetHealth)
+			.def("AddLife", &ADVPlayer::AddHealth)
 
 			.def("IsValid", &ADVPlayer::IsValid)
 
@@ -226,6 +233,7 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 			.def("GetSlot", &ADVPlayer::GetSlot)
 			.def("GetIndex", &ADVPlayer::GetIndex)
 			.def("GetTeam", &ADVPlayer::GetTeam)
+			.def_property_readonly("team", &ADVPlayer::GetTeam)
 			.def("GetButtonStates", &ADVPlayer::GetButtonStates)
 			.def("EmitSound", &ADVPlayer::EmitSound)
 			.def("EmitSoundPersonal", &ADVPlayer::EmitSoundPersonal)
@@ -458,7 +466,8 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 				)
 
 			// return KeyValues3*
-			.def("GetDataKeys", &IGameEvent::GetDataKeys, "GetDataKeys() -> KeyValues3*")
+			// spent a day trying to figure out how to use this and... I'm not clever so..
+			//.def("GetDataKeys", &IGameEvent::GetDataKeys, "GetDataKeys() -> KeyValues3*")
 		
 			// void no return
 			.def("SetBool", &IGameEvent::SetBool)

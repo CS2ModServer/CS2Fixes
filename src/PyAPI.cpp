@@ -2,13 +2,30 @@
 
 #include <ISmmPlugin.h>
 #include "PyInclude.h"
+#include "commands.h"
 
 extern IVEngineServer2* g_pEngineServer2;
 extern ISmmAPI* g_SMAPI;
+class CCSPlayerController;
 
 namespace Source2Py
 {
 
+	void PyAPI::PrintToChat(int playerSlot, std::string message)
+	{
+		message.append("\n");
+		CCSPlayerController* pc = CCSPlayerController::FromSlot(playerSlot);
+		if (!pc || !pc->IsConnected() || pc->IsBot())
+			return;
+
+		ClientPrint(
+			CCSPlayerController::FromSlot(
+				CPlayerSlot(playerSlot)
+				), 
+			3, //see common.h for options, 3 is HUD_PRINTTALK
+			message.c_str()
+			);
+	}
 	void PyAPI::ConPrint(std::string message) {
 		message.append("\n");
 		META_CONPRINT(message.c_str()); 

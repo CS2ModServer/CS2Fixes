@@ -26,6 +26,8 @@ namespace Source2Py {
 		void PyClientSettingsChanged(int playerSlot);
 		void PyFireGameEventBlind(IGameEvent* event);
 		void PyFireGameEventNamed(IGameEvent* event, const char* event_name);
+		void PyOnTakeDamageOld(py::dict dict);
+		void PyOnTakeDamageOld_post(py::dict dict);
 		void PyGameFrame(bool simulating, bool firstTick, bool lastTick);
 		void PyPlayerActivate(int playerSlot);
 		

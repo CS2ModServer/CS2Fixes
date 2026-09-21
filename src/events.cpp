@@ -272,85 +272,13 @@ GAME_EVENT_F(player_hurt)  //FireGameEvent
 		TD_OnPlayerHurt(pEvent);
 }
 
-GAME_EVENT_F(old_player_hurt)
-{
-	if (g_cvarEnableTopDefender.Get())
-		TD_OnPlayerHurt(pEvent);
-
-	//if (!g_bEnableTopDefender) //old
-	//	return;
-	//if (!g_cvarEnableTopDefender.Get()) //new
-	//	return;
-
-	//if (g_bEnableZR) //old
-	//	ZR_OnPlayerDeath(pEvent);
-	//if (g_cvarEnableZR.Get()) //new
-	//	ZR_OnPlayerDeath(pEvent);
-
-
-	//if (!g_bEnableTopDefender)
-	//	return;
-
-	for (auto& plugin : g_CS2Fixes.m_Plugins)
-		plugin.PyPlayerDeath(pEvent);
-
-	CCSPlayerController* pAttacker = (CCSPlayerController*)pEvent->GetPlayerController("attacker");
-	CCSPlayerController* pVictim = (CCSPlayerController*)pEvent->GetPlayerController("userid");
-
-	bool noattacker = false;
-	if (!pAttacker)
-	{
-		Message("noattacker=true");
-		noattacker = true;
-	}
-
-	bool novictim = false;
-	if (!pVictim)
-	{
-		Message("novictim=true");
-		novictim = true;
-	}
-	
-	bool teamkill = false;
-	if (pAttacker->m_iTeamNum == pVictim->m_iTeamNum)
-		teamkill = true;
-
-	bool suicide = false;
-	if (pAttacker == pVictim)
-		suicide = true;
-
-	// Ignore Ts/zombie kills and ignore CT teamkilling or suicide
-	if (	
-			noattacker  ||
-			novictim    ||
-			teamkill    || 
-			suicide     ||
-			pAttacker->m_iTeamNum != CS_TEAM_CT || 
-			pAttacker->m_iTeamNum == pVictim->m_iTeamNum
-			)
-	{
-		return;
-	}
-
-
-	ZEPlayer* pPlayer = pAttacker->GetZEPlayer();
-
-	if (!pPlayer)
-		return;
-
-	pPlayer->SetTotalDamage(pPlayer->GetTotalDamage() + pEvent->GetInt("dmg_health"));
-	pPlayer->SetTotalHits(pPlayer->GetTotalHits() + 1);
-	
-}
-
 GAME_EVENT_F(player_jump)
 {
-    /*	"player_jump":dict({
+    /*	
+		"player_jump":dict({
 			"userid":"playercontroller",
-        }),	*/
-	//int index = pEvent->GetPlayerSlot("userid").Get();
-	//for (auto& plugin : g_CS2Fixes.m_Plugins)
-	//	plugin.PyPlayerJump(index);
+        }),	
+	*/
 
 	for (auto& plugin : g_CS2Fixes.m_Plugins)
 		plugin.PyFireGameEventNamed(pEvent, "player_jump");
