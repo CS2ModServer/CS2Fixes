@@ -483,7 +483,7 @@ bool PrepareMapSetModel(CBaseModelEntity* pModel)
 	return true;
 }
 
-KHook::Return<bool> Detour_CEntityIdentity_AcceptInput(CEntityIdentity* pThis, CUtlSymbolLarge* pInputName, CEntityInstance* pActivator, CEntityInstance* pCaller, variant_t* value, void* a6, void* a7)
+KHook::Return<bool> Detour_CEntityIdentity_AcceptInput(CEntityIdentity* pThis, CUtlSymbolLarge* pInputName, CEntityInstance* pActivator, CEntityInstance* pCaller, variant_t* value, CPulseArgumentPack* pArgumentPack, CPulseInputParamMap* pParamMap)
 {
 	VPROF_SCOPE_BEGIN("Detour_CEntityIdentity_AcceptInput");
 
@@ -575,6 +575,9 @@ KHook::Return<bool> Detour_CEntityIdentity_AcceptInput(CEntityIdentity* pThis, C
 		if (!V_strcasecmp(pInputName->String(), "DisableCameraAll"))
 			return {KHook::Action::Supersede, CPointViewControlHandler::OnDisableAll(pViewControl)};
 	}
+
+	if (g_pMapMigrations->Detour_CEntityIdentity_AcceptInput(pThis, pInputName, pActivator, pCaller, value))
+		return {KHook::Action::Supersede, true};
 
 	VPROF_SCOPE_END();
 
@@ -840,13 +843,13 @@ KHook::Return<bool> Detour_TraceShape(int64* a1, int64 a2, int64 a3, int64 a4, C
 	return {KHook::Action::Ignore};
 }
 
-KHook::Return<void> Detour_CEntityIOOutput_FireOutputInternal(CEntityIOOutput* pThis, CEntityInstance* pActivator, CEntityInstance* pCaller, const CVariant* value, float flDelay, void* a6, void* a7)
+KHook::Return<void> Detour_CEntityIOOutput_FireOutputInternal(CEntityIOOutput* pThis, CEntityInstance* pActivator, CEntityInstance* pCaller, CPulseArgumentPack* pArgumentPack, float flDelay, CPulseInputParamMap* pParamMap, const CVariant* value)
 {
 	if (g_cvarEnableButtonWatch.Get())
-		ButtonWatch(pThis, pActivator, pCaller, value, flDelay);
+		ButtonWatch(pThis, pActivator, pCaller, flDelay);
 
 	if (g_cvarEnableEntWatch.Get())
-		EW_FireOutput(pThis, pActivator, pCaller, value, flDelay);
+		EW_FireOutput(pThis, pActivator, pCaller, flDelay);
 
 	return {KHook::Action::Ignore};
 }
@@ -1029,7 +1032,7 @@ KHook::Return<CSingleWorldRep*> Detour_CWorldRendererMgr_CreateWorld_Internal_Po
 		return {KHook::Action::Ignore};
 
 	auto pWorld = singleWorld->m_pCWorld;
-	auto vecLumpData = (CUtlVector<void*>*)((uint8_t*)pWorld + 0x1E0);
+	auto vecLumpData = (CUtlVector<void*>*)((uint8_t*)pWorld + 0x298);
 
 	FOR_EACH_VEC(*vecLumpData, i)
 	{

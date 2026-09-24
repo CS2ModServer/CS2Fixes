@@ -19,19 +19,27 @@
 
 #pragma once
 
-#include "convar.h"
-#include <map>
+#include "entity/ccsplayerpawn.h"
 
-class CCfgParser
+enum CustomCameraMode_t : uint8_t
 {
-public:
-	void PreLevelLoad(const char* pszMapName);
-	void ApplyGameSettings(const char* pszMapName);
-	void ExecuteConfigs(const char* pszMapName);
-	void ParseCfg(const char* pszCfgPath);
-
-private:
-	std::map<uint16, ConVarRefAbstract> m_mapConVars;
+	CUSTOM_CAMERA_MODE_DISABLED = 0,
+	CUSTOM_CAMERA_MODE_CONTROLLED = 1,
+	CUSTOM_CAMERA_MODE_CONTROLLED_POSITION = 2,
+	CUSTOM_CAMERA_MODE_FOLLOW_POSITION = 3,
 };
 
-extern CCfgParser* g_pCfgParser;
+class CCSCustomPlayerCamera : public CBaseEntity
+{
+public:
+	DECLARE_SCHEMA_CLASS(CCSCustomPlayerCamera)
+
+	SCHEMA_FIELD(CHandle<CCSPlayerPawnBase>, m_hPawn)
+	SCHEMA_FIELD(CustomCameraMode_t, m_nCameraMode)
+	SCHEMA_FIELD(CHandle<CBaseEntity>, m_hFollowEntity)
+	SCHEMA_FIELD(bool, m_bFollowEyes)
+	SCHEMA_FIELD(Vector, m_vecFollowOffset)
+	SCHEMA_FIELD(Vector, m_vecCameraOffset)
+	SCHEMA_FIELD(bool, m_bClipCameraOffset)
+	SCHEMA_FIELD(float32, m_flCameraOffsetReturnStrength)
+};
