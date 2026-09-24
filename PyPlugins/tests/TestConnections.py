@@ -1,4 +1,6 @@
-import Source2Py
+import Source2Py as s2
+GameEvent = s2.GameEvent
+
 import logging, inspect
 import traceback
 
@@ -11,7 +13,7 @@ def alog(message: str, callername: bool = True):
     caller = str("")
     if (callername):
         caller = "[" + str(inspect.stack()[1].function) + "] "
-    Source2Py.ServerPrint("[TestConnections]" + caller + str(message))
+    s2.ServerPrint("[TestConnections]" + caller + str(message))
     log.info(msg=("[TestConnections]" + caller + str(message)))
     pass
 
@@ -21,8 +23,8 @@ class TestConnections:
         as a reminder of the incoming type from CPP.
     '''
     def OnPluginLoaded(self):
-        alog("=============== TestConnections.py  ==============")
         try:
+            alog("=============== TestConnections.py  ==============")
         except Exception as e:
             alog(e)
             alog(traceback.format_exc())
