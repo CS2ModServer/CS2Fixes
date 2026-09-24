@@ -532,18 +532,12 @@ GAME_EVENT_F(player_connect)
 
 GAME_EVENT_F(player_connect_full)
 {
-	Message("player_connect_full\n");
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyFireGameEventNamed(pEvent, "player_connect_full");
 }
 
 GAME_EVENT_F(player_disconnect)
 {
-	Message("player_disconnect\n");
-}
-GAME_EVENT_F(client_disconnect)
-{
-	Message("client_disconnect\n");
-}
-GAME_EVENT_F(cs_game_disconnected)
-{
-	Message("cs_game_disconnected\n");
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyFireGameEventNamed(pEvent, "player_disconnect");
 }

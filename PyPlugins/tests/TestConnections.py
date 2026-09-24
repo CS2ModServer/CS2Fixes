@@ -1,6 +1,9 @@
 import Source2Py as s2
 GameEvent = s2.GameEvent
 
+from adventure.game_events import game_events
+Event = game_events.Event
+
 import logging, inspect
 import traceback
 
@@ -17,7 +20,28 @@ def alog(message: str, callername: bool = True):
     log.info(msg=("[TestConnections]" + caller + str(message)))
     pass
 
-alog("START")
+    '''
+        "player_connect":dict({
+            "name":"string",
+            "userid":"playercontroller",
+            "networkid":"string",
+            "xuid":"uint64",
+            "address":"string",
+            "bot":"bool",
+            }),
+        "player_connect_full":dict({
+            "userid":"playercontroller",
+            }),
+        "player_disconnect":dict({
+            "userid":"playercontroller",
+            "reason":"short",
+            "name":"string",
+            "networkid":"string",
+            "xuid":"uint64",
+            "PlayerID":"short",
+            }),
+
+    '''
 class TestConnections:
     ''' note that python does not need typing in it's method declarations but here it is being used 
         as a reminder of the incoming type from CPP.
@@ -33,6 +57,15 @@ class TestConnections:
         event: GameEvent
         ):
         alog("================= player_connect  ================")
+        d = Event(event)
+        for k,v in d.items():
+            alog(str(k).ljust(14) + " | " + str(v))
+        pass
+    def player_connect_full(self, 
+        event: GameEvent
+        ):
+        alog("=============== player_connect_full  =============")
+        d = Event(event)
         for k,v in d.items():
             alog(str(k).ljust(14) + " | " + str(v))
         pass
@@ -40,13 +73,7 @@ class TestConnections:
         event: GameEvent
         ):
         alog("=============== player_disconnect  ===============")
-        for k,v in d.items():
-            alog(str(k).ljust(14) + " | " + str(v))
-        pass
-    def player_put_in_server(self,
-        event: GameEvent
-        ):
-        alog("============== player_put_in_server  =============")
+        d = Event(event)
         for k,v in d.items():
             alog(str(k).ljust(14) + " | " + str(v))
         pass
