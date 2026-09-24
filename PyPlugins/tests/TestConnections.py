@@ -30,14 +30,21 @@ class TestConnections:
     def player_connect(self, 
         event: GameEvent
         ):
+        alog("================= player_connect  ================")
         for k,v in d.items():
             alog(str(k).ljust(14) + " | " + str(v))
         pass
     def player_disconnect(self,
         event: GameEvent
         ):
+        alog("=============== player_disconnect  ===============")
+        for k,v in d.items():
+            alog(str(k).ljust(14) + " | " + str(v))
         pass
     def player_put_in_server(self,
         event: GameEvent
         ):
+        alog("============== player_put_in_server  =============")
+        for k,v in d.items():
+            alog(str(k).ljust(14) + " | " + str(v))
         pass
