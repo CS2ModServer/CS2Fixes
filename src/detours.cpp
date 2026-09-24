@@ -214,9 +214,9 @@ KHook::Return<int64> Detour_CBaseEntity_TakeDamageOld(CBaseEntity* pThis, CTakeD
 
 	d["damage"] = pInfo->m_flDamage;
 	d["type"] = pInfo->m_bitsDamageType;
-
+	
 	for (auto& plugin : g_CS2Fixes.m_Plugins)
-		plugin.PyOnTakeDamageOld(d);
+		plugin.PyFireFakeEventNamed(d, "player_take_damage");
 
 	if (pResult == nullptr)
 	{

@@ -1,4 +1,7 @@
-import Source2Py
+import Source2Py as s2
+GameEvent = s2.GameEvent
+ADVPlayer = s2.ADVPlayer
+
 import logging, inspect
 import traceback
 
@@ -11,7 +14,7 @@ def alog(message: str, callername: bool = True):
     caller = str("")
     if (callername):
         caller = "[" + str(inspect.stack()[1].function) + "] "
-    Source2Py.ServerPrint("[TestPlayerDeath]" + caller + str(message))
+    s2.ServerPrint("[TestPlayerDeath]" + caller + str(message))
     log.info(msg=("[TestPlayerDeath]" + caller + str(message)))
     pass
 
@@ -24,6 +27,7 @@ event_dict_of_dict = dict({})
 for k, v in dumped_events.dumped_events.items():
     event_dict_of_dict.update(v)
 
+#This can be iterated over in K/V style, easier than the cs2 IGameEvent*
 class Event(object):
     def __setitem__(self, key, value):
         setattr(self, key, value)
@@ -31,45 +35,40 @@ class Event(object):
         return getattr(self, key)
     def items(self):
         return self.__dict__.items()
-    def __init__(self, _event):
+    def __init__(self, 
+        _event: GameEvent
+        ):
         try:
             self["name"] = _event.GetName()
             keys = event_dict_of_dict.get(self["name"], dict())
             for k, v in keys.items():
-                GEKS = Source2Py.GameEventKeySymbol_t(k)
-
                 # some or all may be wrong, but working for now
                 if   (v == "string"):
-                    self[k] = _event.GetString(GEKS, "None")
+                    self[k] = _event.GetString(k, "None")
                 elif (v == "bool"):
-                    self[k] = _event.GetBool(GEKS, False)
+                    self[k] = _event.GetBool(k, False)
                 elif (v == "byte"):
-                    self[k] = _event.GetInt(GEKS, -1)      #python cares not, will automagically sort this mess
-                elif (v == "short"):                       #mess
-                    self[k] = _event.GetInt(GEKS, -1)      #mess
-                elif (v == "long"):                        #mess
-                    self[k] = _event.GetInt(GEKS, -1)      #mess
-                elif (v == "int"):                         #mess
-                    self[k] = _event.GetInt(GEKS, -1)      #mess
-                elif (v == "float"):                       #mess
-                    self[k] = _event.GetFloat(GEKS, -1.0)  #mess
-                elif (v == "player_pawn"):                 #mess
-                    self[k] = _event.GetInt(GEKS, -1)      #mess
-                elif (v == "playercontroller"):            #universally used as player id on server for all events (so far)
-                    self[k] = _event.GetPlayerSlot(GEKS).Get()
-                    #self[k] = _event.GetInt(GEKS, -1)
-
-                elif (v == "uint64"):                      #player steamid or contentid on steam network
-                    self[k] = _event.GetUint64(GEKS, 0)
-
+                    self[k] = _event.GetInt(k, -1) 
+                elif (v == "short"): 
+                    self[k] = _event.GetInt(k, -1) 
+                elif (v == "long"): 
+                    self[k] = _event.GetInt(k, -1) 
+                elif (v == "int"):
+                    self[k] = _event.GetInt(k, -1) 
+                elif (v == "float"): 
+                    self[k] = _event.GetFloat(k, -1.0)
+                elif (v == "player_pawn"):
+                    self[k] = _event.GetInt(k, -1)
+                    #self[k] = _event.GetPlayerPawn(k) "player_footstep":{"userid":"player_pawn"} need to get that event to test if really a pawn or just slot/userid.
+                elif (v == "playercontroller"):
+                    self[k] = _event.GetPlayerSlot(k).Get()
+                elif (v == "uint64"): #player steamid or contentid on steam network
+                    self[k] = _event.GetUint64(k, -1)
                 elif (v == "strict_ehandle"):
-                    #GetEntity is used for _pawn keys like attacker_pawn and userid_pawn which are the only ones currently using strict_ehandle
-                    #self[k] = _event.GetEntity(GEKS, None)
-                    pass
-                else: #   local, hint_, 
+                    self[k] = _event.GetPawnEHandle(k)
+                else: 
                     alog("else!!! " + str(k) + " " + str(v))
                     pass
-                #alog("K: " + k + " V: " + v + ": " + str(self[k]))        except Exception as e:
         except Exception as e:
             alog(e)
             alog(traceback.format_exc())
@@ -90,7 +89,7 @@ class TestPlayerDeath:
                 "headshot":"bool",
                 "dominated":"short",
                 "revenge":"short",
-                "wipe":"short",
+                "wipe":"short",       #ace
                 "penetrated":"short",
                 "noreplay":"bool",
                 "noscope":"bool",
@@ -105,44 +104,28 @@ class TestPlayerDeath:
     def OnPluginLoad(self):
         alog("successfully loaded")
         pass
-    def _heal(self, who, amount):
-        player = Source2Py.ADVPlayer(who)
-        player.AddHealth(amount)
-    def _testDeath_old(self, event):
-        geks = Source2Py.GameEventKeySymbol_t("userid")
-        playerid = event.GetPlayerSlot(geks).Get()
-        who_died = Source2Py.ADVPlayer(playerid)
-
-        geks = Source2Py.GameEventKeySymbol_t("attacker")
-        attackerid = event.GetPlayerSlot(geks).Get()
-        self._heal(self, attackerid, 35)
-
-        geks = Source2Py.GameEventKeySymbol_t("assister")
-        assisterid = event.GetPlayerSlot(geks).Get()
-        if (assisterid>=0):
-            self._heal(self, attackerid, 5)
-
-        alog("player slot:" + str(int(playerid)) + " name:" + str(who_died.GetName()))
-        pass
-    def _testDeath_new(self, event):
+    def _testDeath(self, 
+        event: GameEvent
+        ):
         ev = Event(event)
         for k, v in ev.items():
-            alog(str(k) + "   |   " + str(v))
+            alog(str(k).rjust(25) + "   |   " + str(v).ljust(25))
 
-        victim = Source2Py.ADVPlayer(ev['userid'])
-        
+        #either way is usable because we turned the GameEvent into a python dict like object called Event
+        #victim = ADVPlayer(ev['userid'])
+        victim = ADVPlayer(event.userid)
         if(victim.IsValid()):
-            killstring = victim.GetName() + " was killed by "
+            killstring = victim.name + " was killed by "
 
-            attacker = Source2Py.ADVPlayer(ev['attacker'])
+            attacker = ADVPlayer(ev['attacker'])
             if (attacker.IsValid()):
-                killstring = killstring + attacker.GetName()
+                killstring = killstring + attacker.name
                 heal = 15
                 current_hp = attacker.GetHealth()
                 alog(str(attacker.GetName() + " healed by " + str(heal) + " from " + str(current_hp) + " to " + str(current_hp+heal)))
                 attacker.AddHealth(15)
 
-            assister = Source2Py.ADVPlayer(ev['assister'])
+            assister = ADVPlayer(ev['assister'])
             if (assister.IsValid()):
                 name = assister.GetName()
                 if (name):
@@ -154,11 +137,12 @@ class TestPlayerDeath:
 
             alog(killstring)
         pass
-    def OnPlayerDeath(self, event):
+    def player_death(self, 
+        event: GameEvent
+        ):
         alog("START")
         try:
-            #self._testDeath_old(self, event)
-            self._testDeath_new(self, event)
+            self._testDeath(self, event)
         except Exception as e:
             alog(e)
             alog(traceback.format_exc())

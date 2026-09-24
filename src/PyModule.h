@@ -136,6 +136,83 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 				})
 			;
 	}
+	//DamageTypes_t
+	{
+		py::enum_<DamageTypes_t>(m, "DamageTypes_t", py::arithmetic())
+			.value("DMG_GENERIC", DamageTypes_t::DMG_GENERIC)
+			.value("DMG_CRUSH",   DamageTypes_t::DMG_CRUSH)
+			.value("DMG_BULLET",  DamageTypes_t::DMG_BULLET)
+			.value("DMG_SLASH",   DamageTypes_t::DMG_SLASH)
+			.value("DMG_BURN",    DamageTypes_t::DMG_BURN)
+			.value("DMG_VEHICLE", DamageTypes_t::DMG_VEHICLE)
+			.value("DMG_FALL",    DamageTypes_t::DMG_FALL)
+			.value("DMG_BLAST",   DamageTypes_t::DMG_BLAST)
+			.value("DMG_CLUB",    DamageTypes_t::DMG_CLUB)
+			.value("DMG_SHOCK",   DamageTypes_t::DMG_SHOCK)
+			.value("DMG_SONIC",   DamageTypes_t::DMG_SONIC)
+			.value("DMG_ENERGYBEAM",   DamageTypes_t::DMG_ENERGYBEAM)
+			.value("DMG_BUCKSHOT",     DamageTypes_t::DMG_BUCKSHOT)
+			.value("DMG_DROWN",        DamageTypes_t::DMG_DROWN)
+			.value("DMG_POISON",       DamageTypes_t::DMG_POISON)
+			.value("DMG_RADIATION",    DamageTypes_t::DMG_RADIATION)
+			.value("DMG_DROWNRECOVER", DamageTypes_t::DMG_DROWNRECOVER)
+			.value("DMG_ACID",         DamageTypes_t::DMG_ACID)
+			.value("DMG_PHYSGUN",      DamageTypes_t::DMG_PHYSGUN)
+			.value("DMG_DISSOLVE",     DamageTypes_t::DMG_DISSOLVE)
+			.value("DMG_BLAST_SURFACE", DamageTypes_t::DMG_BLAST_SURFACE)
+			.value("DMG_HEADSHOT",      DamageTypes_t::DMG_HEADSHOT)
+			.export_values();
+	}
+	
+	//CBaseEntity
+	{
+		py::class_<CBaseEntity, std::shared_ptr < CBaseEntity >> (m, "CBaseEntity");
+	}
+
+	//CTakeDamageInfo
+	{
+		py::class_<CTakeDamageInfo, std::shared_ptr<CTakeDamageInfo>>(m, "CTakeDamageInfo")
+			.def(py::init<CBaseEntity*, CBaseEntity*, CBaseEntity*, float, DamageTypes_t>(),
+				py::arg("pInflictor") = nullptr,
+				py::arg("pAttacker") = nullptr,
+				py::arg("pAbility") = nullptr,
+				py::arg("flDamage") = 0.0f,
+				py::arg("bitsDamageType") = DMG_GENERIC)
+			.def_property("inflictor", 
+				[](CTakeDamageInfo &self) 
+				{ return self.m_hInflictor; }, 
+				[](CTakeDamageInfo &self, CBaseEntity* value) 
+				{ self.m_hInflictor = value; })
+			.def_property("attacker", 
+				[](CTakeDamageInfo &self) 
+				{ return self.m_hAttacker; }, 
+				[](CTakeDamageInfo &self, CBaseEntity* value) 
+				{ self.m_hAttacker = value; })
+			.def_property("ability", 
+				[](CTakeDamageInfo &self) 
+				{ return self.m_hAbility; }, 
+				[](CTakeDamageInfo &self, CBaseEntity* value) 
+				{ self.m_hAbility = value; })
+			.def_property("damage", 
+				[](CTakeDamageInfo &self) -> py::float_
+				{ return py::float_(self.m_flDamage); }, 
+				[](CTakeDamageInfo &self, float value) 
+				{ self.m_flDamage = value; })
+			.def_property("type", 
+				[](CTakeDamageInfo &self)
+				{ return self.m_bitsDamageType; }, 
+				[](CTakeDamageInfo &self, DamageTypes_t value) 
+				{ self.m_bitsDamageType = value; })
+			;
+	}
+
+	//CTakeDamageResult
+	{
+		py::class_<CTakeDamageResult, std::shared_ptr<CTakeDamageResult>>(m, "CTakeDamageResult")
+		.def(py::init<float>(),
+			py::arg("damage")=0.0f)
+			;
+	}
 
 	//CEntityIndex
 	{
@@ -327,48 +404,48 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 		py::class_<IGameEvent>(m, "GameEvent")
 			
 			// int
-			.def_property("area", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("area"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("area"), value); })
-			.def_property("assister", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("assister"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("assister"), value); })
-			.def_property("attacker", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("attacker"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("attacker"), value); })
-			.def_property("avenger_id", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("avenger_id"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("avenger_id"), value); })
-			.def_property("avenged_player_id", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("avenged_player_id"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("avenged_player_id"), value); })
-			.def_property("armor", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("armor"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("armor"), value); })
-			.def_property("behavior", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("behavior"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("behavior"), value); })
-			.def_property("damage_given", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("damage_given"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("damage_given"), value); })
-			.def_property("damage_taken", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("damage_taken"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("damage_taken"), value); })
-			.def_property("defindex", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("defindex"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("defindex"), value); })
-			.def_property("dmg_armor", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("dmg_armor"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("dmg_armor"), value); })
-			.def_property("dmg_health", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("dmg_health"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("dmg_health"), value); })
-			.def_property("dominated", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("dominated"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("dominated"), value); })
-			.def_property("entityid", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("entityid"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("entityid"), value); })
-			.def_property("health", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("health"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("health"), value); })
-			.def_property("hitgroup", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("hitgroup"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("hitgroup"), value); })
-			.def_property("hits_given", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("hits_given"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("hits_given"), value); })
-			.def_property("hits_taken", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("hits_taken"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("hits_taken"), value); })
-			.def_property("hostage", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("hostage"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("hostage"), value); })
-			.def_property("index", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("index"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("index"), value); })
-			.def_property("killer", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("killer"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("killer"), value); })
-			.def_property("legacy", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("legacy"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("legacy"), value); })
-			.def_property("limit", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("limit"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("limit"), value); })
-			.def_property("loadout", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("loadout"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("loadout"), value); })
-			.def_property("newmode", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("newmode"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("newmode"), value); })
-			.def_property("nomusic", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("nomusic"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("nomusic"), value); })
-			.def_property("num_penetrations", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("num_penetrations"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("num_penetrations"), value); })
-			.def_property("obs_target", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("obs_target"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("obs_target"), value); })
-			.def_property("oldmode", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("oldmode"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("oldmode"), value); })
-			.def_property("otherid", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("otherid"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("otherid"), value); })
-			.def_property("penetrated", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("penetrated"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("penetrated"), value); })
-			.def_property("player_count", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("player_count"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("player_count"), value); })
-			.def_property("reason", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("reason"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("reason"), value); })
-			.def_property("revenge", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("revenge"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("revenge"), value); })
-			.def_property("site", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("site"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("site"), value); })
-			.def_property("slot", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("slot"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("slot"), value); })
-			.def_property("team", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("team"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("team"), value); })
-			.def_property("userid", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("userid"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("userid"), value); })
-			.def_property("victim", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("victim"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("victim"), value); })
-			.def_property("weptype", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("weptype"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("weptype"), value); })
-			.def_property("winner", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("winner"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("winner"), value); })
-			.def_property("wipe", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("wipe"), -1)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("wipe"), value); })
+			.def_property("area", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("area"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("area"), value); })
+			.def_property("assister", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("assister"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("assister"), value); })
+			.def_property("attacker", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("attacker"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("attacker"), value); })
+			.def_property("avenger_id", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("avenger_id"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("avenger_id"), value); })
+			.def_property("avenged_player_id", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("avenged_player_id"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("avenged_player_id"), value); })
+			.def_property("armor", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("armor"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("armor"), value); })
+			.def_property("behavior", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("behavior"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("behavior"), value); })
+			.def_property("damage_given", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("damage_given"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("damage_given"), value); })
+			.def_property("damage_taken", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("damage_taken"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("damage_taken"), value); })
+			.def_property("defindex", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("defindex"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("defindex"), value); })
+			.def_property("dmg_armor", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("dmg_armor"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("dmg_armor"), value); })
+			.def_property("dmg_health", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("dmg_health"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("dmg_health"), value); })
+			.def_property("dominated", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("dominated"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("dominated"), value); })
+			.def_property("entityid", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("entityid"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("entityid"), value); })
+			.def_property("health", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("health"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("health"), value); })
+			.def_property("hitgroup", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("hitgroup"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("hitgroup"), value); })
+			.def_property("hits_given", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("hits_given"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("hits_given"), value); })
+			.def_property("hits_taken", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("hits_taken"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("hits_taken"), value); })
+			.def_property("hostage", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("hostage"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("hostage"), value); })
+			.def_property("index", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("index"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("index"), value); })
+			.def_property("killer", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("killer"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("killer"), value); })
+			.def_property("legacy", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("legacy"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("legacy"), value); })
+			.def_property("limit", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("limit"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("limit"), value); })
+			.def_property("loadout", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("loadout"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("loadout"), value); })
+			.def_property("newmode", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("newmode"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("newmode"), value); })
+			.def_property("nomusic", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("nomusic"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("nomusic"), value); })
+			.def_property("num_penetrations", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("num_penetrations"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("num_penetrations"), value); })
+			.def_property("obs_target", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("obs_target"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("obs_target"), value); })
+			.def_property("oldmode", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("oldmode"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("oldmode"), value); })
+			.def_property("otherid", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("otherid"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("otherid"), value); })
+			.def_property("penetrated", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("penetrated"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("penetrated"), value); })
+			.def_property("player_count", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("player_count"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("player_count"), value); })
+			.def_property("reason", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("reason"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("reason"), value); })
+			.def_property("revenge", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("revenge"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("revenge"), value); })
+			.def_property("site", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("site"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("site"), value); })
+			.def_property("slot", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("slot"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("slot"), value); })
+			.def_property("team", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("team"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("team"), value); })
+			.def_property("userid", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("userid"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("userid"), value); })
+			.def_property("victim", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("victim"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("victim"), value); })
+			.def_property("weptype", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("weptype"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("weptype"), value); })
+			.def_property("winner", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("winner"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("winner"), value); })
+			.def_property("wipe", [](IGameEvent& self) -> py::int_ { return py::int_(self.GetInt(GameEventKeySymbol_t("wipe"), -1000)); }, [](IGameEvent& self, int value) { self.SetInt(GameEventKeySymbol_t("wipe"), value); })
 			
 			// float
 			.def_property("blind_duration", [](IGameEvent& self) -> py::float_ { return py::float_(self.GetFloat(GameEventKeySymbol_t("blind_duration"), -123456.7f)); }, [](IGameEvent& self, float value) { self.SetFloat(GameEventKeySymbol_t("blind_duration"), value); })
@@ -432,15 +509,18 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 			.def("GetID", &IGameEvent::GetID)
 			.def("GetInt",
 				 [](IGameEvent& self, std::string key, int defaultValue) -> int
-				 {
-					return self.GetInt(GameEventKeySymbol_t(key.c_str()), defaultValue);
-				 },
+				 { return self.GetInt(GameEventKeySymbol_t(key.c_str()), defaultValue); },
 				 py::arg("key"), 
 				 py::arg("defaultValue") = 0
 				 )
 
 			// return uint64
-			.def("GetUint64", &IGameEvent::GetUint64)
+			//.def("GetUint64", &IGameEvent::GetUint64)
+			.def("GetUint64", 
+				[](IGameEvent& self, std::string key, int defaultValue) -> uint64 
+				{ return self.GetUint64(GameEventKeySymbol_t(key.c_str()), defaultValue); }, 
+				py::arg("key"), 
+				py::arg("defaultValue") = uint64(0))
 
 			// return bool
 			.def("GetBool", 
@@ -483,8 +563,9 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 
 			// return CEntityHandle
 			.def("GetEHandle", &IGameEvent::GetEHandle)
-			.def("GetPawnEHandle", &IGameEvent::GetPawnEHandle)
-
+			.def("GetPawnEHandle", 
+				[](IGameEvent& self, std::string key) -> CEntityHandle 
+				{ return self.GetPawnEHandle(GameEventKeySymbol_t(key.c_str())); }) 
 			// return CEntityIndex
 			.def("GetEntityIndex", &IGameEvent::GetEntityIndex)
 			.def("GetPawnEntityIndex", &IGameEvent::GetPawnEntityIndex)

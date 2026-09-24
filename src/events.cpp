@@ -385,14 +385,8 @@ GAME_EVENT_F(player_death) // FireGameEvent
 	if (g_cvarEnableEntWatch.Get())
 		EW_PlayerDeath(pEvent);
 
-	//if (g_bEnableEntWatch)
-	//	EW_PlayerDeath(pEvent);
-
-	//if (!g_bEnableTopDefender)
-	//	return;
-
 	for (auto& plugin : g_CS2Fixes.m_Plugins)
-		plugin.PyPlayerDeath(pEvent);
+		plugin.PyFireGameEventNamed(pEvent, "player_death");
 
 	CCSPlayerController* pAttacker = (CCSPlayerController*)pEvent->GetPlayerController("attacker");
 	CCSPlayerController* pVictim = (CCSPlayerController*)pEvent->GetPlayerController("userid");
@@ -532,12 +526,10 @@ GAME_EVENT_F(player_score)
 
 GAME_EVENT_F(player_connect)
 {
-	Message("player_connect\n");
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyFireGameEventNamed(pEvent, "player_connect");
 }
-GAME_EVENT_F(gc_connected)
-{
-	Message("gc_connected\n");
-}
+
 GAME_EVENT_F(player_connect_full)
 {
 	Message("player_connect_full\n");

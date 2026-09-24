@@ -71,36 +71,16 @@ namespace Source2Py {
 		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnClientSettingsChanged", playerSlot);
 	}
 
-	void PyPlugin::PyClientConnected(
-		int playerSlot, 
-		const char* name, 
-		uint64_t xuid, 
-		const char* networkID, 
-		const char* address, 
-		bool fakePlayer)
-	{ 
-		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnClientConnected", playerSlot, name, xuid, networkID, address, fakePlayer);
-	}
-
-	void PyPlugin::PyFireGameEventBlind(IGameEvent* event)
-	{
-		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnGameEventBlind", event);
-	}
-	
 	void PyPlugin::PyFireGameEventNamed(IGameEvent* event, const char* event_name)
 	{
 		PyRuntime::ExecuteObjectMethod(m_PluginObject, event_name, event);
 	}
 
-	void PyPlugin::PyOnTakeDamageOld(py::dict dict)
+	void PyPlugin::PyFireFakeEventNamed(py::dict event, const char* event_name)
 	{
-		PyRuntime::ExecuteObjectMethod(m_PluginObject, "player_take_damage", dict);
+		PyRuntime::ExecuteObjectMethod(m_PluginObject, event_name, event);
 	}
 
-	void PyPlugin::PyOnTakeDamageOld_post(py::dict dict)
-	{
-		PyRuntime::ExecuteObjectMethod(m_PluginObject, "player_take_damage_post", dict);
-	}
 
 	void PyPlugin::PyPlayerHurt(IGameEvent* event)
 	{
@@ -112,18 +92,6 @@ namespace Source2Py {
 		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnPlayerDeath", event);
 	}
 
-	void PyPlugin::PyPlayerDeathNew(
-		IGameEvent* event,
-		CPlayerSlot killerSlot,
-		uint64_t killerSteam,
-		CPlayerSlot victimSlot,
-		uint64_t victimSteam,
-		CPlayerSlot assisterSlot,
-		uint64_t assisterSteam,
-		bool suicide)
-	{
-		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnPlayerDeathNew", event, killerSlot, killerSteam, victimSlot, victimSteam, assisterSlot, assisterSteam, suicide);
-	}
 	void PyPlugin::PyBombPlanted(IGameEvent* event, int slot, int site)
 	{
 		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnBombPlanted", event, slot, site);

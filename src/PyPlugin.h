@@ -21,13 +21,16 @@ namespace Source2Py {
 		// Python plugin hooks
 		void PyClientActive(int playerSlot, bool loadGame, const char* name, uint64_t xuid);
 		void PyClientDisconnect(int playerSlot, int reason, const char* name, uint64_t xuid, const char* networkID);
-		void PyClientConnected(int playerSlot, const char* name, uint64_t xuid, const char* networkID, const char* address, bool fakePlayer);
 		void PyClientPutInServer(int playerSlot, char const* name, int type, uint64_t xuid);
 		void PyClientSettingsChanged(int playerSlot);
+
+
 		void PyFireGameEventBlind(IGameEvent* event);
 		void PyFireGameEventNamed(IGameEvent* event, const char* event_name);
-		void PyOnTakeDamageOld(py::dict dict);
-		void PyOnTakeDamageOld_post(py::dict dict);
+		void PyFireFakeEventBlind(py::dict event);
+		void PyFireFakeEventNamed(py::dict event, const char* event_name);
+
+
 		void PyGameFrame(bool simulating, bool firstTick, bool lastTick);
 		void PyPlayerActivate(int playerSlot);
 		
@@ -37,20 +40,7 @@ namespace Source2Py {
 		void PyClientUltimate(int playerSlot);
 		
 		void PyPlayerHurt(IGameEvent* event);
-
-		//event, killerslot, killersteam,    victimslot, victimsteam,    assistorslot, assistorsteam, suicide
-		void PyPlayerDeathNew(
-			IGameEvent* event, 
-			CPlayerSlot	killerSlot,
-			uint64_t	killerSteam, 
-			CPlayerSlot victimSlot,
-			uint64_t	victimSteam, 
-			CPlayerSlot assisterSlot,
-			uint64_t	assisterSteam, 
-			bool		suicide
-			);
 		void PyPlayerDeath(IGameEvent* event);
-
 		
 		void PyBombPlanted(IGameEvent* event, int slot, int site);
 		void PyBombDefused(IGameEvent* event, int slot, int site);

@@ -235,14 +235,18 @@ KHook::Return<void> Hook_ApplyGameSettings(IServerGameDLL* pThis, KeyValues* pKV
 
 KHook::Return<void> Hook_ClientActive_Post(IServerGameClients* pThis, CPlayerSlot slot, bool bLoadGame, const char* pszName, uint64 xuid)
 {
+#ifdef _DEBUG
 	Message("Hook_ClientActive(%d, %d, \"%s\", %lli)\n", slot, bLoadGame, pszName, xuid);
+#endif
 
 	return {KHook::Action::Ignore};
 }
 
 KHook::Return<void> Hook_ClientDisconnect_Post(IServerGameClients* pThis, CPlayerSlot slot, ENetworkDisconnectionReason reason, const char* pszName, uint64 xuid, const char* pszNetworkID)
 {
+#ifdef _DEBUG
 	Message("Hook_ClientDisconnect(%d, %d, \"%s\", %lli)\n", slot, reason, pszName, xuid);
+#endif
 
 	CCSPlayerController* player = CCSPlayerController::FromSlot(slot);
 
@@ -294,7 +298,9 @@ KHook::Return<void> Hook_ClientSettingsChanged(IServerGameClients* pThis, CPlaye
 
 KHook::Return<void> Hook_OnClientConnected(IServerGameClients* pThis, CPlayerSlot slot, const char* pszName, uint64 xuid, const char* pszNetworkID, const char* pszAddress, bool bFakePlayer)
 {
+#ifdef _DEBUG
 	Message("Hook_OnClientConnected(%d, \"%s\", %lli, \"%s\", \"%s\", %d)\n", slot, pszName, xuid, pszNetworkID, pszAddress, bFakePlayer);
+#endif
 
 	static ConVarRefAbstract tv_name("tv_name");
 	const char* pszTvName = tv_name.GetString().Get();
@@ -308,7 +314,9 @@ KHook::Return<void> Hook_OnClientConnected(IServerGameClients* pThis, CPlayerSlo
 
 KHook::Return<bool> Hook_ClientConnect(IServerGameClients* pThis, CPlayerSlot slot, const char* pszName, uint64 xuid, const char* pszNetworkID, bool unk1, CBufferString* pRejectReason)
 {
+#ifdef _DEBUG
 	Message("Hook_ClientConnect(%d, \"%s\", %lli, \"%s\", %d, \"%s\")\n", slot, pszName, xuid, pszNetworkID, unk1, pRejectReason->Get());
+#endif
 
 	// Player is banned
 	if (!g_playerManager->OnClientConnected(slot, xuid, pszNetworkID))
@@ -360,7 +368,6 @@ KHook::Return<void> Hook_ClientSvcUserMessage(IServerGameClients* pThis, CPlayer
 	if (!pController)
 		return {KHook::Action::Ignore};
 
-	// TRISTEN CS_UM_CustomHudClicked undeclared identifier?
 	if (um_type == CS_UM_CustomHudClicked)
 	{
 		CCSUsrMsg_CustomHudClicked message;

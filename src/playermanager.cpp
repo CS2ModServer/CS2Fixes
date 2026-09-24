@@ -794,21 +794,6 @@ bool CPlayerManager::OnClientConnected(CPlayerSlot slot, uint64 xuid, const char
 
 	pPlayer->SetIpAddress(ip);
 
-	CCSPlayerController* pc = CCSPlayerController::FromSlot(slot);
-	const char* name = "unknown";
-	if (pc)
-		name = pc->GetPlayerName().c_str();
-
-	for (auto& plugin : g_CS2Fixes.m_Plugins)
-		plugin.PyClientConnected(
-			slot.Get(), 
-			name, 
-			xuid, 
-			pszNetworkID, 
-			pPlayer->GetIpAddress(), 
-			pPlayer->IsFakeClient()
-			);
-
 	if (!g_pAdminSystem->ApplyInfractions(pPlayer))
 	{
 		// Player is banned
