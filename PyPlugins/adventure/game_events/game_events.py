@@ -4,6 +4,18 @@ import traceback
 
 from tests import dumped_events
 
+import logging, inspect
+logging.basicConfig(filename='adventure/game_events/game_events.log', encoding='utf-8', level=logging.DEBUG, format='[%(asctime)s]%(message)s', datefmt='%H:%M:%S')
+log = logging
+
+def alog(message: str, callername: bool = True):
+    caller = str("")
+    if (callername):
+        caller = "[" + str(inspect.stack()[1].function) + "] "
+    s2.ServerPrint("[game_events]" + caller + str(message))
+    log.info(msg=("[game_events]" + caller + str(message)))
+    pass
+
 #base game events
 event_dict_of_dict = dict({})
 for k, v in dumped_events.dumped_events.items():

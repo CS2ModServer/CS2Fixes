@@ -301,6 +301,8 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 			.def("AddLife", &ADVPlayer::AddHealth)
 
 			.def("IsValid", &ADVPlayer::IsValid)
+			.def("IsAlive", &ADVPlayer::IsAlive)
+			.def("IsBot", &ADVPlayer::IsBot)
 
 			.def_property_readonly("onground", &ADVPlayer::IsOnGround)
 			.def("IsOnGround", &ADVPlayer::IsOnGround)

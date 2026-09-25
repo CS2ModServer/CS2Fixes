@@ -51,6 +51,8 @@ public:
 
 	CCSPlayerController*    GetPC();
 	CBaseEntity*			GetPawn();
+	bool IsAlive();
+	bool IsBot();
 	int GetHealth();
 	void AddHealth(int amount);
 	void SetHealth(int amount);

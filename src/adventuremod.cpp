@@ -272,6 +272,22 @@ CBaseEntity* ADVPlayer::GetPawn()
 		return nullptr;
 }
 
+bool ADVPlayer::IsAlive()
+{
+	CCSPlayerController* pc = GetPC();
+	if (pc)
+		return (CBaseEntity*)pc->IsAlive();
+	return false;
+}
+
+bool ADVPlayer::IsBot()
+{
+	CCSPlayerController* pc = GetPC();
+	if (pc)
+		return (CBaseEntity*)pc->IsBot();
+	return false;
+}
+
 int ADVPlayer::GetTeam()
 {
 	//CS_TEAM_NONE      0

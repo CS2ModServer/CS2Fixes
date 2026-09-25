@@ -104,30 +104,22 @@ GAME_EVENT_F(player_team) // FireGameEvent
 CConVar<bool> g_cvarNoblock("cs2f_noblock_enable", FCVAR_NONE, "Whether to use player noblock, which sets debris collision on every player", false);
 CConVar<int> g_cvarFreeArmor("cs2f_free_armor", FCVAR_NONE, "Whether kevlar (1+) and/or helmet (2) are given automatically", 0, true, 0, true, 2);
 
-GAME_EVENT_F(player_spawned) // FireGameEvent
+GAME_EVENT_F(player_spawned)
 {
-	int index = pEvent->GetPlayerSlot("userid").Get();
 	for (auto& plugin : g_CS2Fixes.m_Plugins)
-		plugin.PyPlayerSpawned(index);
-	
+		plugin.PyFireGameEventNamed(pEvent, "player_spawned");	
 	return;
 }
 
-GAME_EVENT_F(player_activate) // FireGameEvent
+GAME_EVENT_F(player_activate)
 {
-	int index = pEvent->GetPlayerSlot("userid").Get();
 	for (auto& plugin : g_CS2Fixes.m_Plugins)
-		plugin.PyPlayerActivate(index);
-	
+		plugin.PyFireGameEventNamed(pEvent, "player_activate");
 	return;
 }
 
-GAME_EVENT_F(player_spawn) // FireGameEvent
+GAME_EVENT_F(player_spawn)
 {
-	int index = pEvent->GetPlayerSlot("userid").Get();
-	for (auto& plugin : g_CS2Fixes.m_Plugins)
-		plugin.PyPlayerSpawn(index);
-
 	CCSPlayerController* pController = (CCSPlayerController*)pEvent->GetPlayerController("userid");
 	
 	if (!pController)
@@ -151,15 +143,16 @@ GAME_EVENT_F(player_spawn) // FireGameEvent
 	CTimer::Create(0.0f, TIMERFLAG_MAP | TIMERFLAG_ROUND, [hController]() {
 		CCSPlayerController* pController = hController.Get();
 
-		int index = pController->GetPlayerSlot();
-		for (auto& plugin : g_CS2Fixes.m_Plugins)
-			plugin.PyPlayerSpawn_post(index);
-
 		if (!pController)
 			return -1.0f;
 
 		if (const auto player = pController->GetZEPlayer())
 			player->SetSteamIdAttribute();
+
+		py::dict d;
+		d["userid"] = pController->GetPlayerSlot();
+		for (auto& plugin : g_CS2Fixes.m_Plugins)
+			plugin.PyFireFakeEventNamed(d, "player_spawn"); // note: will append _fake to the event name for Python.
 
 		if (!pController->m_bPawnIsAlive())
 			return -1.0f;
@@ -179,7 +172,7 @@ GAME_EVENT_F(player_spawn) // FireGameEvent
 
 	if (!pPawn)
 		return;
-
+	
 	CCSPlayer_ItemServices* pItemServices = pPawn->m_pItemServices();
 
 	if (!pItemServices)
@@ -191,7 +184,8 @@ GAME_EVENT_F(player_spawn) // FireGameEvent
 	else if (g_cvarFreeArmor.GetInt() == 2)
 		pItemServices->GiveNamedItem("item_assaultsuit");
 
-
+	if (!pPawn->IsAlive())
+		return;
 }
 
 /*

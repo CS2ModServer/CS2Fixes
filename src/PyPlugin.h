@@ -28,12 +28,11 @@ namespace Source2Py {
 		void PyFireGameEventBlind(IGameEvent* event);
 		void PyFireGameEventNamed(IGameEvent* event, const char* event_name);
 		void PyFireFakeEventBlind(py::dict event);
-		void PyFireFakeEventNamed(py::dict event, const char* event_name);
+		void PyFireFakeEventNamed(py::dict event, std::string event_name);
 
 
 		void PyGameFrame(bool simulating, bool firstTick, bool lastTick);
-		void PyPlayerActivate(int playerSlot);
-		
+
 		void PyClientCommand(int playerSlot, const char* command);
 		void PyClientAbility1(int playerSlot);
 		void PyClientAbility2(int playerSlot);
@@ -49,10 +48,6 @@ namespace Source2Py {
 		void PyPlayerJump(int playerSlot);
 		void PyPlayerAirborn(int playerSlot);
 		void PyPlayerLand(int playerSlot);
-
-		void PyPlayerSpawn(int playerSlot);
-		void PyPlayerSpawn_post(int playerSlot);
-		void PyPlayerSpawned(int playerSlot);
 
 		void PyRoundEnd(IGameEvent* event);
 		// void PyMENU(auto& f);

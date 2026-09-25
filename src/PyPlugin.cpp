@@ -76,9 +76,11 @@ namespace Source2Py {
 		PyRuntime::ExecuteObjectMethod(m_PluginObject, event_name, event);
 	}
 
-	void PyPlugin::PyFireFakeEventNamed(py::dict event, const char* event_name)
+	void PyPlugin::PyFireFakeEventNamed(py::dict event, std::string event_name)
 	{
-		PyRuntime::ExecuteObjectMethod(m_PluginObject, event_name, event);
+		event_name += "_fake";
+		event["event_name"] = event_name;
+		PyRuntime::ExecuteObjectMethod(m_PluginObject, event_name.c_str(), event);
 	}
 
 
@@ -105,26 +107,6 @@ namespace Source2Py {
 	void PyPlugin::PyBombExploded(IGameEvent* event, int slot, int site)
 	{
 		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnBombExploded", event, slot, site);
-	}
-
-	void PyPlugin::PyPlayerSpawn(int playerSlot)
-	{
-		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnPlayerSpawn", playerSlot);
-	}
-
-	void PyPlugin::PyPlayerSpawn_post(int playerSlot)
-	{
-		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnPlayerSpawn_post", playerSlot);
-	}
-
-	void PyPlugin::PyPlayerSpawned(int playerSlot)
-	{
-		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnPlayerSpawned", playerSlot);
-	}
-
-	void PyPlugin::PyPlayerActivate(int playerSlot)
-	{
-		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnPlayerActivate", playerSlot);
 	}
 
 	void PyPlugin::PyPlayerJump(int playerSlot)
