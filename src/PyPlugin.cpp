@@ -84,16 +84,6 @@ namespace Source2Py {
 	}
 
 
-	void PyPlugin::PyPlayerHurt(IGameEvent* event)
-	{
-		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnPlayerHurt", event);
-	}
-
-	void PyPlugin::PyPlayerDeath(IGameEvent* event)
-	{
-		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnPlayerDeath", event);
-	}
-
 	void PyPlugin::PyBombPlanted(IGameEvent* event, int slot, int site)
 	{
 		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnBombPlanted", event, slot, site);
@@ -107,21 +97,6 @@ namespace Source2Py {
 	void PyPlugin::PyBombExploded(IGameEvent* event, int slot, int site)
 	{
 		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnBombExploded", event, slot, site);
-	}
-
-	void PyPlugin::PyPlayerJump(int playerSlot)
-	{
-		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnPlayerJump", playerSlot);
-	}
-
-	void PyPlugin::PyPlayerLand(int playerSlot)
-	{
-		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnPlayerLand", playerSlot);
-	}
-	
-	void PyPlugin::PyPlayerAirborn(int playerSlot)
-	{
-		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnPlayerAirborn", playerSlot);
 	}
 
 	void PyPlugin::PyClientCommand(int playerSlot, const char* command)

@@ -50,7 +50,8 @@ public:
 	int						GetTeam();
 
 	CCSPlayerController*    GetPC();
-	CBaseEntity*			GetPawn();
+	CBaseEntity* GetPawn();
+
 	bool IsAlive();
 	bool IsBot();
 	int GetHealth();

@@ -2,7 +2,8 @@ import Source2Py as s2
 GameEvent = s2.GameEvent
 import traceback
 
-from tests import dumped_events
+from adventure.game_events import dumped_events
+#from tests import dumped_events
 
 import logging, inspect
 logging.basicConfig(filename='adventure/game_events/game_events.log', encoding='utf-8', level=logging.DEBUG, format='[%(asctime)s]%(message)s', datefmt='%H:%M:%S')

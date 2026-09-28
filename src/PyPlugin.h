@@ -38,16 +38,9 @@ namespace Source2Py {
 		void PyClientAbility2(int playerSlot);
 		void PyClientUltimate(int playerSlot);
 		
-		void PyPlayerHurt(IGameEvent* event);
-		void PyPlayerDeath(IGameEvent* event);
-		
 		void PyBombPlanted(IGameEvent* event, int slot, int site);
 		void PyBombDefused(IGameEvent* event, int slot, int site);
 		void PyBombExploded(IGameEvent* event, int slot, int site);
-
-		void PyPlayerJump(int playerSlot);
-		void PyPlayerAirborn(int playerSlot);
-		void PyPlayerLand(int playerSlot);
 
 		void PyRoundEnd(IGameEvent* event);
 		// void PyMENU(auto& f);

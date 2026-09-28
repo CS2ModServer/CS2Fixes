@@ -1,6 +1,7 @@
 import Source2Py
 
-from tests import dumped_events
+from adventure.game_events import dumped_events
+#from tests import dumped_events
 
 class TestLoadAnotherFile:
     def __init__(self):

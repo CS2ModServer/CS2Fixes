@@ -40,7 +40,6 @@ dumped_events = dict({
             "userid":"playercontroller",
             "networkid":"string",
             "xuid":"uint64",
-            "address":"string",
             "bot":"bool",
             }),
         "player_disconnect":dict({
@@ -50,6 +49,7 @@ dumped_events = dict({
             "networkid":"string",
             "xuid":"uint64",
             "PlayerID":"short",
+            "ever_fully_connected":"bool",
             }),
         "player_info":dict({
             "name":"string",
@@ -415,6 +415,14 @@ dumped_events = dict({
             }),
         "dynamic_shadow_light_changed":dict({
             }),
+        "bot_takeover":dict({
+            "userid":"playercontroller",
+            "userid_pawn":"strict_ehandle",
+            "botid":"playercontroller",
+            "p":"float",
+            "y":"float",
+            "r":"float",
+            }),
         }),
     "game.gameevents":dict({
         "gameui_hidden":dict({
@@ -711,6 +719,21 @@ dumped_events = dict({
             "num_penetrations":"byte",
             "no_scope":"bool",
             "in_air":"bool",
+            "shoot_ang_x":"float",
+            "shoot_ang_y":"float",
+            "shoot_ang_z":"float",
+            "aim_punch_x":"float",
+            "aim_punch_y":"float",
+            "aim_punch_z":"float",
+            "attack_tick_count":"int",
+            "attack_tick_frac":"float",
+            "render_tick_count":"int",
+            "render_tick_frac":"float",
+            "inaccuracy_total":"float",
+            "inaccuracy_move":"float",
+            "inaccuracy_air":"float",
+            "recoil_index":"float",
+            "type":"int",
             }),
         "item_purchase":dict({
             "userid":"playercontroller",
@@ -732,16 +755,19 @@ dumped_events = dict({
             "userid":"playercontroller",
             "userid_pawn":"strict_ehandle",
             "site":"short",
+            "c4":"short",
             }),
         "bomb_defused":dict({
             "userid":"playercontroller",
             "userid_pawn":"strict_ehandle",
             "site":"short",
+            "c4":"short",
             }),
         "bomb_exploded":dict({
             "userid":"playercontroller",
             "userid_pawn":"strict_ehandle",
             "site":"short",
+            "c4":"short",
             }),
         "bomb_dropped":dict({
             "userid":"playercontroller",
@@ -1196,14 +1222,6 @@ dumped_events = dict({
         "player_given_c4":dict({
             "userid":"playercontroller",
             }),
-        "bot_takeover":dict({
-            "userid":"playercontroller",
-            "userid_pawn":"strict_ehandle",
-            "botid":"playercontroller",
-            "p":"float",
-            "y":"float",
-            "r":"float",
-            }),
         "jointeam_failed":dict({
             "userid":"playercontroller",
             "reason":"byte",
@@ -1330,24 +1348,23 @@ dumped_events = dict({
             }),
         "team_intro_end":dict({
             }),
-        "bullet_flight_resolution":dict({
-            "userid":"playercontroller",
-            "userid_pawn":"strict_ehandle",
-            "pos_x":"short",
-            "pos_y":"short",
-            "pos_z":"short",
-            "ang_x":"short",
-            "ang_y":"short",
-            "ang_z":"short",
-            "start_x":"short",
-            "start_y":"short",
-            "start_z":"short",
-            }),
         "game_phase_changed":dict({
             "new_phase":"short",
             }),
         "clientside_reload_custom_econ":dict({
             "steamid":"string",
+            }),
+        }),
+
+    "adventure.res":dict({
+        "player_land":dict({
+            "userid":"byte",
+            }),
+        "player_airborn":dict({
+            "userid":"byte",
+            }),
+        "example_event":dict({
+            "userid":"byte",
             }),
         }),
 });

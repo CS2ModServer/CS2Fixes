@@ -9,6 +9,7 @@
 #include "adventuremod.h"
 
 class CPlayerSlot;
+class CBaseEntity;
 #include <igameevents.h>
 extern IGameEventManager2* g_gameEventManager;
 #include "eventlistener.h"
@@ -166,10 +167,99 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 	
 	//CBaseEntity
 	{
-		py::class_<CBaseEntity, std::shared_ptr < CBaseEntity >> (m, "CBaseEntity");
+		py::class_<CBaseEntity, py::smart_holder>(m, "CBaseEntity")
+			.def(py::init([](CBaseEntity& p) { return &p;}))
+
+			.def("Push",
+				[](CBaseEntity& self, py::dict d) 
+				{
+
+					Vector v = self.m_vecAbsVelocity;
+					//v.x += d["x"].cast<float>(); //originally additive
+					//v.y += d["y"].cast<float>(); //originally additive
+					//v.z += d["z"].cast<float>(); //originally additive
+					v.x = d["x"].cast<float>();
+					v.y = d["y"].cast<float>();
+					v.z = d["z"].cast<float>();
+					uint32 flags = self.m_fFlags();
+					if (v.z > 0 && (flags & FL_ONGROUND))
+					{
+						flags ^= FL_ONGROUND;
+						self.SetGroundEntity(nullptr);
+						Vector origin = self.GetAbsOrigin();
+						origin.z += 1.0f;
+						
+						self.Teleport(&origin, nullptr, nullptr);
+					}
+					self.SetAbsVelocity(v);
+				})
+			
+			//"m_vecBaseVelocity is the velocity of the entity you're standing on, like a moving train." -Peace-Maker, Sourcemod
+			.def("GetBaseVelocity",
+				 [](CBaseEntity& self) -> py::dict {
+					 Vector v = self.m_vecBaseVelocity();
+					 py::dict d;
+					 d["x"] = py::float_(v.x);
+					 d["y"] = py::float_(v.y);
+					 d["z"] = py::float_(v.z);
+
+					 return d;
+				 })
+			.def_property_readonly("basevelocity",
+				[](CBaseEntity& self) -> py::dict 
+				{
+					Vector v = self.m_vecBaseVelocity();
+					py::dict d;
+					d["x"] = py::float_(v.x);
+					d["y"] = py::float_(v.y);
+					d["z"] = py::float_(v.z);
+
+					return d;
+				})
+			
+			//"m_vecVelocity is the player's own walking velocity, so all the movement and acceleration code
+			// doesn't have to care for the moving train." -Peace-Maker, Sourcemod
+			.def_property_readonly("localvelocity",
+				[](CBaseEntity& self) -> py::dict
+				{
+					Vector bv = self.m_vecBaseVelocity();
+					Vector av = self.m_vecAbsVelocity();
+					Vector lv = av - bv;
+
+					py::dict d;
+					d["x"] = py::float_(lv.x);
+					d["y"] = py::float_(lv.y);
+					d["z"] = py::float_(lv.z);
+
+					return d;
+				})
+			//"m_vecBaseVelocity and m_vecVelocity are later combined into the real absolute velocity m_vecAbsVelocity." -Peace-Maker, Sourcemod
+			.def("GetAbsVelocity", 
+				[](CBaseEntity &self) -> py::dict {
+					Vector v = self.m_vecAbsVelocity();
+					py::dict d;
+					d["x"] = py::float_(v.x);
+					d["y"] = py::float_(v.y);
+					d["z"] = py::float_(v.z);
+
+					return d;
+				 })
+			.def_property_readonly("absvelocity", 
+				[](CBaseEntity &self) -> py::dict 
+				{
+					Vector v = self.m_vecAbsVelocity();
+					py::dict d;
+					d["x"] = py::float_(v.x);
+					d["y"] = py::float_(v.y);
+					d["z"] = py::float_(v.z);
+
+					return d;
+				})
+
+			;
 	}
 
-	//CTakeDamageInfo
+	// CTakeDamageInfo
 	{
 		py::class_<CTakeDamageInfo, std::shared_ptr<CTakeDamageInfo>>(m, "CTakeDamageInfo")
 			.def(py::init<CBaseEntity*, CBaseEntity*, CBaseEntity*, float, DamageTypes_t>(),
@@ -283,8 +373,10 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 
 			.def_property_readonly("playercontroller", &ADVPlayer::GetPC)
 			.def("GetPC", &ADVPlayer::GetPC)
-			.def_property_readonly("pawn", &ADVPlayer::GetPawn)
-			.def("GetPawn", &ADVPlayer::GetPawn)
+
+			.def_property_readonly("pawn", &ADVPlayer::GetPawn, py::return_value_policy::reference_internal)
+			.def("GetPawn", &ADVPlayer::GetPawn, py::return_value_policy::reference_internal)
+			
 			.def_property_readonly("name", &ADVPlayer::GetName)
 			.def("GetName", &ADVPlayer::GetName)
 			.def_property_readonly("slot", &ADVPlayer::GetSlot)

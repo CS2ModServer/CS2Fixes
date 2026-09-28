@@ -20,7 +20,8 @@ def alog(message: str, callername: bool = True):
 
 alog("START")
 
-from tests import dumped_events
+from adventure.game_events import dumped_events
+#from tests import dumped_events
 
 #base game events
 event_dict_of_dict = dict({})

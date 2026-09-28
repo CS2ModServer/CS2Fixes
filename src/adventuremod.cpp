@@ -267,7 +267,8 @@ CBaseEntity* ADVPlayer::GetPawn()
 {
 	CCSPlayerController* pc = GetPC();
 	if (pc)
-		return (CBaseEntity*)pc->GetPawn();
+		return reinterpret_cast<CBaseEntity*>(pc->GetPawn());
+		//return (CBaseEntity*)pc->GetPawn();
 	else
 		return nullptr;
 }

@@ -630,14 +630,36 @@ KHook::Return<void> Detour_ProcessMovement(CCSPlayer_MovementServices* pThis, vo
 	int t = GetGlobals()->tickcount;
 	int slot = pController->GetPlayerSlot();
 	ZEPlayer* zPlayer = pController->GetZEPlayer();
+	if (pPawn->m_pMovementServices()->m_nButtons().m_pButtonStates[0] & IN_JUMP)
+	{
+		//if (zPlayer->m_iLastAirborn < zPlayer->m_iLastGround && 
+		//    zPlayer->m_iLastJump    < zPlayer->m_iLastGround)
+		if (zPlayer->m_iLastJump    < zPlayer->m_iLastGround)
+		{
+			CTimer::Create(0.0f, TIMERFLAG_MAP | TIMERFLAG_ROUND, [slot]() 
+			{
+				// announce they pressed jump while grounded
+				IGameEvent* pEvent = g_gameEventManager->CreateEvent("player_jump");
+				pEvent->SetInt("userid", slot);
+				g_gameEventManager->FireEvent(pEvent, true);
+				return -1.0f;
+			});
+		}
+		zPlayer->m_iLastJump = t;
+	}
+
 	if (pPawn->m_fFlags & FL_ONGROUND || pPawn->m_nActualMoveType & MOVETYPE_LADDER)
 	{
 		if (zPlayer->m_iLastGround < zPlayer->m_iLastAirborn)
 		{
-			//announce they landed on something
-			IGameEvent* pEvent = g_gameEventManager->CreateEvent("player_land");
-			pEvent->SetInt("userid", slot);
-			g_gameEventManager->FireEvent(pEvent, true);
+			CTimer::Create(0.0f, TIMERFLAG_MAP | TIMERFLAG_ROUND, [slot]() 
+			{
+				// announce they landed on something
+				IGameEvent* pEvent = g_gameEventManager->CreateEvent("player_land");
+				pEvent->SetInt("userid", slot);
+				g_gameEventManager->FireEvent(pEvent, true);
+				return -1.0f;
+			});
 		}
 		zPlayer->m_iLastGround = t;
 	}
@@ -645,26 +667,18 @@ KHook::Return<void> Detour_ProcessMovement(CCSPlayer_MovementServices* pThis, vo
 	{
 		if (zPlayer->m_iLastAirborn < zPlayer->m_iLastGround)
 		{
-			//announce they left the ground
-			IGameEvent* pEvent = g_gameEventManager->CreateEvent("player_airborn");
-			pEvent->SetInt("userid", slot);
-			g_gameEventManager->FireEvent(pEvent, true);
+			CTimer::Create(0.0f, TIMERFLAG_MAP | TIMERFLAG_ROUND, [slot]() {
+				// announce they left the ground
+				IGameEvent* pEvent = g_gameEventManager->CreateEvent("player_airborn");
+				pEvent->SetInt("userid", slot);
+				g_gameEventManager->FireEvent(pEvent, true);
+				return -1.0f;
+			});
 		}
 		zPlayer->m_iLastAirborn = t;
 	}
 	
-	if (pPawn->m_pMovementServices()->m_nButtons().m_pButtonStates[0] & IN_JUMP)
-	{
-		if (zPlayer->m_iLastAirborn < zPlayer->m_iLastGround && 
-			zPlayer->m_iLastJump < zPlayer->m_iLastGround)
-		{
-			//announce they pressed jump while grounded
-			IGameEvent* pEvent = g_gameEventManager->CreateEvent("player_jump");
-			pEvent->SetInt("userid", slot);
-			g_gameEventManager->FireEvent(pEvent, true);
-		}
-		zPlayer->m_iLastJump = t;
-	}
+
 
 	if (flSpeedMod == 1.f)
 		return {KHook::Action::Ignore};

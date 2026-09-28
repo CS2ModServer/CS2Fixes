@@ -268,28 +268,24 @@ GAME_EVENT_F(player_hurt)  //FireGameEvent
 
 GAME_EVENT_F(player_jump)
 {
-    /*	
-		"player_jump":dict({
+    /*	"player_jump":dict({
 			"userid":"playercontroller",
-        }),	
-	*/
-
+        }),	*/
+	
 	for (auto& plugin : g_CS2Fixes.m_Plugins)
 		plugin.PyFireGameEventNamed(pEvent, "player_jump");
 }
 
 GAME_EVENT_F(player_land)
 {
-	int index = pEvent->GetPlayerSlot("userid").Get();
 	for (auto& plugin : g_CS2Fixes.m_Plugins)
-		plugin.PyPlayerLand(index);
+		plugin.PyFireGameEventNamed(pEvent, "player_land");
 }
 
 GAME_EVENT_F(player_airborn)
 {
-	int index = pEvent->GetPlayerSlot("userid").Get();
 	for (auto& plugin : g_CS2Fixes.m_Plugins)
-		plugin.PyPlayerAirborn(index);
+		plugin.PyFireGameEventNamed(pEvent, "player_airborn");
 }
 
 CConVar<bool> g_cvarFullAllTalk("cs2f_full_alltalk", FCVAR_NONE, "Whether to enforce sv_full_alltalk 1", false);
