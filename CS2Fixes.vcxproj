@@ -175,6 +175,8 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\adventuremenu.cpp" />
+    <ClCompile Include="src\adventuremod.cpp" />
     <ClCompile Include="src\buttonwatch.cpp" />
     <ClCompile Include="build\cs2fixes.cs2\windows-x86_64\cs_usercmd.pb.cc" />
     <ClCompile Include="build\cs2fixes.cs2\windows-x86_64\networkbasetypes.pb.cc" />

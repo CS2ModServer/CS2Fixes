@@ -34,7 +34,21 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 	m.def("GetTickCount", 
 		[]() { return GetGlobals()->tickcount; });
 
-	//KeyValues3
+	m.def("GetPlayersNearPlayerID_list", &PyAPI::GetPlayersNearPlayerID_list);
+	m.def(  "GetPlayersNearCoords_list",   &PyAPI::GetPlayersNearCoords_list);
+
+	m.def("GetPlayersNearPlayerID_dict", &PyAPI::GetPlayersNearPlayerID_dict,
+		py::arg("vec"),
+		py::arg("distance"),
+		py::arg("ignore"),
+		py::arg("return_difference") = true
+		);
+	m.def("GetPlayersNearCoords_dict", &PyAPI::GetPlayersNearCoords_dict,
+		  py::arg("vec"),
+		  py::arg("distance"),
+		  py::arg("ignore"),
+		  py::arg("return_difference") = true);
+	// KeyValues3
 	/* {
 		py::enum_<KV3TypeEx_t>(m, "KV3TypeEx_t")
 			.value("KV3_TYPEEX_INVALID", KV3TypeEx_t::KV3_TYPEEX_INVALID)
@@ -164,7 +178,32 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 			.value("DMG_HEADSHOT",      DamageTypes_t::DMG_HEADSHOT)
 			.export_values();
 	}
-	
+	// ButtonStates
+	{
+		py::enum_<InputBitMask_t>(m, "InputBitMask_t", py::arithmetic())
+			.value("IN_NONE",          InputBitMask_t::IN_NONE)
+			.value("IN_ALL",           InputBitMask_t::IN_ALL)
+			.value("IN_ATTACK",        InputBitMask_t::IN_ATTACK)
+			.value("IN_JUMP",          InputBitMask_t::IN_JUMP)
+			.value("IN_DUCK",          InputBitMask_t::IN_DUCK)
+			.value("IN_FORWARD",       InputBitMask_t::IN_FORWARD)
+			.value("IN_BACK",          InputBitMask_t::IN_BACK)
+			.value("IN_USE",           InputBitMask_t::IN_USE)
+			.value("IN_TURNLEFT",      InputBitMask_t::IN_TURNLEFT)
+			.value("IN_TURNRIGHT",     InputBitMask_t::IN_TURNRIGHT)
+			.value("IN_MOVELEFT",      InputBitMask_t::IN_MOVELEFT)
+			.value("IN_MOVERIGHT",     InputBitMask_t::IN_MOVERIGHT)
+			.value("IN_ATTACK2",       InputBitMask_t::IN_ATTACK2)
+			.value("IN_RELOAD",        InputBitMask_t::IN_RELOAD)
+			.value("IN_SPEED",         InputBitMask_t::IN_SPEED) //USED TO BE IN_SPRINT ?
+			.value("IN_JOYAUTOSPRINT", InputBitMask_t::IN_JOYAUTOSPRINT)
+			.value("IN_FIRST_MOD_SPECIFIC_BIT", InputBitMask_t::IN_FIRST_MOD_SPECIFIC_BIT)
+			.value("IN_USEORRELOAD",            InputBitMask_t::IN_USEORRELOAD)
+			.value("IN_SCORE",                  InputBitMask_t::IN_SCORE)
+			.value("IN_ZOOM",                   InputBitMask_t::IN_ZOOM)
+			.value("IN_LOOK_AT_WEAPON",         InputBitMask_t::IN_LOOK_AT_WEAPON)
+			.export_values();
+	}	
 	//CBaseEntity
 	{
 		py::class_<CBaseEntity, py::smart_holder>(m, "CBaseEntity")
@@ -175,9 +214,6 @@ PYBIND11_EMBEDDED_MODULE(Source2Py, m) {
 				{
 
 					Vector v = self.m_vecAbsVelocity;
-					//v.x += d["x"].cast<float>(); //originally additive
-					//v.y += d["y"].cast<float>(); //originally additive
-					//v.z += d["z"].cast<float>(); //originally additive
 					v.x = d["x"].cast<float>();
 					v.y = d["y"].cast<float>();
 					v.z = d["z"].cast<float>();

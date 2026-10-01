@@ -1,8 +1,10 @@
-import Source2Py
-ADVPlayer   = Source2Py.ADVPlayer
+import Source2Py as s2
+ADVPlayer   = s2.ADVPlayer
+
+from adventure.game_events import game_events
+Event = game_events.Event
 
 import logging, inspect, traceback
-
 logging.basicConfig(filename='tests/TestPlayerInputs.log', encoding='utf-8', level=logging.DEBUG, format='[%(asctime)s]%(message)s', datefmt='%H:%M:%S')
 log = logging
 
@@ -10,104 +12,150 @@ def alog(message: str, callername: bool = True):
     caller = str("")
     if (callername):
         caller = "[" + str(inspect.stack()[1].function) + "] "
-    Source2Py.ServerPrint("[TestPlayerInputs]" + caller + str(message))
+    s2.ServerPrint("[TestPlayerInputs]" + caller + str(message))
     log.info(msg=("[TestPlayerInputs]" + caller + str(message)))
     pass
 
+
+#Put in order of frequency, not sure how python goes through set/dict/list
+special_events = {
+    "binds": ["ability1", "ability2", "ultimate"],
+    "events": ["attacker", "victim", "spawn", "kill", "death"]
+}
+
+try:
+    from adventure.game_events.trigger_events import TriggerEventManager
+    
+    event_manager = TriggerEventManager( 
+        special_events["binds"], 
+        special_events["events"]
+        )
+    Scroll = event_manager.SM.Scroll
+    s      = event_manager.SM.Scroll
+except Exception as e:
+    alog(e)
+    alog(traceback.format_exc())
+
 alog("START")
-class TestPlayerInputs:
+class TestPlayerInputs(object):
+    scroll = None
     def OnPluginLoad(self):
         alog("")
         pass
-    def _checkButtonStates(self, _slot):
+    @classmethod
+    def _give_scroll_ability1(self, slot):
         try:
-            alog("_slot: " + str(_slot))
-            player = ADVPlayer(_slot)
-            if (player.IsValid()):
-                bstates = player.GetButtonStates()
+            # scroll zero is the template scroll, we copy it
+            # then set the owner to the spawning player.
+            # then tell it to build with that new owner, adding it to their
+            # bound pool of technique scrolls
+            temp_scroll = s(event_manager.SM.dict_by_id[0])
+            temp_scroll.owner = slot
 
-                #incomplete list, missing weapon select 1,2,3,4 (eg)
-                IN_ATTACK =     1 << 0
-                alog(str(bstates & IN_ATTACK) + " IN_ATTACK")
-                IN_JUMP =       1 << 1
-                alog(str(bstates & IN_JUMP) + " IN_JUMP")
-                IN_DUCK =       1 << 2
-                alog(str(bstates & IN_DUCK) + " IN_DUCK")
-                IN_FORWARD =    1 << 3
-                alog(str(bstates & IN_FORWARD) + " IN_FORWARD")
-                IN_BACKWARD =   1 << 4
-                alog(str(bstates & IN_BACKWARD) + " IN_BACKWARD")
-                IN_USE =        1 << 5
-                alog(str(bstates & IN_USE) + " IN_USE")
+            self.scroll = temp_scroll
+            # self.scroll.build(event_manager, category="bind", action_map="use_ability1")
+            self.scroll.build(event_manager, action_map="use_ability1")
 
-                #6
-                #7
-                #8
-
-                IN_MOVELEFT =   1 << 9
-                alog(str(bstates & IN_MOVELEFT) + " IN_MOVELEFT")
-                IN_MOVERIGHT =  1 << 10
-                alog(str(bstates & IN_MOVERIGHT) + " IN_MOVERIGHT")
-                IN_ATTACK2 =    1 << 11
-                alog(str(bstates & IN_ATTACK2) + " IN_ATTACK2")
-
-                #12
-
-                IN_RELOAD =     1 << 13
-                alog(str(bstates & IN_RELOAD) + " IN_RELOAD")
-
-                #14
-                #15
-
-                IN_SPRINT =     1 << 16
-                alog(str(bstates & IN_SPRINT) + " IN_SPRINT")
-
-                IN_SCORE =      1 << 33
-                alog(str(bstates & IN_SCORE) + " IN_SCORE")
-                IN_LOOK_AT_WEAPON = 35
-                alog(str(bstates & IN_LOOK_AT_WEAPON) + " IN_LOOK_AT_WEAPON")
-
+            alog(" _give_scroll_ability1 ".center(60, "="))
+            for k, v in self.scroll.__dict__.items():
+                alog(str(k).ljust(25) + " | " + str(v))
         except Exception as e:
             alog(e)
-            alog(traceback.format_exc())        
-    def OnClientCommand(self,
-        _slot: int,
-        _cmd: str):
-        player = ADVPlayer(_slot)
-        if (player.IsValid()):
-            self._checkButtonStates(self, _slot)
-            alog(player.GetName() + " used a ClientCommand: {0}".format(_cmd))
-        pass
-    def OnClientAbility1(self,
-        _slot: int
+            alog(traceback.format_exc())
+    @classmethod
+    def _give_scroll(self, slot, scrollnum, technum, _action_map): # _category, _action_map):
+        temp_scroll = s(event_manager.SM.dict_by_id[scrollnum])
+        temp_scroll.owner = slot
+        temp_scroll.default_technique_id = technum
+        # temp_scroll.build(event_manager, category=_category, action_map=_action_map)
+        temp_scroll.build(event_manager, action_map=_action_map)
+    def player_spawn(self,
+        d
         ):
-        player = ADVPlayer(_slot)
-        if (player.IsValid()):
-            self._checkButtonStates(self, _slot)
-            alog(player.GetName() + " used Ability1!")
+        slot = d["userid"]
+        self._give_scroll_ability1(slot)
+        scrollnum = 1 #1 is normal scroll, no modifiers
+        technum = 1   #1 is Explode technique
+        # self._give_scroll(slot, scrollnum, technum, "passive", "player_death")
+        self._give_scroll(slot, scrollnum, technum, "player_death")
         pass
-    def OnClientAbility2(self,
-        _slot: int
-        ):
-        player = ADVPlayer(_slot)
-        if (player.IsValid()):
-            self._checkButtonStates(self, _slot)
-            alog(player.GetName() + " used Ability2!")
-        pass
-    def OnClientUltimate(self,
-        _slot: int
-        ):
-        player = ADVPlayer(_slot)
-        if (player.IsValid()):
-            self._checkButtonStates(self, _slot)
-            alog(player.GetName() + " used Ultimate!")
-        pass
-    def OnPlayerJump(self, 
-        _slot: int
-        ):
-        alog("START")
-        self._checkButtonStates(self, _slot)
-        alog("END")
-        pass
+    def player_death(self,
+        event):
+            d = Event(event)
+            success = event_manager.DM.fireBind(d)
 
+    def use_ability1(self,
+        d: dict
+        ):
+        #slot = d["userid"]
+        success = event_manager.DM.fireBind(d)
+        # if not event_manager.DM.hasBind(slot, d["event_name"]):
+        #     event_manager.DM.fireBind(slot, d["event_name"])
+        # else:
+        #     self._give_scroll_ability1(slot)
+    @classmethod
+    def _state_info(self,
+        d: dict):
+        alog(" _state_info ".center(60, "="))
+        for k,v in d.items():
+            alog(str(k).ljust(25) + " | " + str(v))
+        
+        p = ADVPlayer(d["userid"])
+        if (p.IsValid()):
+            bstates = p.GetButtonStates()
+            for k,v in s2.InputBitMask_t.__members__.items():
+                alog(str(k).ljust(25) + " | " + str(bstates & v))
+        pass
+    def use_ability2(self,
+        d: dict
+        ):
+        alog(" use_ability2 ".center(60, "="))
+        self._state_info(d)
+        pass
+    def use_ultimate(self,
+        d: dict
+        ):
+        alog(" use_ultimate ".center(60, "="))
+        for k, v in d.items():
+            alog(str(k).ljust(25) + " | " + str(v))
+
+        userid = d["userid"]
+        player = ADVPlayer(userid) 
+
+        if not player.IsValid():
+            alog("player.IsValid()".ljust(25) + " | " + "False")
+            return False
+
+        pawn = player.pawn
+        if not pawn:
+            alog("pawn.IsValid()".ljust(25) + " | " + "False")
+            return False
+
+        alog("userid: ".ljust(25) + " | " + str(type(userid)))
+
+        distance = 400.0
+        alog("distance type: ".ljust(25) + " | " + str(type(distance)))
+
+        ignoreList = [userid,]
+        #ignoreList.append(userid)
+        alog("ignoreList type: ".ljust(25) + " | " + str(type(ignoreList)))
+
+        pList = list()
+        pList = s2.GetPlayersNearPlayerID_list(userid, distance, ignoreList)
+        alog("players in {r} range".format(r=distance).ljust(25) + " | " + str(pList))
+
+        distance = distance*2.0
+        pDict = s2.GetPlayersNearPlayerID_dict(userid, distance, ignoreList)
+        for k, v in pDict.items():
+            p2 = ADVPlayer(k)
+            if p2.IsValid():
+                alog("Distance from {n}.".format(n=ADVPlayer(k).name).ljust(25) + " | " + str(v))
+            else:
+                alog("ADVPlayer was invalid for".ljust(25) + " | " + str(k))
+
+
+
+
+        
+        pass
 

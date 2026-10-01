@@ -44,5 +44,15 @@ namespace Source2Py {
 		// Set timescale
 		static void SetTimescale(float timeScale);
 
+
+		// Get of userid's near coordinates and send to python.
+		// return list of just playerid
+		static py::list GetPlayersNearCoords_list(py::dict vec, py::float_ distance, py::list ignore);
+		static py::list GetPlayersNearPlayerID_list(py::int_ playerid, py::float_ distance, py::list ignore);
+
+		// return dict of {playerid: dict(coordinates)}
+		static py::dict GetPlayersNearCoords_dict(py::dict vec, py::float_ distance, py::list ignore, bool return_difference = true);
+		static py::dict GetPlayersNearPlayerID_dict(py::int_ playerid, py::float_ distance, py::list ignore, bool return_difference = true);
+
 	};
 }

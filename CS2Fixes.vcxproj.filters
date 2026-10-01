@@ -212,6 +212,12 @@
     <ClCompile Include="src\mapmigrations.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\adventuremenu.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\adventuremod.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\mempatch.h">
@@ -505,9 +511,6 @@
     <ClInclude Include="src\cs2_sdk\entity\customhudlayout.h">
       <Filter>Header Files\cs2_sdk\entity</Filter>
     </ClInclude>
-    <ClInclude Include="src\cs2_sdk\entity\customplayercamera.h">
-      <Filter>Header Files\cs2_sdk\entity</Filter>
-    </ClInclude>
     <ClInclude Include="src\cs2_sdk\cchecktransmitinfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -519,6 +522,15 @@
     </ClInclude>
     <ClInclude Include="src\PyRuntime.cpp">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cs2_sdk\entity\custom_player_camera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils\sighook.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cs2_sdk\cchecktransmitinfo.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

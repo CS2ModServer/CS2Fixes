@@ -32,11 +32,6 @@ namespace Source2Py {
 
 
 		void PyGameFrame(bool simulating, bool firstTick, bool lastTick);
-
-		void PyClientCommand(int playerSlot, const char* command);
-		void PyClientAbility1(int playerSlot);
-		void PyClientAbility2(int playerSlot);
-		void PyClientUltimate(int playerSlot);
 		
 		void PyBombPlanted(IGameEvent* event, int slot, int site);
 		void PyBombDefused(IGameEvent* event, int slot, int site);

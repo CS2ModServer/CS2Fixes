@@ -150,21 +150,27 @@ bool ADVPlayer::EmitSoundAll(
 
 
 CON_COMMAND_F(ability1, "Technique bound to ability1", FCVAR_CLIENT_CAN_EXECUTE)
-	{
+{
+	py::dict d;
+	d["userid"] = context.GetPlayerSlot().Get();
 	for (auto& plugin : g_CS2Fixes.m_Plugins)
-		plugin.PyClientAbility1(context.GetPlayerSlot().Get());
+		plugin.PyFireFakeEventNamed(d, "use_ability1");
 	return;
 }
 CON_COMMAND_F(ability2, "Technique bound to ability2", FCVAR_CLIENT_CAN_EXECUTE)
 {
+	py::dict d;
+	d["userid"] = context.GetPlayerSlot().Get();
 	for (auto& plugin : g_CS2Fixes.m_Plugins)
-		plugin.PyClientAbility2(context.GetPlayerSlot().Get());
+		plugin.PyFireFakeEventNamed(d, "use_ability2");
 	return;
 }
 CON_COMMAND_F(ultimate, "Technique bound to ultimate", FCVAR_CLIENT_CAN_EXECUTE)
 {
+	py::dict d;
+	d["userid"] = context.GetPlayerSlot().Get();
 	for (auto& plugin : g_CS2Fixes.m_Plugins)
-		plugin.PyClientUltimate(context.GetPlayerSlot().Get());
+		plugin.PyFireFakeEventNamed(d, "use_ultimate");
 	return;
 }
 

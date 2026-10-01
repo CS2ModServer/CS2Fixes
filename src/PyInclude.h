@@ -4,6 +4,7 @@
 #include <pybind11/embed.h>
 #include <pybind11/operators.h>
 #include <pybind11/functional.h>
+#include <pybind11/stl.h>
 
 
 namespace py = pybind11;

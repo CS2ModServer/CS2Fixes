@@ -78,8 +78,8 @@ namespace Source2Py {
 
 	void PyPlugin::PyFireFakeEventNamed(py::dict event, std::string event_name)
 	{
-		event_name += "_fake";
 		event["event_name"] = event_name;
+		event["fake"] = true;
 		PyRuntime::ExecuteObjectMethod(m_PluginObject, event_name.c_str(), event);
 	}
 
@@ -97,26 +97,6 @@ namespace Source2Py {
 	void PyPlugin::PyBombExploded(IGameEvent* event, int slot, int site)
 	{
 		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnBombExploded", event, slot, site);
-	}
-
-	void PyPlugin::PyClientCommand(int playerSlot, const char* command)
-	{
-		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnClientCommand", playerSlot, command);
-	}
-
-	void PyPlugin::PyClientAbility1(int playerSlot)
-	{
-		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnClientAbility1", playerSlot);
-	}
-
-	void PyPlugin::PyClientAbility2(int playerSlot)
-	{
-		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnClientAbility2", playerSlot);
-	}
-
-	void PyPlugin::PyClientUltimate(int playerSlot)
-	{
-		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnClientUltimate", playerSlot);
 	}
 
 	void PyPlugin::PyRoundEnd(IGameEvent* event)
