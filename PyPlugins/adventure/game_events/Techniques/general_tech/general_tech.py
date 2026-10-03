@@ -62,18 +62,30 @@ def activate_technique_Explode(dispatch, *args, **kwargs) -> bool:
     distance = 400.0
     ignoreList = [userid,]
 
-    #return a list of playerids that were in range.
+    #return a list of playerids that were in range and alive.
     pList = s2.GetPlayersNearPlayerID_list(userid, distance, ignoreList)
     alog("players in {r} range".format(r=distance).ljust(25) + " | " + str(pList))
 
+    for p in pList:
+        vic = ADVPlayer(p)
+        vic.health = vic.health - 30
+
+    
+    closest_p = -1
+    closest_dist = distance + 1.0
+
+    #same but dict and defaults to give distance
     pDict = s2.GetPlayersNearPlayerID_dict(userid, distance, ignoreList)
-    for k, v in pDict:
-        alog("Distance from Player {n} to you.".format(n=ADVPlayer(k).name).ljust(25) + " | " + str(v))
+    for k, v in pDict.items():
+        #alog("Distance from Player {n} to you.".format(n=ADVPlayer(k).name).ljust(25) + " | " + str(v))
+        if (closest_dist > v):
+            closest_p = k
+            closest_dist = v
 
-
-
-
-
+    if (closest_p >=0):
+        vic = ADVPlayer(closest_p)
+        alog("Closest is {n}".format(n=vic.name) + " | " + str(closest_dist))
+        vic.health = vic.health - 20
 
     return True
 # Explode - END #

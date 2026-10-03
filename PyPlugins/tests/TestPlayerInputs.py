@@ -56,9 +56,9 @@ class TestPlayerInputs(object):
             # self.scroll.build(event_manager, category="bind", action_map="use_ability1")
             self.scroll.build(event_manager, action_map="use_ability1")
 
-            alog(" _give_scroll_ability1 ".center(60, "="))
-            for k, v in self.scroll.__dict__.items():
-                alog(str(k).ljust(25) + " | " + str(v))
+            #alog(" _give_scroll_ability1 ".center(60, "="))
+            #for k, v in self.scroll.__dict__.items():
+            #    alog(str(k).ljust(25) + " | " + str(v))
         except Exception as e:
             alog(e)
             alog(traceback.format_exc())
@@ -116,8 +116,8 @@ class TestPlayerInputs(object):
         d: dict
         ):
         alog(" use_ultimate ".center(60, "="))
-        for k, v in d.items():
-            alog(str(k).ljust(25) + " | " + str(v))
+        #for k, v in d.items():
+        #    alog(str(k).ljust(25) + " | " + str(v))
 
         userid = d["userid"]
         player = ADVPlayer(userid) 
@@ -153,9 +153,5 @@ class TestPlayerInputs(object):
             else:
                 alog("ADVPlayer was invalid for".ljust(25) + " | " + str(k))
 
-
-
-
-        
         pass
 

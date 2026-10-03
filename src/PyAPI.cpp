@@ -72,7 +72,7 @@ namespace Source2Py
 				continue;
 
 			CBaseEntity* pawn = ap->GetPawn();
-			if (!pawn)
+			if (!pawn && !pawn->IsAlive())
 				continue;
 
 			Vector v = Vector(pawn->GetAbsOrigin());
@@ -97,7 +97,7 @@ namespace Source2Py
 			return l;
 
 		CBaseEntity* pawn = ap->GetPawn();
-		if (!pawn)
+		if (!pawn && !pawn->IsAlive())
 			return l;
 
 		Vector v = pawn->GetAbsOrigin();
@@ -134,7 +134,7 @@ namespace Source2Py
 				continue;
 
 			CBaseEntity* pawn = ap->GetPawn();
-			if (!pawn)
+			if (!pawn && !pawn->IsAlive())
 				continue;
 
 			Vector v = Vector(pawn->GetAbsOrigin());
@@ -173,7 +173,7 @@ namespace Source2Py
 			return d;
 
 		CBaseEntity* pawn = ap->GetPawn();
-		if (!pawn)
+		if (!pawn && !pawn->IsAlive())
 			return d;
 
 		Vector v = pawn->GetAbsOrigin();
