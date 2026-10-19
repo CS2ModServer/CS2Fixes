@@ -34,6 +34,9 @@
 #include "topdefender.h"
 #include "votemanager.h"
 #include "zombiereborn.h"
+#include "adventuremod.h"
+
+#include "cs2fixes.h"
 
 #include "tier0/memdbgon.h"
 
@@ -45,6 +48,9 @@ void RegisterEventListeners()
 
 	if (bRegistered || !g_gameEventManager)
 		return;
+	
+	//E:/CS2Server/cs2/game/csgo/bin/win64/~ is where were at normally.
+	g_gameEventManager->LoadEventsFromFile("../../csgo/addons/CS2Fixes/resource/adventure.res", false);
 
 	for (CGameEventListener* pListener : g_vecEventListeners)
 		g_gameEventManager->AddListener(pListener, pListener->GetEventName(), true);
@@ -63,7 +69,7 @@ void UnregisterEventListeners()
 	g_vecEventListeners.clear();
 }
 
-GAME_EVENT_F(round_prestart)
+GAME_EVENT_F(round_prestart) // FireGameEvent
 {
 	RemoveTimers(TIMERFLAG_ROUND);
 
@@ -86,7 +92,7 @@ GAME_EVENT_F(round_prestart)
 
 CConVar<bool> g_cvarBlockTeamMessages("cs2f_block_team_messages", FCVAR_NONE, "Whether to block team join messages", false);
 
-GAME_EVENT_F(player_team)
+GAME_EVENT_F(player_team) // FireGameEvent
 {
 	// Remove chat message for team changes
 	if (g_cvarBlockTeamMessages.Get())
@@ -96,10 +102,24 @@ GAME_EVENT_F(player_team)
 CConVar<bool> g_cvarNoblock("cs2f_noblock_enable", FCVAR_NONE, "Whether to use player noblock, which sets debris collision on every player", false);
 CConVar<int> g_cvarFreeArmor("cs2f_free_armor", FCVAR_NONE, "Whether kevlar (1+) and/or helmet (2) are given automatically", 0, true, 0, true, 2);
 
+GAME_EVENT_F(player_spawned)
+{
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyFireGameEventNamed(pEvent, "player_spawned");	
+	return;
+}
+
+GAME_EVENT_F(player_activate)
+{
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyFireGameEventNamed(pEvent, "player_activate");
+	return;
+}
+
 GAME_EVENT_F(player_spawn)
 {
 	CCSPlayerController* pController = (CCSPlayerController*)pEvent->GetPlayerController("userid");
-
+	
 	if (!pController)
 		return;
 
@@ -127,6 +147,11 @@ GAME_EVENT_F(player_spawn)
 		if (const auto player = pController->GetZEPlayer())
 			player->SetSteamIdAttribute();
 
+		py::dict d;
+		d["userid"] = pController->GetPlayerSlot();
+		for (auto& plugin : g_CS2Fixes.m_Plugins)
+			plugin.PyFireFakeEventNamed(d, "player_spawn"); // note: will append _fake to the event name for Python.
+
 		if (!pController->m_bPawnIsAlive())
 			return -1.0f;
 
@@ -145,7 +170,7 @@ GAME_EVENT_F(player_spawn)
 
 	if (!pPawn)
 		return;
-
+	
 	CCSPlayer_ItemServices* pItemServices = pPawn->m_pItemServices();
 
 	if (!pItemServices)
@@ -156,29 +181,251 @@ GAME_EVENT_F(player_spawn)
 		pItemServices->GiveNamedItem("item_kevlar");
 	else if (g_cvarFreeArmor.GetInt() == 2)
 		pItemServices->GiveNamedItem("item_assaultsuit");
+
+	if (!pPawn->IsAlive())
+		return;
 }
 
-GAME_EVENT_F(player_hurt)
+/*
+//core.gameevents
+"player_hurt":	dict({
+					"userid":			"playercontroller",
+					"userid_pawn":		"strict_ehandle",
+					"attacker":			"playercontroller",
+					"attacker_pawn":	"strict_ehandle",
+					"health":			"byte",
+				}),
+//mod.gameevents
+"player_hurt":	dict({
+					"userid":			"playercontroller",
+					"userid_pawn":		"strict_ehandle",
+					"attacker":			"playercontroller",
+					"attacker_pawn":	"strict_ehandle",
+					"health":			"byte",
+					"armor":			"byte",
+					"weapon":			"string",
+					"dmg_health":		"short",
+					"dmg_armor":		"byte",
+					"hitgroup":			"byte",
+				}),
+
+/*
+//core.gameevents
+"player_hurt":	dict({
+					"userid":			"playercontroller",
+					"userid_pawn":		"strict_ehandle",
+					"attacker":			"playercontroller",
+					"attacker_pawn":	"strict_ehandle",
+					"health":			"byte",
+				}),
+//mod.gameevents
+"player_hurt":	dict({
+					"userid":			"playercontroller",
+					"userid_pawn":		"strict_ehandle",
+					"attacker":			"playercontroller",
+					"attacker_pawn":	"strict_ehandle",
+					"health":			"byte",
+					"armor":			"byte",
+					"weapon":			"string",
+					"dmg_health":		"short",
+					"dmg_armor":		"byte",
+					"hitgroup":			"byte",
+				}),
+
+*/
+
+//remember this is firing at the moment the player is hurt, before the damage is applied.
+GAME_EVENT_F(player_hurt)  //FireGameEvent
 {
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyFireGameEventNamed(pEvent, "player_hurt");
+
+	//if (!g_bEnableTopDefender)
+	//		return;
+
+	CCSPlayerController* pAttacker = (CCSPlayerController*)pEvent->GetPlayerController("attacker");
+	CCSPlayerController* pVictim = (CCSPlayerController*)pEvent->GetPlayerController("userid");
+	
+	//pEvent->SetInt("attacker_slot", pAttacker->GetPlayerSlot());
+	//pEvent->SetInt("victim_slot", pVictim->GetPlayerSlot());
+
+	// Ignore Ts/zombies and CTs hurting themselves
+	if (!pAttacker || pAttacker->m_iTeamNum() != CS_TEAM_CT || pAttacker->m_iTeamNum() == pVictim->m_iTeamNum())
+		return;
+
+	ZEPlayer* pPlayer = pAttacker->GetZEPlayer();
+
+	if (!pPlayer)
+		return;
+
+	pPlayer->SetTotalDamage(pPlayer->GetTotalDamage() + pEvent->GetInt("dmg_health"));
+	pPlayer->SetTotalHits(pPlayer->GetTotalHits() + 1);
 	if (g_cvarEnableTopDefender.Get())
 		TD_OnPlayerHurt(pEvent);
 }
 
-GAME_EVENT_F(player_death)
+GAME_EVENT_F(player_jump)
 {
-	if (g_cvarEnableZR.Get())
-		ZR_OnPlayerDeath(pEvent);
+    /*	"player_jump":dict({
+			"userid":"playercontroller",
+        }),	*/
+	
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyFireGameEventNamed(pEvent, "player_jump");
+}
 
+GAME_EVENT_F(player_land)
+{
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyFireGameEventNamed(pEvent, "player_land");
+}
+
+GAME_EVENT_F(player_airborn)
+{
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyFireGameEventNamed(pEvent, "player_airborn");
+}
+
+CConVar<bool> g_cvarFullAllTalk("cs2f_full_alltalk", FCVAR_NONE, "Whether to enforce sv_full_alltalk 1", false);
+GAME_EVENT_F(bomb_planted) // FireGameEvent
+{
+	/*
+		"bomb_planted":dict({
+			"userid":"slot",
+			"userid_pawn":"strict_ehandle",
+			"site":"short",
+			}),
+	*/
+	CPlayerSlot slot = pEvent->GetPlayerSlot("userid");
+	int site = pEvent->GetInt("site");
+
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyBombPlanted(pEvent, slot.Get(), site);
+}
+
+GAME_EVENT_F(bomb_defused)
+{
+	/*
+	    "bomb_defused":dict({
+            "userid":"slot",
+            "userid_pawn":"strict_ehandle",
+            "site":"short",
+            }),
+	*/
+	CPlayerSlot slot = pEvent->GetPlayerSlot("userid");
+	int site = pEvent->GetInt("site");
+
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyBombDefused(pEvent, slot.Get(), site);
+}
+
+GAME_EVENT_F(bomb_exploded) // FireGameEvent
+{
+	/*
+		"bomb_exploded":dict({
+			"userid":"slot",
+			"userid_pawn":"strict_ehandle",
+			"site":"short",
+			}),
+	*/
+	CPlayerSlot slot = pEvent->GetPlayerSlot("userid");
+	int site = pEvent->GetInt("site");
+
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyBombExploded(pEvent, slot.Get(), site);
+}
+
+GAME_EVENT_F(player_death) // FireGameEvent
+{
+	/*
+		"player_death":dict
+		({
+			"userid":"playercontroller",
+			"userid_pawn":"strict_ehandle",
+			"attacker":"playercontroller",
+			"attacker_pawn":"strict_ehandle",
+			"assister":"playercontroller",
+			"assister_pawn":"strict_ehandle",
+			"assistedflash":"bool",
+			"weapon":"string",
+			"weapon_itemid":"string",
+			"weapon_fauxitemid":"string",
+			"weapon_originalowner_xuid":"string",
+			"headshot":"bool",
+			"dominated":"short",
+			"revenge":"short",
+			"wipe":"short",
+			"penetrated":"short",
+			"noreplay":"bool",
+			"noscope":"bool",
+			"thrusmoke":"bool",
+			"attackerblind":"bool",
+			"distance":"float",
+			"dmg_health":"short",
+			"dmg_armor":"byte",
+			"hitgroup":"byte",
+			"attackerinair":"bool",
+		}),
+	*/
+
+	//if (g_bEnableZR)
+	//	ZR_OnPlayerDeath(pEvent);
 	if (g_cvarEnableEntWatch.Get())
 		EW_PlayerDeath(pEvent);
 
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyFireGameEventNamed(pEvent, "player_death");
+
+	CCSPlayerController* pAttacker = (CCSPlayerController*)pEvent->GetPlayerController("attacker");
+	CCSPlayerController* pVictim = (CCSPlayerController*)pEvent->GetPlayerController("userid");
+
+	bool noattacker = false;
+	if (!pAttacker)
+	{
+		Message("noattacker=true");
+		noattacker = true;
+	}
+
+	bool novictim = false;
+	if (!pVictim)
+	{
+		Message("novictim=true");
+		novictim = true;
+	}
+	
+	bool teamkill = false;
+	if (pAttacker->m_iTeamNum == pVictim->m_iTeamNum)
+		teamkill = true;
+
+	bool suicide = false;
+	if (pAttacker == pVictim)
+		suicide = true;
+
+	// Ignore Ts/zombie kills and ignore CT teamkilling or suicide
+	if (	
+			noattacker  ||
+			novictim    ||
+			teamkill    || 
+			suicide     ||
+			pAttacker->m_iTeamNum != CS_TEAM_CT || 
+			pAttacker->m_iTeamNum == pVictim->m_iTeamNum
+			)
+	{
+		return;
+	}
+
+
+	ZEPlayer* pPlayer = pAttacker->GetZEPlayer();
+
+		if (!pPlayer)
+		return;
+
+	pPlayer->SetTotalKills(pPlayer->GetTotalKills() + 1);
 	if (g_cvarEnableTopDefender.Get())
 		TD_OnPlayerDeath(pEvent);
 }
 
-CConVar<bool> g_cvarFullAllTalk("cs2f_full_alltalk", FCVAR_NONE, "Whether to enforce sv_full_alltalk 1", false);
-
-GAME_EVENT_F(round_start)
+GAME_EVENT_F(round_start) // FireGameEvent
 {
 	g_pPanoramaVoteHandler->Init();
 
@@ -200,10 +447,13 @@ GAME_EVENT_F(round_start)
 		TD_OnRoundStart(pEvent);
 }
 
-GAME_EVENT_F(round_end)
+GAME_EVENT_F(round_end) //FireGameEvent
 {
 	if (g_cvarFixHudFlashing.Get() && g_pGameRules)
 		g_pGameRules->m_bGameRestart = false;
+
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyRoundEnd(pEvent);
 
 	if (g_cvarEnableTopDefender.Get())
 		TD_OnRoundEnd(pEvent);
@@ -221,12 +471,29 @@ GAME_EVENT_F(round_time_warning)
 		ZR_OnRoundTimeWarning(pEvent);
 }
 
-GAME_EVENT_F(bullet_impact)
+GAME_EVENT_F(bullet_impact) // FireGameEvent
 {
 	if (g_cvarEnableLeader.Get())
 		Leader_BulletImpact(pEvent);
 }
 
+/* The macro below is defined in eventlistener.h
+ * #define GAME_EVENT_F(_event)                                        \
+ *	void _event##_callback(IGameEvent*);                               \
+ *	CGameEventListener _event##_listener(_event##_callback, #_event);  \
+ *	void _event##_callback(IGameEvent* pEvent)
+ *
+ * I sure hope writing this out helps someone else who's in here to figure stuff out.
+ *
+ * void vote_cast_callback(IGameEvent*);                                   \ definition for the game event
+ * CGameEventListener vote_cast_listener(vote_cast_callback, "vote_cast"); \ register that we will have a callback when desired event fires
+ * void vote_cast_callback(IGameEvent* pEvent)                             \ the actual callback
+ * {
+ *     g_pPanoramaVoteHandler->VoteCast(pEvent);
+ * }
+ * 
+ * And that's it, now to forget about this and rediscover in a few years when trying to figure out this magic.
+ */
 GAME_EVENT_F(vote_cast)
 {
 	g_pPanoramaVoteHandler->VoteCast(pEvent);
@@ -238,4 +505,27 @@ GAME_EVENT_F(cs_win_panel_match)
 
 	if (!g_pMapVoteSystem->IsVoteOngoing())
 		g_pMapVoteSystem->StartVote();
+}
+
+GAME_EVENT_F(player_score)
+{
+	Message("player_score fired, from where i don't know.\n");
+}
+
+GAME_EVENT_F(player_connect)
+{
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyFireGameEventNamed(pEvent, "player_connect");
+}
+
+GAME_EVENT_F(player_connect_full)
+{
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyFireGameEventNamed(pEvent, "player_connect_full");
+}
+
+GAME_EVENT_F(player_disconnect)
+{
+	for (auto& plugin : g_CS2Fixes.m_Plugins)
+		plugin.PyFireGameEventNamed(pEvent, "player_disconnect");
 }

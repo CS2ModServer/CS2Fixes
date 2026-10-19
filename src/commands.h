@@ -1,4 +1,4 @@
-/**
+﻿/**
  * =============================================================================
  * CS2Fixes
  * Copyright (C) 2023-2026 Source2ZE
@@ -41,6 +41,11 @@ extern CConVar<bool> g_cvarEnableHide;
 #define CHAT_PREFIX " \7[CS2Fixes]\1 "
 
 typedef void (*FnChatCommandCallback_t)(const CCommand& args, CCSPlayerController* player);
+
+extern CConVar<bool> g_cvarEnableHide;
+extern CConVar<bool> g_cvarEnableStopSound;
+extern CConVar<bool> g_cvarEnableNoShake;
+extern CConVar<float> g_cvarMaxShakeAmp;
 
 void ClientPrintAll(int destination, const char* msg, ...);
 void ClientPrint(CCSPlayerController* player, int destination, const char* msg, ...);

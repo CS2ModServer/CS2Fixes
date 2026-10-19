@@ -22,6 +22,7 @@
 #include "khook.hpp"
 #include "map.h"
 #include <tier0/utlsymboltablelarge.h>
+//#include "cs2_sdk/entityio.h"
 
 class CCheckTransmitInfo;
 class IRecipientFilter;

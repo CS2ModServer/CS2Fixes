@@ -40,6 +40,8 @@
 #include "zombiereborn.h"
 #include <../cs2fixes.h>
 
+#include "adventuremod.h"
+
 #include "tier0/memdbgon.h"
 
 CPlayerManager* g_playerManager = nullptr;
@@ -868,11 +870,16 @@ void CPlayerManager::OnBotConnected(CPlayerSlot slot)
 
 bool CPlayerManager::OnClientConnected(CPlayerSlot slot, uint64 xuid, const char* pszNetworkID)
 {
+	//ZEPlayer
 	Assert(m_vecPlayers[slot.Get()] == nullptr);
 
-	Message("%d connected\n", slot.Get());
+	//Message("%d connected\n", slot.Get());
 
 	ZEPlayer* pPlayer = new ZEPlayer(slot);
+
+	//ADVPlayer
+	//pPlayer->m_ADVPlayer.UpdatePlayerItems();
+	
 	pPlayer->SetUnauthenticatedSteamId(new CSteamID(xuid));
 
 	std::string ip(pszNetworkID);
@@ -913,7 +920,7 @@ bool CPlayerManager::OnClientConnected(CPlayerSlot slot, uint64 xuid, const char
 
 void CPlayerManager::OnClientDisconnect(CPlayerSlot slot)
 {
-	Message("%d disconnected\n", slot.Get());
+	//Message("%d disconnected\n", slot.Get());
 
 	g_pUserPreferencesSystem->PushPreferences(slot.Get());
 	g_pUserPreferencesSystem->ClearPreferences(slot.Get());
@@ -954,6 +961,24 @@ void CPlayerManager::OnClientPutInServer(CPlayerSlot slot)
 
 	if (pClient && pClient->m_LoadedSpawnGroups.Count() != vecActualSpawnGroups.Count())
 		pClient->m_LoadedSpawnGroups = vecActualSpawnGroups;
+	// test a thing
+	if (false)
+	{
+		CCSPlayerController* ccs = CCSPlayerController::FromSlot(slot);
+		const char* name = ccs->GetPlayerName();
+
+		Message("[CS2Fixes] Currently Connected players and their inventory.\n");
+		Message("[CS2Fixes] %s is slot %d.\n", name, slot.Get());
+		Message("[CS2Fixes] BEFORE update called\n");
+		//pPlayer->m_ADVPlayer.UpdatePlayerItems();
+		Message("[CS2Fixes] AFTER update called\n");
+
+		//std::vector<std::string> inv = pPlayer->m_ADVPlayer.GetPlayerItems();
+
+		//Message("[CS2Fixes] item count %d\n", inv.size());
+		//for (std::vector<std::string>::iterator it = inv.begin(); it != inv.end(); it++)
+		//	Message("[CS2Fixes] item %s\n", it);
+	} // test a thing
 }
 
 void CPlayerManager::OnLateLoad()

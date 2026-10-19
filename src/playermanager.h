@@ -33,6 +33,8 @@
 #include "tier0/utlvector.h"
 #include <playerslot.h>
 
+#include "adventuremod.h"
+
 extern CConVar<bool> g_cvarFlashLightTransmitOthers;
 extern CConVar<CUtlString> g_cvarFlashLightAttachment;
 extern CConVar<bool> g_cvarEnableMapSteamIds;
@@ -153,6 +155,8 @@ private:
 	};
 };
 
+class ADVPlayer;
+
 class ZEPlayer
 {
 public:
@@ -202,10 +206,14 @@ public:
 		m_flEntwatchHudX = -7.5f;
 		m_flEntwatchHudY = -2.0f;
 		m_flEntwatchHudSize = 60.0f;
+		m_ADVPlayer = ADVPlayer(slot.Get());
 		m_bTopDefender = false;
 		m_flLastVoiceTime = -15.0f;
 		m_flBeaconEnabledTime = -2.0f;
 		m_bOriginalClanTagSaved = false;
+		m_iLastGround = 0;
+		m_iLastAirborn = 0;
+		m_iLastJump = 0;
 	}
 
 	~ZEPlayer()
@@ -216,6 +224,7 @@ public:
 			pFlashLight->Remove();
 	}
 
+	ADVPlayer* GetADVPlayer() { return (ADVPlayer*)&m_ADVPlayer; }
 	bool IsFakeClient() { return m_bFakeClient; }
 	bool IsAuthenticated() { return m_bAuthenticated; }
 	bool IsConnected() { return m_bConnected; }
@@ -418,6 +427,12 @@ private:
 	float m_flBeaconEnabledTime;
 	std::string m_strOriginalClanTag;
 	bool m_bOriginalClanTagSaved;
+
+public:
+	int m_iLastGround = 0;
+	int m_iLastAirborn = 0;
+	int m_iLastJump = 0;
+	ADVPlayer m_ADVPlayer;
 };
 
 class CPlayerManager

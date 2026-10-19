@@ -21,6 +21,7 @@
 
 #include "engine2/igameeventsystem.h"
 #include "engine2/isource2engine.h"
+#include "engine2/ivengineserver2.h"
 #include "entity/cgamerules.h"
 #include "igameevents.h"
 #include "netmessages.pb.h"
@@ -29,8 +30,16 @@
 #include "public/ics2fixes.h"
 #include "steam/isteamhttp.h"
 #include <ISmmPlugin.h>
+//#include <iserver.h>
 #include <engine2/inetworkgameserver.h>
 
+#include <string>
+#include <vector>
+#include <filesystem>
+namespace fs = std::filesystem;
+#include "PyPlugin.h"
+
+struct CTakeDamageInfoContainer;
 #ifdef AMBUILD
 	#include "version_gen.h"
 #else
@@ -83,6 +92,23 @@ public:
 	const char* GetVersion() { return PLUGIN_FULL_VERSION; }
 	const char* GetDate() { return __DATE__; }
 	const char* GetLogTag() { return PLUGIN_LOGTAG; }
+
+
+public:
+	// Get this plugin's directory path
+	fs::path GetPluginBaseDirectory() { return s_Source2PyDirectory; }
+	bool LoadPythonPlugins();
+	void ReloadPythonPlugins();
+	
+	void MenuSelection(int selection); //they interacted with a menu item
+
+private:
+	const fs::path s_Source2PyDirectory = "../../csgo/addons/CS2Fixes/PyPlugins/";
+
+public:
+	std::vector<Source2Py::PyPlugin> m_Plugins;
+	//virtual std::vector<std::string> GetPlayerItems(CPlayerSlot slot);
+	//virtual py::list _maptest_GetPlayerClasses(CPlayerSlot slot);
 };
 
 extern CS2Fixes g_CS2Fixes;

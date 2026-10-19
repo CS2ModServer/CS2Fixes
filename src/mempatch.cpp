@@ -19,6 +19,7 @@
 
 #include "mempatch.h"
 #include "common.h"
+#include "khook.hpp"
 #include "tier0/dbg.h"
 #include "tier0/tier0_strtools.h"
 #include "utils/module.h"

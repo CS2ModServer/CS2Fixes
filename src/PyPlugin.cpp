@@ -1,0 +1,110 @@
+#include "PyPlugin.h"
+
+#include <filesystem>
+namespace fs = std::filesystem;
+
+namespace Source2Py {
+
+	bool PyPlugin::LoadFromFile(std::string filepath) {
+		std::string modulename = fs::path(filepath).stem().string();
+
+		// Format filepath into module path for Python
+		filepath.erase(filepath.find_last_of('.'), filepath.size());
+		for (char& c : filepath) {
+			if (c == '/' || c == '\\')
+				c = '.';
+		}
+
+		// Attempt to load Python plugin
+		try {
+			m_PluginObject = py::module_::import(filepath.c_str()).attr(modulename.c_str());
+			Message("Trying to load plugin: %s\n", modulename.c_str());
+		}
+		catch (py::error_already_set& e) {
+			Message("Failed to load Python modulename: %s\n", modulename.c_str());
+			Message("%s\n", e.what());
+			m_Valid = false;
+		}
+
+		return m_Valid;
+	}
+
+	void PyPlugin::Load() {
+		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnPluginLoad");
+	}
+
+	void PyPlugin::Unload() {
+		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnPluginUnload");
+	}
+
+	void PyPlugin::PyGameFrame(bool simulating, bool firstTick, bool lastTick)
+	{ 
+		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnGameFrame", simulating, firstTick, lastTick);
+	}
+
+	void PyPlugin::PyClientActive(int playerSlot, bool loadGame, const char* name, uint64_t xuid)
+	{ 
+		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnClientActive", playerSlot, loadGame, name, xuid);
+	}
+
+	void PyPlugin::PyClientDisconnect(
+		int playerSlot, 
+		int reason, 
+		const char* name, 
+		uint64_t xuid, 
+		const char* networkID)
+	{ 
+		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnClientDisconnect", playerSlot, reason, name, xuid, networkID);
+	}
+
+	void PyPlugin::PyClientPutInServer(
+		int playerSlot, 
+		char const* name, 
+		int type, 
+		uint64_t xuid)
+	{ 
+		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnClientPutInServer", playerSlot, name, type, xuid);
+	}
+
+	void PyPlugin::PyClientSettingsChanged(int playerSlot)
+	{ 
+		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnClientSettingsChanged", playerSlot);
+	}
+
+	void PyPlugin::PyFireGameEventNamed(IGameEvent* event, const char* event_name)
+	{
+		PyRuntime::ExecuteObjectMethod(m_PluginObject, event_name, event);
+	}
+
+	void PyPlugin::PyFireFakeEventNamed(py::dict event, std::string event_name)
+	{
+		event["event_name"] = event_name;
+		event["fake"] = true;
+		PyRuntime::ExecuteObjectMethod(m_PluginObject, event_name.c_str(), event);
+	}
+
+
+	void PyPlugin::PyBombPlanted(IGameEvent* event, int slot, int site)
+	{
+		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnBombPlanted", event, slot, site);
+	}
+
+	void PyPlugin::PyBombDefused(IGameEvent* event, int slot, int site)
+	{
+		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnBombDefused", event, slot, site);
+	}
+
+	void PyPlugin::PyBombExploded(IGameEvent* event, int slot, int site)
+	{
+		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnBombExploded", event, slot, site);
+	}
+
+	void PyPlugin::PyRoundEnd(IGameEvent* event)
+	{
+		PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnRoundEnd", event);
+	}
+	//void PyPlugin::PyMENU(auto& f)
+	//{
+	//	PyRuntime::ExecuteObjectMethod(m_PluginObject, "OnMENU", f);
+	//}
+} // namespace Source2Py

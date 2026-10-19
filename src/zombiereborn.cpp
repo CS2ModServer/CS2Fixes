@@ -1,4 +1,4 @@
-/**
+﻿/**
  * =============================================================================
  * CS2Fixes
  * Copyright (C) 2023-2026 Source2ZE
@@ -106,6 +106,8 @@ void ZR_Precache(IEntityResourceManifest* pResourceManifest)
 	pResourceManifest->AddResource(g_cvarHumanWinOverlayParticle.Get().String());
 	pResourceManifest->AddResource(g_cvarZombieWinOverlayParticle.Get().String());
 
+	Message("Precached the stuff TRISTEN TRISTEN\n");
+	Message("Precached the stuff TRISTEN TRISTEN\n");
 	pResourceManifest->AddResource("soundevents/soundevents_zr.vsndevts");
 }
 
@@ -240,7 +242,7 @@ void ZRClass::Override(ordered_json jsonKeys, std::string szClassname)
 }
 
 ZRHumanClass::ZRHumanClass(ordered_json jsonKeys, std::string szClassname) :
-	ZRClass(jsonKeys, szClassname, CS_TEAM_CT){};
+	ZRClass(jsonKeys, szClassname, CS_TEAM_CT) {};
 
 ZRZombieClass::ZRZombieClass(ordered_json jsonKeys, std::string szClassname) :
 	ZRClass(jsonKeys, szClassname, CS_TEAM_T),
@@ -685,15 +687,15 @@ void CZRPlayerClassManager::CreateRegenTimer(int iPlayerSlot, CHandle<CCSPlayerP
 	auto wTimer = CTimer::Create(flInterval, TIMERFLAG_MAP | TIMERFLAG_ROUND, [hPawn, flInterval, iAmount]() {
 		CCSPlayerPawn* pPawn = hPawn.Get();
 
-		if (!pPawn || !pPawn->IsAlive())
+	if (!pPawn || !pPawn->IsAlive())
 			return -1.0f;
 
-		// Do we even need to regen?
-		if (pPawn->m_iHealth() >= pPawn->m_iMaxHealth())
+	// Do we even need to regen?
+	if (pPawn->m_iHealth() >= pPawn->m_iMaxHealth())
 			return flInterval;
 
 		int iHealth = pPawn->m_iHealth() + iAmount;
-		pPawn->m_iHealth = pPawn->m_iMaxHealth() < iHealth ? pPawn->m_iMaxHealth() : iHealth;
+	pPawn->m_iHealth = pPawn->m_iMaxHealth() < iHealth ? pPawn->m_iMaxHealth() : iHealth;
 		return flInterval;
 	});
 
@@ -995,7 +997,10 @@ void ZR_OnPlayerSpawn(CCSPlayerController* pController)
 
 void ZR_ApplyKnockback(CCSPlayerPawn* pHuman, CCSPlayerPawn* pVictim, float flDamage, const char* szWeapon, int hitgroup, float classknockback)
 {
-	std::shared_ptr<ZRWeapon> pWeapon = g_pZRWeaponConfig->FindWeapon(szWeapon);
+	if (V_strlen(szWeapon) <= 7)
+		return;
+
+	std::shared_ptr<ZRWeapon> pWeapon = g_pZRWeaponConfig->FindWeapon(szWeapon + 7);
 	std::shared_ptr<ZRHitgroup> pHitgroup = g_pZRHitgroupConfig->FindHitgroupIndex(hitgroup);
 	// player shouldn't be able to pick up that weapon in the first place, but just in case
 	if (!pWeapon)
@@ -1518,11 +1523,11 @@ bool ZR_Detour_CEntityIdentity_AcceptInput(CEntityIdentity* pThis, CUtlSymbolLar
 				return true;
 			// This would allow maps to mess with timeleft, so we're actually just going to block it entirely
 			case CSRoundEndReason::GameStart:
-				return false;
+		return false;
 			case CSRoundEndReason::Draw:
 			default:
 				ZR_FinishRound(CS_TEAM_NONE);
-				return true;
+	return true;
 		}
 	}
 
@@ -1785,7 +1790,7 @@ void ZR_FinishRound(int iTeamNum)
 			CRecipientFilter filter;
 			filter.AddAllPlayers();
 			g_hTeamCT->DispatchParticle(g_cvarHumanWinOverlayParticle.Get().String(), &filter, PATTACH_MAIN_VIEW);
-		}
+	}
 	}
 	else if (iTeamNum == CS_TEAM_T)
 	{
@@ -1800,7 +1805,7 @@ void ZR_FinishRound(int iTeamNum)
 			CRecipientFilter filter;
 			filter.AddAllPlayers();
 			g_hTeamT->DispatchParticle(g_cvarZombieWinOverlayParticle.Get().String(), &filter, PATTACH_MAIN_VIEW);
-		}
+	}
 	}
 }
 
@@ -1970,7 +1975,7 @@ CON_COMMAND_CHAT(zclass, "<teamname/class name/number> - Find and select your Z:
 			for (int i = 0; i < vecClasses.size(); i++)
 				if (vecClasses[i]->iTeam == team)
 					ClientPrint(player, HUD_PRINTTALK, "%i. %s", i + 1, vecClasses[i]->szClassName.c_str());
-		}
+			}
 
 		ClientPrint(player, HUD_PRINTTALK, ZR_PREFIX "Select a class using \x2!zclass <class name/number>");
 		return;
