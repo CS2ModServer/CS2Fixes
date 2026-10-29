@@ -5,10 +5,11 @@
 #include <string>
 
 #include "cs2fixes.h"
-#include <ISmmPlugin.h>
+//#include <ISmmPlugin.h>
 
-extern IVEngineServer2* g_pEngineServer2;
-extern ISmmAPI* g_SMAPI;
+//extern IVEngineServer2* g_pEngineServer2;
+class IVEngineServer2;
+//extern ISmmAPI* g_SMAPI;
 
 namespace Source2Py
 {

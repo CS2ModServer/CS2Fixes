@@ -3,6 +3,8 @@
 #include "PyInclude.h"
 #include "commands.h"
 
+#include "engine2/ivengineserver2.h"
+
 class CCSPlayerController;
 
 namespace Source2Py
@@ -19,7 +21,7 @@ namespace Source2Py
 			CCSPlayerController::FromSlot(
 				CPlayerSlot(playerSlot)
 				), 
-			3, //see common.h for options, 3 is HUD_PRINTTALK
+			TextMsgDestinations::HUD_PRINTTALK, //see common.h for options, 3 is HUD_PRINTTALK
 			message.c_str()
 			);
 	}
@@ -30,14 +32,21 @@ namespace Source2Py
 
 	void PyAPI::ClientConPrint(int playerSlot, std::string message) {
 		message.append("\n");
-		g_pEngineServer2->ClientPrintf(playerSlot, message.c_str());
+		ClientPrint(
+			CCSPlayerController::FromSlot(
+				CPlayerSlot(playerSlot)
+				),
+				TextMsgDestinations::HUD_PRINTCONSOLE,
+			message.c_str()
+			);
 	}
 
 	void PyAPI::ServerCommand(const std::string& command) {
 		g_pEngineServer2->ServerCommand(command.c_str());
 	}
 
-	void PyAPI::ClientCommand(int playerSlot, const std::string& command) {
+	void PyAPI::ClientCommand(int playerSlot, const std::string& command) 
+	{
 		g_pEngineServer2->ClientCommand(playerSlot, command.c_str());
 	}
 

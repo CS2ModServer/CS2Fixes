@@ -58,9 +58,9 @@ class CGameRules;
 class CEntityKeyValues;
 class IRecipientFilter;
 class CTakeDamageInfo;
+class CUtlSymbolTable;
 class CCSPlayer_WeaponServices;
 class CBasePlayerWeapon;
-class CSpawnGroupMgrGameSystem;
 struct CPulseArgumentPack;
 struct CPulseInputParamMap;
 struct EmitSound_t;
@@ -79,10 +79,12 @@ struct CGcBanInformation_t
 namespace addresses
 {
 	bool Initialize();
-	bool InitializeBanMap();
+	bool InitializeRipRelativeAddresses();
 	bool InitializeVScriptFunctions();
+	void* ResolveRipRelative(const char* pszName, int nOpcodeSize = 3);
 
 	inline CUtlOrderedMap<uint32, CGcBanInformation_t, uint32>* sm_mapGcBanInformation;
+	inline CUtlSymbolTable* CCSAddonManager_CommandWhitelist;
 
 	inline void(FASTCALL* SetGroundEntity)(CBaseEntity* ent, CBaseEntity* ground, CBaseEntity* unk3);
 	inline void(FASTCALL* CCSPlayerController_SwitchTeam)(CCSPlayerController* pController, uint32 team);
@@ -108,7 +110,6 @@ namespace addresses
 	inline StartSoundEventInfo(FASTCALL* CBaseEntity_EmitSoundFilter)(IRecipientFilter& filter, CEntityIndex ent, const EmitSound_t& params);
 	inline void(FASTCALL* CBaseEntity_SetMoveType)(CBaseEntity* pThis, MoveType_t nMoveType, MoveCollide_t nMoveCollide);
 	inline void(FASTCALL* CCSPlayer_WeaponServices_EquipWeapon)(CCSPlayer_WeaponServices* pWeaponServices, CBasePlayerWeapon* pPlayerWeapon);
-	inline void(FASTCALL* GetSpawnGroups)(CSpawnGroupMgrGameSystem* pSpawnGroupMgr, CUtlVector<SpawnGroupHandle_t>* pList);
 	inline void(FASTCALL* CBasePlayerPawn_SnapViewAngles)(CBasePlayerPawn* pPawn, QAngle* pAngles);
 	inline int64(FASTCALL* CBaseEntity_TakeDamageOld)(CBaseEntity* pThis, CTakeDamageInfo* pInfo, CTakeDamageResult* pResult);
 

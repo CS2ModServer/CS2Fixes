@@ -1578,7 +1578,7 @@ void SpawnPlayer(CCSPlayerController* pController)
 	});
 }
 
-void ZR_Hook_ClientPutInServer(CPlayerSlot slot, char const* pszName, int type, uint64 xuid)
+void ZR_Hook_ClientPutInServer(CPlayerSlot slot, char const* pszName, ClientPutInServerType_t type, uint64 xuid)
 {
 	CCSPlayerController* pController = CCSPlayerController::FromSlot(slot);
 	if (!pController)

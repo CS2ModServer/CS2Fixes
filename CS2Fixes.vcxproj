@@ -315,12 +315,12 @@
     <ClInclude Include="src\utils\plat.h" />
     <ClInclude Include="src\utils\vscript_function.h" />
     <ClInclude Include="src\utils\virtual.h" />
+    <ClInclude Include="src\utils\weapon.h" />
     <ClInclude Include="src\utils\version_gen_placeholder.h" />
     <ClInclude Include="src\utils\hud_manager.h" />
     <ClInclude Include="src\utils\utils.h" />
     <ClInclude Include="src\utils\khook_helpers.h" />
     <ClInclude Include="src\utils\sighook.h" />
-    <ClInclude Include="src\utils\weapon.h" />
     <!--- CS2ModServer - Headers -->
     <ClInclude Include="src\cs2_sdk\cchecktransmitinfo.h" />
     <ClInclude Include="src\adventuremenu.h" />

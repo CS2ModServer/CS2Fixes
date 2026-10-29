@@ -1,4 +1,4 @@
-/**
+﻿/**
  * =============================================================================
  * CS2Fixes
  * Copyright (C) 2023-2026 Source2ZE
@@ -43,7 +43,7 @@ namespace CGamePlayerEquipHandler
 	void Use(CGamePlayerEquip* pEntity, InputData_t* pInput);
 	void TriggerForAllPlayers(CGamePlayerEquip* pEntity);
 	bool TriggerForActivatedPlayer(CGamePlayerEquip* pEntity, CBaseEntity* pActivator, variant_t* value);
-	void OnPrecache(CGamePlayerEquip* pEntity, const CEntityKeyValues* kv);
+	bool OnPrecache(CGamePlayerEquip* pEntity, const CEntityKeyValues* kv, CEntityKeyValues* pFilteredKV);
 } // namespace CGamePlayerEquipHandler
 
 namespace CGameUIHandler

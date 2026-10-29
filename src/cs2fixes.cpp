@@ -68,8 +68,7 @@ IGameEventSystem* g_gameEventSystem = nullptr;
 IGameEventManager2* g_gameEventManager = nullptr;
 CGameEntitySystem* g_pEntitySystem = nullptr;
 IVEngineServer2* g_pEngineServer2 = nullptr;
-CCSGameRules* g_pGameRules = nullptr;				  // Will be null between map end & new map startup, null check if necessary!
-CSpawnGroupMgrGameSystem* g_pSpawnGroupMgr = nullptr; // Will be null between map end & new map startup, null check if necessary!
+CCSGameRules* g_pGameRules = nullptr; // Will be null between map end & new map startup, null check if necessary!
 
 double g_flUniversalTime = 0.0;
 float g_flLastTickedTime = 0.0f;
@@ -77,7 +76,7 @@ bool g_bHasTicked = false;
 bool g_bRequiredInitLoaded = true;
 
 // Will return null between map end & new map startup, null check if necessary!
-INetworkGameServer* GetNetworkGameServer()
+CNetworkGameServerBase* GetNetworkGameServer()
 {
 	return g_pNetworkServerService->GetIGameServer();
 }
@@ -289,7 +288,7 @@ bool CS2Fixes::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, bool
 	});
 
 	// run our cfg
-	g_pCfgParser->ParseCfg("cs2fixes/cs2fixes");
+	g_pCfgParser->ParseCfg("cs2fixes");
 
 	srand(time(0));
 
@@ -607,6 +606,7 @@ void CS2Fixes::OnLevelInit(char const* pMapName,
 
 	g_playerManager->SetupInfiniteAmmo();
 	g_pMapVoteSystem->OnLevelInit(pMapName);
+	g_pConvarWhitelist->ApplyToGameTable(pMapName);
 
 	if (g_cvarEnableZR.Get())
 		ZR_OnLevelInit();
